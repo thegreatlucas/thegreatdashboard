@@ -4,35 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard AON 26 - Brasil, Argentina & México</title>
-    <!-- Papa Parse para leitura de CSV -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <!-- Fontes premium e modernas -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Bebas+Neue&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* John Deere Construction Colors */
-            --bg-start: #111111;         /* Heavy Machinery Black */
-            --bg-end: #1a1a1a;           /* Charcoal */
-            --accent: #FFC800;           /* Signature JD Construction Yellow */
-            --accent-dark: #cc9f00;      /* Darker Yellow for Hover */
-            --highlight: #FFC800; 
-            
-            /* Interfaces */
-            --card-bg: rgba(255, 255, 255, 0.03);
-            --card-border: rgba(255, 200, 0, 0.15); /* Faint yellow border */
-            --card-hover: rgba(255, 200, 0, 0.08);
-
-            /* Texts */
-            --text-main: #f5f5f5;
-            --text-muted: #8e8e9e;
+            --bg-start: #1a1a2e;
+            --bg-end: #16213e;
+            --accent: #4a9d3e;  
+            --highlight: #FFD700; 
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
         }
         
         * { box-sizing: border-box; }
 
         body {
             margin: 0;
-            font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at 50% 0%, var(--bg-end) 0%, var(--bg-start) 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
             background-attachment: fixed;
             color: var(--text-main);
             min-height: 100vh;
@@ -42,54 +30,36 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.2rem 2.5rem;
-            border-bottom: 2px solid var(--accent); /* Barras grossas amarelas típicas da C&F */
-            background: #090909;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(5px);
             position: sticky;
             top: 0;
             z-index: 100;
         }
 
         .header-titles h1 {
-            margin: 0; 
-            font-size: 28px; 
-            color: var(--text-main);
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        /* Acento do logo no título */
-        .header-titles h1::before {
-            content: '';
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            background: var(--accent);
-            border-radius: 2px;
+            margin: 0; font-size: 26px; color: var(--highlight);
         }
 
         .header-titles p {
-            margin: 5px 0 0 24px; color: var(--text-muted); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+            margin: 5px 0 0 0; color: var(--text-muted); font-size: 14px;
         }
 
         .controls {
-            display: flex; align-items: center; gap: 20px;
+            display: flex; align-items: center; gap: 15px;
         }
 
         .btn-refresh {
-            background-color: var(--accent); color: #000; border: none;
-            padding: 12px 24px; border-radius: 4px; cursor: pointer;
-            font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;
-            transition: all 0.2s ease;
+            background-color: var(--accent); color: white; border: none;
+            padding: 10px 20px; border-radius: 6px; cursor: pointer;
+            font-weight: bold; font-size: 14px; transition: 0.2s;
         }
-        .btn-refresh:hover { background-color: var(--accent-dark); transform: scale(1.02); }
-        .btn-refresh:disabled { background-color: #333; color: #666; cursor: not-allowed; transform: none; }
+        .btn-refresh:hover { background-color: #3d8233; }
+        .btn-refresh:disabled { background-color: #555; cursor: not-allowed; }
 
-        .status-indicator { font-size: 13px; font-weight: 600; color: var(--text-muted); padding-right: 10px; }
+        .status-indicator { font-size: 14px; color: var(--text-muted); }
 
         .container { padding: 2rem; max-width: 1400px; margin: 0 auto; }
 
@@ -102,26 +72,25 @@
             align-items: center;
         }
         .filters-label {
-            font-size: 13px; font-weight: 800; color: var(--text-muted); margin-right: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+            font-size: 14px; color: var(--text-muted); margin-right: 5px; text-transform: uppercase; letter-spacing: 1px;
         }
         .filter-btn {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
             color: var(--text-muted);
-            padding: 10px 20px;
-            border-radius: 4px; /* Cantos secos de construção */
+            padding: 8px 16px;
+            border-radius: 20px;
             cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 14px;
             transition: all 0.2s ease;
         }
-        .filter-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        .filter-btn:hover { background: rgba(255,255,255,0.15); color: white; }
         .filter-btn.active {
             background: var(--accent);
             border-color: var(--accent);
-            color: #000;
-            font-weight: 800;
-            box-shadow: 0 4px 15px rgba(255, 200, 0, 0.4);
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(74, 157, 62, 0.3);
         }
 
         .metrics-main {
@@ -130,46 +99,43 @@
         }
 
         .card {
-            background: var(--card-bg); 
-            border-radius: 8px; padding: 25px; border: 1px solid var(--card-border);
-            transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+            background: var(--card-bg); backdrop-filter: blur(10px);
+            border-radius: 12px; padding: 24px; border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .card:hover {
-            transform: translateY(-3px); 
-            background: var(--card-hover);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
-            border-color: var(--accent);
+            transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 215, 0, 0.3);
         }
-        .card h3 { margin: 0 0 10px 0; font-size: 13px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .card .value { margin: 0; font-size: 46px; font-family: 'Bebas Neue', 'Inter', sans-serif; font-weight: normal; letter-spacing: 2px; color: var(--highlight); }
+        .card h3 { margin: 0 0 10px 0; font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .card .value { margin: 0; font-size: 42px; font-weight: bold; color: var(--highlight); }
 
         .country-cards {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;
         }
 
-        .country-card { display: flex; align-items: center; justify-content: space-between; border-left: 4px solid var(--accent); }
-        .country-info h3 { font-size: 20px; margin: 0 0 5px 0; color: white; display: flex; align-items: center; gap: 10px; font-weight: 800; }
-        .country-info p { margin: 0; color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .country-card { display: flex; align-items: center; justify-content: space-between; }
+        .country-info h3 { font-size: 18px; margin: 0 0 5px 0; color: white; display: flex; align-items: center; gap: 10px; }
+        .country-info p { margin: 0; color: var(--text-muted); font-size: 13px; }
         .country-stats { text-align: right; }
-        .country-stats .value { font-size: 38px; }
+        .country-stats .value { font-size: 32px; }
 
         .metrics-dealers {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;
         }
 
-        .dealer-card { padding: 20px; border-left: 2px solid transparent; }
-        .dealer-card:hover { border-left: 2px solid var(--accent); }
+        .dealer-card { padding: 20px; }
         .dealer-header {
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 18px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 15px;
+            margin-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 15px;
         }
-        .dealer-header h4 { margin: 0; font-size: 16px; font-weight: 800; color: #fff; letter-spacing: 0.5px; text-transform: uppercase; }
-        .dealer-header .flag { font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .dealer-header h4 { margin: 0; font-size: 18px; color: #fff; }
+        .dealer-header .flag { font-size: 20px; }
         
-        .dealer-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 14px; }
+        .dealer-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px; }
         .dealer-stats div { display: flex; flex-direction: column; gap: 4px; }
-        .dealer-stats .label { color: var(--text-muted); font-size: 11px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; }
-        .dealer-stats .val { font-weight: 800; font-size: 18px; }
+        .dealer-stats .label { color: var(--text-muted); font-size: 12px; text-transform: uppercase; }
+        .dealer-stats .val { font-weight: bold; font-size: 16px; }
 
         .grid-full-width { grid-column: 1 / -1; flex-direction: row !important; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 8px; margin-top: 4px; }
 
@@ -205,18 +171,6 @@
 </head>
 <body>
 
-    <!-- Access Control Security Layer (Front-End) -->
-    <div id="auth-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-start); z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; transition: opacity 0.3s ease;">
-        <h2 style="color:var(--highlight); font-family:'Bebas Neue', sans-serif; font-size:56px; margin-bottom:5px; letter-spacing:3px;">ACESSO RESTRITO</h2>
-        <p style="color:var(--text-muted); margin-top:0; margin-bottom:30px; text-transform:uppercase; font-size:14px; font-weight:800; letter-spacing:1px;">Dashboard AON 26 &mdash; John Deere</p>
-        <div style="display:flex; gap:10px;">
-            <input type="password" id="pass-input" placeholder="Senha Institucional" style="padding:15px; border-radius:4px; border:1px solid var(--card-border); background:rgba(0,0,0,0.5); color:white; outline:none; font-size:16px; width:260px; text-align:center; font-family:'Inter', sans-serif;">
-            <button onclick="checkPassword()" class="btn-refresh" style="margin:0;">Desbloquear</button>
-        </div>
-        <p id="auth-error" style="color:#ff5252; margin-top:20px; font-size:14px; font-weight:600; display:none;">Acesso Negado. Tente novamente.</p>
-    </div>
-
-    <!-- Removed legacy CORS warnings. The application works autonomously via Double-Click proxy tunneling -->
     <header>
         <div class="header-titles">
             <h1>Dashboard AON 26</h1>
@@ -232,8 +186,8 @@
         <!-- BARRA DE FILTROS -->
         <div class="filters-bar">
             <span class="filters-label">Filtrar Base:</span>
-            <button class="filter-btn" id="btn-filter-all" onclick="applyFilter('all')">Todos os Leads</button>
-            <button class="filter-btn active" id="btn-filter-aon" onclick="applyFilter('aon')">AON (Válidos)</button>
+            <button class="filter-btn active" id="btn-filter-all" onclick="applyFilter('all')">Todos os Leads</button>
+            <button class="filter-btn" id="btn-filter-aon" onclick="applyFilter('aon')">AON (Válidos)</button>
             <button class="filter-btn" id="btn-filter-aon25" onclick="applyFilter('aon25')">AON 25 (Até Dez/25)</button>
             <button class="filter-btn" id="btn-filter-expoagro" onclick="applyFilter('expoagro')">Expoagro</button>
             <button class="filter-btn" id="btn-filter-conexpo" onclick="applyFilter('conexpo')">Conexpo (19/03/26)</button>
@@ -242,11 +196,11 @@
         <div class="metrics-main">
             <div class="card">
                 <h3>Total Filtrado</h3>
-                <p id="m-total" class="value" style="color: #fff;">-</p>
+                <p id="m-total" class="value">-</p>
             </div>
-            <div class="card" style="border-top: 3px solid var(--success);">
+            <div class="card">
                 <h3>Qualificados</h3>
-                <p id="m-qual" class="value" style="color: var(--success);">-</p>
+                <p id="m-qual" class="value" style="color: var(--accent);">-</p>
             </div>
             <div class="card">
                 <h3>Em Negociação</h3>
@@ -306,36 +260,11 @@
     </div>
 
     <script>
-        // Sistema Baseado de Sessão (Auth Layer)
-        function checkPassword() {
-            const pass = document.getElementById('pass-input').value;
-            if (pass === 'jdc123' || pass === 'JDC123') {
-                sessionStorage.setItem('jd_auth', 'true');
-                document.getElementById('auth-screen').style.opacity = '0';
-                setTimeout(() => document.getElementById('auth-screen').style.display = 'none', 300);
-            } else {
-                const err = document.getElementById('auth-error');
-                err.style.display = 'block';
-                setTimeout(() => err.style.display = 'none', 2500);
-            }
-        }
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            const inputField = document.getElementById('pass-input');
-            if (inputField) {
-                inputField.addEventListener('keypress', function (e) {
-                    if (e.key === 'Enter') checkPassword();
-                });
-            }
-            if (sessionStorage.getItem('jd_auth') === 'true') {
-                document.getElementById('auth-screen').style.display = 'none';
-            }
-        });
-
         const DEALERS_CONFIG = {
             "Veneza Sul": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1JCeNcqhmFF0cDWQJhCAKLg28xLyL-GfsbJQN7ia2FNI/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
             "Veneza NE": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1zbktMtatVyTPZnjMF4JI1ERkzQYCm2KamYj9-Tx_340/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
             "INOVA": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1r1ywrkva9dLT50wStb0UQ2_NYtXy7iGIqtrB1LKdeL0/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
+            "Agrosul": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1oLex2XBsJTlk-Pjr_IyFR_TSEp0RX47GzZnlxZPb66k/edit?usp=sharing", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
             "RZK": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1hvlMm4zjP0etlxXEWxbMmzuJ06nlK-AUebyMBUvGjL0/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
             "Terraverde": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1rAlUFZq3qlBq13fMY9xpKR1MveZeaVAFC9ctHY6OQKU/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
             "SLC": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1Jbeyx1W2scMATMRl8AF3adx5IdVGzNMFdrhq2UrTbiU/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
@@ -359,7 +288,7 @@
         let GLOBAL_ALL_DATA = {};
         let EXPOAGRO_EMAILS = new Set();
         let EXPOAGRO_PHONES = new Set();
-        let CURRENT_FILTER = 'aon';
+        let CURRENT_FILTER = 'all';
 
         function normalizeString(str) {
             if (!str) return "";
@@ -379,34 +308,6 @@
         function extractSheetId(url) {
             const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
             return match ? match[1] : null;
-        }
-
-        // Táticas de Sobrevivência: Fazemos "Round-Robin" balanceado de proxies!
-        // Alguns Proxies como o AllOrigins exigem URL Encode. Outros (Codetabs) recusam Encoding.
-        const PROXIES = [
-            { url: "https://api.allorigins.win/raw?url=", encode: true },
-            { url: "https://api.codetabs.com/v1/proxy?quest=", encode: false }
-        ];
-        
-        async function fetchWithProxyFallback(rawUrl) {
-            let lastErr = null;
-            // Embaralha o array para que as frotas ataquem os túneis de forma verdadeiramente aleatória e distribuída.
-            const shuffledProxies = [...PROXIES].sort(() => Math.random() - 0.5);
-
-            for (let i = 0; i < shuffledProxies.length; i++) {
-                const proxy = shuffledProxies[i];
-                const proxyUrl = proxy.url + (proxy.encode ? encodeURIComponent(rawUrl) : rawUrl);
-                
-                try {
-                    const response = await fetch(proxyUrl);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    return await response.text();
-                } catch (err) {
-                    lastErr = err;
-                    // Seletor silencioso: falha e varre automaticamente pro próximo
-                }
-            }
-            throw new Error(`Conexões Recusadas Pelo Bypass (Proxy Offline). Última Resposta: ${lastErr}`);
         }
 
         // Funções de Date Regex
@@ -473,63 +374,49 @@
 
         async function loadExpoagroCentral() {
             try {
-                const rawUrl = `https://docs.google.com/spreadsheets/d/${expoId}/export?format=csv&gid=356962129&_t=${Date.now()}`;
+                const expoId = "1D4PxV6UzK4YOPAHBGUGjRb15I9UVf8jUlAg4yjRXppY";
+                const cb = 'gviz_expoagro_' + Date.now();
+                const fetchUrl = `https://docs.google.com/spreadsheets/d/${expoId}/gviz/tq?tqx=out:json;responseHandler:${cb}&gid=356962129`;
                 
-                let csvText;
-                try {
-                    csvText = await fetchWithProxyFallback(rawUrl);
-                    // Sucesso: Persiste no banco de dados local do navegador
-                    try { localStorage.setItem('cache_Expoagro', csvText); } catch(e) {}
-                } catch (err) {
-                    // Blecaute na rede: Tenta reanimar o último cache local!
-                    const cached = localStorage.getItem('cache_Expoagro');
-                    if (cached) {
-                        console.warn("[OFFLINE] Servidores Proxy inoperantes. Lendo Expoagro da memória Cache local.");
-                        csvText = cached;
-                    } else {
-                        throw err; // Sem internet e sem cache
-                    }
-                }
+                const table = await fetchViaJSONP(fetchUrl, cb);
+                const cols = table.cols;
                 
-                const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
-                const rows = parsed.data;
-                
-                console.log(`[EXPO] Total rows na aba: ${rows.length}`);
+                let emIdx = -1, telIdx = -1, campIdx = -1;
+                cols.forEach((c, i) => {
+                    if (!c || !c.label) return;
+                    const l = normalizeString(c.label);
+                    if (l === 'email') emIdx = i;
+                    if (l.includes('telefone') || l.includes('phone')) telIdx = i;
+                    if (l === 'campaign_name' || l.includes('campanha')) campIdx = i;
+                });
 
                 EXPOAGRO_EMAILS.clear();
                 EXPOAGRO_PHONES.clear();
 
-                // Filtrar apenas linhas com campaign_name contendo 'expo'
-                const expoRows = rows.filter(r => {
-                    const camp = normalizeString(r['campaign_name'] || r['Campaign_name'] || '');
-                    return camp.includes('expo');
+                const filteredRows = table.rows.filter(r => {
+                    if(!r || !r.c) return false;
+                    const campName = r.c[campIdx] && r.c[campIdx].v ? normalizeString(r.c[campIdx].v) : '';
+                    return campName.includes('expo');
                 });
 
-                console.log(`[EXPO] Leads Expoagro encontrados: ${expoRows.length}`);
-
-                expoRows.forEach(r => {
-                    const email = normalizeString(r['email'] || r['Email'] || '');
-                    const phone = normalizeString(r['phone_number'] || r['Telefone'] || '');
-                    if (email) EXPOAGRO_EMAILS.add(email);
-                    if (phone) EXPOAGRO_PHONES.add(phone);
+                filteredRows.forEach(r => {
+                    if(emIdx >= 0 && r.c[emIdx] && r.c[emIdx].v) EXPOAGRO_EMAILS.add(normalizeString(r.c[emIdx].v));
+                    if(telIdx >= 0 && r.c[telIdx] && r.c[telIdx].v) EXPOAGRO_PHONES.add(normalizeString(r.c[telIdx].v));
                 });
 
-                // Montar leads virtuais da Expoagro
-                const expoLeads = expoRows.map(r => ({
-                    status: normalizeString(r['Status'] || r['lead_status'] || ''),
-                    postStatus: normalizeString(r['Fase pós qualificação'] || r['Post-calificación'] || ''),
-                    aonRaw: '',
-                    hasAonCol: false,
-                    dateRaw: normalizeString(r['created_time'] || r['Data do Lead'] || ''),
-                    email: normalizeString(r['email'] || ''),
-                    phone: normalizeString(r['phone_number'] || '')
-                }));
+                table.rows = filteredRows; // Passar somente os 60 leads pro virtual dealer
 
+                // Injetar headers artificiais para colunas geradas pelo Facebook Leads mas sem nome no Google Sheets
+                // Na posição 26 e 27 ficam os campos "Status" e "Fase pós qualificação" (como visto via CSV dump)
+                if (table.cols[26]) table.cols[26].label = 'Status';
+                if (table.cols[27]) table.cols[27].label = 'Fase pós qualificação';
+
+                // Importar as linhas da Expoagro como um novo dealer virtual
+                const expoLeads = parseLeads(table, DEALERS_CONFIG["Expoagro"], "Expoagro");
                 GLOBAL_ALL_DATA["Expoagro"] = { leads: expoLeads, error: null };
 
             } catch (err) {
-                console.warn("[EXPO] Falha ao carregar Expoagro:", err);
-                GLOBAL_ALL_DATA["Expoagro"] = { leads: [], error: err.message };
+                console.warn("Falha ao puxar aba Expoagro genérica (ignorando silenciosamente). O botão de filtro Expoagro retornará zero encontrados.", err);
             }
         }
 
@@ -537,31 +424,11 @@
             const sheetId = extractSheetId(config.sheetUrl);
             if (!sheetId) throw new Error("URL inválida ou ID da planilha não encontrado.");
 
-            const gidMatch = config.sheetUrl.match(/gid=(\d+)/);
-            const gid = gidMatch ? gidMatch[1] : '0';
-
-            // Cache buster via _t=Date.now() força o servidor proxy a criar uma ponte nova, ignorando bloqueios 408 prévios
-            // Usar multi-proxy round-robin c/ fallback para estilhaçar limites Anti-DDoS
-            const rawUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}&_t=${Date.now()}`;
+            const cbName = 'gviz_' + dealerName.replace(/[^a-zA-Z0-9]/g, '') + '_' + Date.now() + Math.floor(Math.random()*1000);
+            const fetchUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json;responseHandler:${cbName}&sheet=${encodeURIComponent('Página1')}`;
             
-            let csvText;
-            try {
-                csvText = await fetchWithProxyFallback(rawUrl);
-                // Download aprovado pelo Proxy: Salva o CSV inteiro no disco duro do navegador (LocalStorage)
-                try { localStorage.setItem('cache_' + dealerName, csvText); } catch(e) {}
-            } catch (err) {
-                // Se todos os 4 Proxies Capotarem: Resgatar da memória!
-                const cached = localStorage.getItem('cache_' + dealerName);
-                if (cached) {
-                    console.warn(`[OFFLINE CACHE] Proxies mortos. Puxando dados salvos de ${dealerName}`);
-                    csvText = cached;
-                } else {
-                    throw err; // Se capotou na primeira vez da vida, joga o erro pra frente
-                }
-            }
-            
-            const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
-            return parseLeadsFromCSV(parsed.data, config, dealerName);
+            const table = await fetchViaJSONP(fetchUrl, cbName);
+            return parseLeads(table, config, dealerName);
         }
 
         function parseLeads(table, config, dealerName) {
@@ -603,11 +470,10 @@
             const leadsObjArr = [];
 
             const safeVal = (r, i) => {
-                if (i === undefined || i === -1 || i >= r.c.length || !r.c[i]) return { v: '', f: '' };
-                const cell = r.c[i];
+                if (i === undefined || i === -1 || !r.c[i]) return { v: '', f: '' };
                 return {
-                    v: cell.v !== null && cell.v !== undefined ? cell.v.toString() : '',
-                    f: cell.f !== null && cell.f !== undefined ? cell.f.toString() : ''
+                    v: r.c[i].v !== null ? r.c[i].v.toString() : '',
+                    f: r.c[i].f !== null && r.c[i].f !== undefined ? r.c[i].f.toString() : ''
                 };
             };
 
@@ -633,67 +499,6 @@
             return leadsObjArr;
         }
 
-
-        function parseLeadsFromCSV(rows, config, dealerName) {
-            // rows é array de objetos com keys = nomes das colunas
-            const leadsObjArr = [];
-
-            rows.forEach(row => {
-                if (!row) return;
-
-                // Encontrar colunas de forma case-insensitive
-                const keys = Object.keys(row);
-                const findCol = (name) => {
-                    const norm = normalizeString(name);
-                    const key = keys.find(k => normalizeString(k) === norm);
-                    return key ? normalizeString(row[key]) : '';
-                };
-
-                const statusRaw = findCol(config.statusCol);
-                const postRaw   = findCol(config.postStatusCol);
-                
-                // O Python checa if 'AON?' in df.columns (Case-sensitive e cego para barras/espaços ocultos)
-                // Se algum dealer brasileiro escreveu "aON?" ou "AON? ", o script Python dá BYPASS no filtro 
-                // e aceita o lixo por não achar a chave exata. Mimetizando esse comportamento cego fielmente:
-                const aonKey = keys.find(k => k === 'AON?');
-                const aonRaw = aonKey ? normalizeString(row[aonKey]) : '';
-                const hasAonCol = !!aonKey;
-
-                // Email
-                const emailKey = keys.find(k => {
-                    const n = normalizeString(k);
-                    return n.includes('mail') || n.includes('correo');
-                });
-                const email = emailKey ? normalizeString(row[emailKey]) : '';
-
-                // Phone
-                const phoneKey = keys.find(k => {
-                    const n = normalizeString(k);
-                    return n.includes('tele') || n.includes('phone') || n === 'whatsapp';
-                });
-                const phone = phoneKey ? normalizeString(row[phoneKey]) : '';
-
-                // Data
-                const dateKey = keys.find(k => {
-                    const n = normalizeString(k);
-                    return n === 'data' || n === 'fecha' || n === 'data do lead';
-                });
-                const dateRaw = dateKey ? normalizeString(row[dateKey]) : '';
-
-                leadsObjArr.push({
-                    status: statusRaw,
-                    postStatus: postRaw,
-                    aonRaw: aonRaw,
-                    hasAonCol: hasAonCol,
-                    dateRaw: dateRaw,
-                    email: email,
-                    phone: phone
-                });
-            });
-
-            return leadsObjArr;
-        }
-
         function applyFilter(filterType) {
             CURRENT_FILTER = filterType;
             
@@ -703,7 +508,6 @@
 
             let m = { total: 0, qual: 0, neg: 0, noInt: 0, stopped: 0 };
             let cMetrics = { BR: { total: 0, dealers: 0 }, AR: { total: 0, dealers: 0 }, MX: { total: 0, dealers: 0 } };
-            let matchedExpoEmails = new Set();
 
             const dealerGrid = document.getElementById('dealer-grid');
             dealerGrid.innerHTML = '';
@@ -716,50 +520,50 @@
 
                 if (!dData.error) {
                     filtered = dData.leads.filter(lead => {
-                        // O Python exclui duplicadas SOMENTE por e-mail ("Cruzar por e-mail com os arquivos AR").
-                        const isExpoLead = lead.email && EXPOAGRO_EMAILS.has(lead.email);
+                        const isExpoLead = (lead.email && EXPOAGRO_EMAILS.has(lead.email)) || (lead.phone && EXPOAGRO_PHONES.has(lead.phone));
                         
-                        // LÓGICA DE CRUZAMENTO EXPOAGRO:
-                        // Dealers AR têm o status atualizado. A frota virtual 'Expoagro' tem o status original (obsoleto).
+                        // Botão Expoagro: Exibe APENAS leads da Expoagro + ARs cruzados
                         if (filterType === 'expoagro') {
-                            if (dealerName === 'Expoagro') {
-                                return !matchedExpoEmails.has(lead.email); // Retorna os leads que a Argentina não cobriu (Órfãos)
-                            }
-                            if (country === 'AR' && isExpoLead) {
-                                matchedExpoEmails.add(lead.email); // AR tem prioridade - Adere o Status Atualizado!
-                                return true;
-                            }
+                            if (dealerName === 'Expoagro') return true; 
+                            return isExpoLead;
+                        }
+
+                        // Ocultar a frota virtual Expoagro dos botões restritos
+                        if ((filterType === 'aon' || filterType === 'aon25' || filterType === 'conexpo') && dealerName === 'Expoagro') {
                             return false;
                         }
 
-                        if (filterType === 'all' || filterType === 'aon' || filterType === 'aon25') {
-                            if (dealerName === 'Expoagro') {
-                                return !matchedExpoEmails.has(lead.email); // Evita duplicar no volume Geral e campanhas globais
-                            }
-                            if (country === 'AR' && isExpoLead) {
-                                matchedExpoEmails.add(lead.email); 
-                            }
+                        // REGRA ARGENTINA: Excluir EXPOAGRO emails de dentro das frotas listadas dos dealers originais em todas as contagens normais para não ser dupla-contagem da virtual!
+                        if (country === 'AR' && dealerName !== 'Expoagro' && isExpoLead) {
+                            return false;
                         }
 
-                        // A única campanha que ignora Expoagro é a Conexpo (pois foi num dia específico e isolado nos USA).
+                        // Botão Conexpo: Isolado e independente do AON
                         if (filterType === 'conexpo') {
-                            if (dealerName === 'Expoagro') return false; 
-                            if (country === 'AR' && isExpoLead) return false; 
                             return isConexpo(lead.dateRaw);
                         }
 
+                        // Condicional do AON (Aplicado apenas ao BR, para AR/MX fica sempre True)
                         let isAonValid = true;
                         
                         if (country === 'BR') {
                             if (lead.hasAonCol) {
-                                const aon = lead.aonRaw ? lead.aonRaw.trim() : '';
-                                isAonValid = aon !== '' && aon !== 'nan' && !aon.startsWith('#');
+                                // O script python apenas rejeitava #N/A (startswith #) e vazios. 
+                                // Não rejeitava '-', 'erro' ou 'nulo' preenchidos em texto.
+                                isAonValid = lead.aonRaw && lead.aonRaw !== '' && !lead.aonRaw.startsWith('#');
+                            } else {
+                                isAonValid = true;
                             }
                         }
 
-                        if (filterType === 'aon') return isAonValid;
-                        if (filterType === 'aon25') return isAonValid && isUpToDec2025(lead.dateRaw);
+                        if (filterType === 'aon') {
+                            return isAonValid;
+                        } 
+                        if (filterType === 'aon25') {
+                            return isAonValid && isUpToDec2025(lead.dateRaw);
+                        }
                         
+                        // Default 'all'
                         return true; 
                     });
 
@@ -781,26 +585,8 @@
                     });
 
                     // Aggregate
-                    // Aggregate
                     m.total += dt.total; m.qual += dt.qual; m.neg += dt.neg; m.noInt += dt.noInt; m.stopped += dt.stop;
                     cMetrics[country].total += dt.total; cMetrics[country].dealers += 1;
-
-                    // Ocultador solicitado pelo usuário:
-                    // Se o distribuidor não tem NENHUM lead após os filtros calculados da vez, pula a montagem da UI
-                    if (dt.total === 0) {
-                        continue;
-                    }
-                    
-                    // Regra: Expoagro é frota virtual apenas para cálculo global. Não renderizar card pra não poluir.
-                    if (dealerName === 'Expoagro') {
-                        continue;
-                    }
-
-                    // Cálculos de Taxas (% baseadas no volume de Leads do Card atual)
-                    const txQual = dt.total > 0 ? ((dt.qual / dt.total) * 100).toFixed(0) + '%' : '0%';
-                    // Atendidos = Tudo aquilo que NÃO foi "Pararam de responder" (Contato Mudo/inválido)
-                    const atendidos = (dt.qual + dt.neg + dt.noInt);
-                    const txAtend = dt.total > 0 ? ((atendidos / dt.total) * 100).toFixed(0) + '%' : '0%';
 
                     // Append card
                     const card = document.createElement('div');
@@ -811,18 +597,13 @@
                             <span class="flag" title="${COUNTRY_NAMES[country]}">${FLAGS[country]}</span>
                         </div>
                         <div class="dealer-stats">
-                            <div><span class="label">Qualificados</span> <span class="val" style="color:var(--success)">${dt.qual}</span></div>
-                            <div><span class="label">Em Negociação</span> <span class="val" style="color: #4da6ff;">${dt.neg}</span></div>
-                            
+                            <div><span class="label">Leads Filtrados</span> <span class="val">${dt.total}</span></div>
+                            <div><span class="label">Qualificados</span> <span class="val" style="color:var(--highlight)">${dt.qual}</span></div>
+                            <div><span class="label">Em negoci.</span> <span class="val">${dt.neg}</span></div>
                             <div><span class="label">Sem Intenção</span> <span class="val">${dt.noInt}</span></div>
-                            <div><span class="label">P. de Responder</span> <span class="val" style="color: #ff5252">${dt.stop}</span></div>
-                            
-                            <div><span class="label">Tx Qualificação</span> <span class="val">${txQual}</span></div>
-                            <div><span class="label">Tx Atendimento</span> <span class="val">${txAtend}</span></div>
-
-                            <div class="grid-full-width" style="margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px;">
-                                <span class="label" style="font-size: 13px;">Total de Leads</span>
-                                <span class="val" style="color: var(--accent); font-size: 26px;">${dt.total}</span>
+                            <div class="grid-full-width">
+                                <span class="label">Pararam de Responder</span>
+                                <span class="val" style="color:#ffb74d">${dt.stop}</span>
                             </div>
                         </div>
                     `;
@@ -856,9 +637,8 @@
         }
 
         async function fetchAllData() {
-            const dealerNames = Object.keys(DEALERS_CONFIG).filter(n => n !== "Expoagro");
-            
-            const fetchDealer = async (dealerName) => {
+            // fetchAllData ignora dealers Expoagro já populados manualmente no script 
+            const promises = Object.keys(DEALERS_CONFIG).filter(n => n !== "Expoagro").map(async (dealerName) => {
                 const config = DEALERS_CONFIG[dealerName];
                 try {
                     const leads = await fetchGoogleSheetData(config, dealerName);
@@ -867,18 +647,12 @@
                     console.error(`Erro buscando ${dealerName}:`, err);
                     GLOBAL_ALL_DATA[dealerName] = { error: err.message, leads: [] };
                 }
-            };
-
-            // Retorno à tática de Lotes (3 a 3) para esfriar o firewall dos servidores proxy anti-spam
-            for (let i = 0; i < dealerNames.length; i += 3) {
-                const batch = dealerNames.slice(i, i + 3).map(fetchDealer);
-                await Promise.all(batch);
-                // Pausa restauradora de 800 milissegundos pro proxy respirar
-                await new Promise(resolve => setTimeout(resolve, 800)); 
-            }
+            });
             
             // Expoagro fetch (não é obrigatório sucesso de 100% pra parar tela)
-            await loadExpoagroCentral();
+            promises.push(loadExpoagroCentral());
+
+            await Promise.all(promises);
         }
 
         async function refreshData() {
@@ -911,7 +685,6 @@
 
         // Auto load no início
         window.addEventListener('DOMContentLoaded', () => {
-            CURRENT_FILTER = 'aon';
             refreshData();
         });
 
