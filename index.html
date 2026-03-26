@@ -312,7 +312,11 @@
             if (pass === 'jdc123' || pass === 'JDC123') {
                 sessionStorage.setItem('jd_auth', 'true');
                 document.getElementById('auth-screen').style.opacity = '0';
-                setTimeout(() => document.getElementById('auth-screen').style.display = 'none', 300);
+                setTimeout(() => {
+                    document.getElementById('auth-screen').style.display = 'none';
+                    // Apenas iniciação da rede APÓS autenticação. Impede vazamento do modal.
+                    refreshData();
+                }, 300);
             } else {
                 const err = document.getElementById('auth-error');
                 err.style.display = 'block';
@@ -321,6 +325,7 @@
         }
         
         document.addEventListener('DOMContentLoaded', () => {
+            CURRENT_FILTER = 'aon'; // Default genérico
             const inputField = document.getElementById('pass-input');
             if (inputField) {
                 inputField.addEventListener('keypress', function (e) {
@@ -329,6 +334,7 @@
             }
             if (sessionStorage.getItem('jd_auth') === 'true') {
                 document.getElementById('auth-screen').style.display = 'none';
+                refreshData(); // Carrega automaticamente se a aba estava autorizada
             }
         });
 
@@ -909,12 +915,8 @@
             }
         }
 
-        // Auto load no início
-        window.addEventListener('DOMContentLoaded', () => {
-            CURRENT_FILTER = 'aon';
-            refreshData();
-        });
-
+        // O Event Listener local de DOMContentLoaded automático que ficava aqui embaixo foi removido.
+        // A autorização via checkPassword() gerencia o boot dos dados com exclusividade.
     </script>
 </body>
 </html>
