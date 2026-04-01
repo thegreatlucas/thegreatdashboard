@@ -150,14 +150,17 @@
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;
         }
 
-        .country-card { display: flex; flex-direction: column; border-left: 4px solid var(--accent); }
-        .country-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+        .country-card { display: flex; flex-direction: column; gap: 16px; border-left: 4px solid var(--accent); }
+        .country-header { display: flex; justify-content: space-between; align-items: flex-start; }
         .country-header h3 { font-size: 20px; margin: 0 0 5px 0; color: white; display: flex; align-items: center; gap: 10px; font-weight: 800; }
         .country-header p { margin: 0; color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-        .country-metrics { display: flex; gap: 28px; }
-        .country-metrics > div { display: flex; flex-direction: column; gap: 5px; }
+        .country-main-stat { display: flex; flex-direction: column; gap: 3px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .country-main-value { font-size: 54px; font-family: 'Bebas Neue', 'Inter', sans-serif; font-weight: normal; letter-spacing: 2px; color: var(--accent); line-height: 1; }
+        .country-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .country-stat-block { display: flex; flex-direction: column; gap: 4px; }
         .country-metric-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; }
-        .country-metric-value { font-size: 32px; font-family: 'Bebas Neue', 'Inter', sans-serif; font-weight: normal; letter-spacing: 1px; }
+        .country-stat-value { font-size: 26px; font-family: 'Bebas Neue', 'Inter', sans-serif; font-weight: normal; letter-spacing: 1px; }
+        .country-stat-sub { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-top: -2px; }
 
         .metrics-dealers {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;
@@ -275,79 +278,88 @@
         <div class="country-cards">
             <div class="card country-card">
                 <div class="country-header">
-                    <div>
-                        <h3><span>🇧🇷</span> Brasil</h3>
-                        <p id="c-BR-dealers">- dealers</p>
-                    </div>
+                    <h3><span>🇧🇷</span> Brasil</h3>
+                    <p id="c-BR-dealers">- dealers</p>
                 </div>
-                <div class="country-metrics">
-                    <div>
-                        <span class="country-metric-label">Leads</span>
-                        <span id="c-BR-total" class="country-metric-value" style="color: var(--accent);">-</span>
-                    </div>
-                    <div>
+                <div class="country-main-stat">
+                    <span class="country-metric-label">Total de Leads</span>
+                    <span id="c-BR-total" class="country-main-value">-</span>
+                </div>
+                <div class="country-stats-grid">
+                    <div class="country-stat-block">
                         <span class="country-metric-label">Qualificados</span>
-                        <span id="c-BR-qual" class="country-metric-value" style="color: var(--success);">-</span>
+                        <span id="c-BR-qual" class="country-stat-value" style="color: var(--success);">-</span>
                     </div>
-                    <div>
+                    <div class="country-stat-block">
+                        <span class="country-metric-label">Em Negociação</span>
+                        <span id="c-BR-neg" class="country-stat-value" style="color: #4da6ff;">-</span>
+                        <span id="c-BR-neg-pct" class="country-stat-sub">- dos qualificados</span>
+                    </div>
+                    <div class="country-stat-block">
                         <span class="country-metric-label">Tx Atendimento</span>
-                        <span id="c-BR-txatend" class="country-metric-value">-</span>
+                        <span id="c-BR-txatend" class="country-stat-value">-</span>
                     </div>
-                    <div>
+                    <div class="country-stat-block">
                         <span class="country-metric-label">Tx Qualificação</span>
-                        <span id="c-BR-txqual" class="country-metric-value" style="color: var(--success);">-</span>
+                        <span id="c-BR-txqual" class="country-stat-value" style="color: var(--success);">-</span>
                     </div>
                 </div>
             </div>
             <div class="card country-card">
                 <div class="country-header">
-                    <div>
-                        <h3><span>🇦🇷</span> Argentina</h3>
-                        <p id="c-AR-dealers">- dealers</p>
-                    </div>
+                    <h3><span>🇦🇷</span> Argentina</h3>
+                    <p id="c-AR-dealers">- dealers</p>
                 </div>
-                <div class="country-metrics">
-                    <div>
-                        <span class="country-metric-label">Leads</span>
-                        <span id="c-AR-total" class="country-metric-value" style="color: var(--accent);">-</span>
-                    </div>
-                    <div>
+                <div class="country-main-stat">
+                    <span class="country-metric-label">Total de Leads</span>
+                    <span id="c-AR-total" class="country-main-value">-</span>
+                </div>
+                <div class="country-stats-grid">
+                    <div class="country-stat-block">
                         <span class="country-metric-label">Qualificados</span>
-                        <span id="c-AR-qual" class="country-metric-value" style="color: var(--success);">-</span>
+                        <span id="c-AR-qual" class="country-stat-value" style="color: var(--success);">-</span>
                     </div>
-                    <div>
+                    <div class="country-stat-block">
+                        <span class="country-metric-label">Em Negociação</span>
+                        <span id="c-AR-neg" class="country-stat-value" style="color: #4da6ff;">-</span>
+                        <span id="c-AR-neg-pct" class="country-stat-sub">- dos qualificados</span>
+                    </div>
+                    <div class="country-stat-block">
                         <span class="country-metric-label">Tx Atendimento</span>
-                        <span id="c-AR-txatend" class="country-metric-value">-</span>
+                        <span id="c-AR-txatend" class="country-stat-value">-</span>
                     </div>
-                    <div>
+                    <div class="country-stat-block">
                         <span class="country-metric-label">Tx Qualificação</span>
-                        <span id="c-AR-txqual" class="country-metric-value" style="color: var(--success);">-</span>
+                        <span id="c-AR-txqual" class="country-stat-value" style="color: var(--success);">-</span>
                     </div>
                 </div>
             </div>
             <div class="card country-card">
                 <div class="country-header">
-                    <div>
-                        <h3><span>🇲🇽</span> México</h3>
-                        <p id="c-MX-dealers">- dealers</p>
-                    </div>
+                    <h3><span>🇲🇽</span> México</h3>
+                    <p id="c-MX-dealers">- dealers</p>
                 </div>
-                <div class="country-metrics">
-                    <div>
-                        <span class="country-metric-label">Leads</span>
-                        <span id="c-MX-total" class="country-metric-value" style="color: var(--accent);">-</span>
-                    </div>
-                    <div>
+                <div class="country-main-stat">
+                    <span class="country-metric-label">Total de Leads</span>
+                    <span id="c-MX-total" class="country-main-value">-</span>
+                </div>
+                <div class="country-stats-grid">
+                    <div class="country-stat-block">
                         <span class="country-metric-label">Qualificados</span>
-                        <span id="c-MX-qual" class="country-metric-value" style="color: var(--success);">-</span>
+                        <span id="c-MX-qual" class="country-stat-value" style="color: var(--success);">-</span>
                     </div>
-                    <div>
+                    <div class="country-stat-block">
+                        <span class="country-metric-label">Em Negociação</span>
+                        <span id="c-MX-neg" class="country-stat-value" style="color: #4da6ff;">-</span>
+                        <span id="c-MX-neg-pct" class="country-stat-sub">- dos qualificados</span>
+                    </div>
+                    <div class="country-stat-block">
                         <span class="country-metric-label">Tx Atendimento</span>
-                        <span id="c-MX-txatend" class="country-metric-value">-</span>
+                        <span id="c-MX-txatend" class="country-stat-value">-</span>
                     </div>
-                    <div>
+                    <div class="country-stat-block">
                         <span class="country-metric-label">Tx Qualificação</span>
-                        <span id="c-MX-txqual" class="country-metric-value" style="color: var(--success);">-</span>
+                        <span id="c-MX-txqual" class="country-stat-value" style="color: var(--success);">-</span>
                     </div>
                 </div>
             </div>
@@ -771,7 +783,7 @@
             document.getElementById('btn-filter-' + filterType).classList.add('active');
 
             let m = { total: 0, qual: 0, neg: 0, noInt: 0, stopped: 0 };
-            let cMetrics = { BR: { total: 0, dealers: 0, stopped: 0, qual: 0 }, AR: { total: 0, dealers: 0, stopped: 0, qual: 0 }, MX: { total: 0, dealers: 0, stopped: 0, qual: 0 } };
+            let cMetrics = { BR: { total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 }, AR: { total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 }, MX: { total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 } };
             let matchedExpoEmails = new Set();
 
             const dealerGrid = document.getElementById('dealer-grid');
@@ -853,7 +865,7 @@
                     // Aggregate
                     m.total += dt.total; m.qual += dt.qual; m.neg += dt.neg; m.noInt += dt.noInt; m.stopped += dt.stop;
                     cMetrics[country].total += dt.total; cMetrics[country].dealers += 1;
-                    cMetrics[country].stopped += dt.stop; cMetrics[country].qual += dt.qual;
+                    cMetrics[country].stopped += dt.stop; cMetrics[country].qual += dt.qual; cMetrics[country].neg += dt.neg;
 
                     // Ocultador solicitado pelo usuário:
                     // Se o distribuidor não tem NENHUM lead após os filtros calculados da vez, pula a montagem da UI
@@ -927,6 +939,8 @@
                 document.getElementById(`c-${c}-total`).textContent = cm.total;
                 document.getElementById(`c-${c}-dealers`).textContent = cm.dealers + ' configurados';
                 document.getElementById(`c-${c}-qual`).textContent = cm.qual;
+                document.getElementById(`c-${c}-neg`).textContent = cm.neg;
+                document.getElementById(`c-${c}-neg-pct`).textContent = cm.qual > 0 ? ((cm.neg / cm.qual) * 100).toFixed(0) + '% dos qualificados' : '- dos qualificados';
                 document.getElementById(`c-${c}-txatend`).textContent = cm.total > 0 ? (((cm.total - cm.stopped) / cm.total) * 100).toFixed(0) + '%' : '0%';
                 document.getElementById(`c-${c}-txqual`).textContent = cm.total > 0 ? ((cm.qual / cm.total) * 100).toFixed(0) + '%' : '0%';
             });
