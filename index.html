@@ -425,6 +425,7 @@
         // Táticas de Sobrevivência: Fazemos "Round-Robin" balanceado de proxies!
         // Alguns Proxies como o AllOrigins exigem URL Encode. Outros (Codetabs) recusam Encoding.
         const PROXIES = [
+            { url: "https://corsproxy.io/?url=", encode: true },
             { url: "https://api.allorigins.win/raw?url=", encode: true },
             { url: "https://api.codetabs.com/v1/proxy?quest=", encode: false }
         ];
