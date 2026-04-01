@@ -260,6 +260,10 @@
                 <h3>Pararam de Resp.</h3>
                 <p id="m-stop" class="value">-</p>
             </div>
+            <div class="card" style="border-top: 3px solid var(--accent);">
+                <h3>Tx Atendimento Geral</h3>
+                <p id="m-txatend" class="value">-</p>
+            </div>
         </div>
 
         <div class="country-cards">
@@ -288,6 +292,37 @@
                 </div>
                 <div class="country-stats">
                     <p id="c-MX-total" class="value">-</p>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title" style="margin-top: 10px; margin-bottom: 15px;">Taxa de Atendimento por País</h2>
+        <div class="country-cards" style="margin-bottom: 30px;">
+            <div class="card country-card" style="border-left: 4px solid var(--accent);">
+                <div class="country-info">
+                    <h3><span>🇧🇷</span> Brasil</h3>
+                    <p>Taxa de Atendimento</p>
+                </div>
+                <div class="country-stats">
+                    <p id="c-BR-txatend" class="value">-</p>
+                </div>
+            </div>
+            <div class="card country-card" style="border-left: 4px solid var(--accent);">
+                <div class="country-info">
+                    <h3><span>🇦🇷</span> Argentina</h3>
+                    <p>Taxa de Atendimento</p>
+                </div>
+                <div class="country-stats">
+                    <p id="c-AR-txatend" class="value">-</p>
+                </div>
+            </div>
+            <div class="card country-card" style="border-left: 4px solid var(--accent);">
+                <div class="country-info">
+                    <h3><span>🇲🇽</span> México</h3>
+                    <p>Taxa de Atendimento</p>
+                </div>
+                <div class="country-stats">
+                    <p id="c-MX-txatend" class="value">-</p>
                 </div>
             </div>
         </div>
@@ -708,7 +743,7 @@
             document.getElementById('btn-filter-' + filterType).classList.add('active');
 
             let m = { total: 0, qual: 0, neg: 0, noInt: 0, stopped: 0 };
-            let cMetrics = { BR: { total: 0, dealers: 0 }, AR: { total: 0, dealers: 0 }, MX: { total: 0, dealers: 0 } };
+            let cMetrics = { BR: { total: 0, dealers: 0, qual: 0, neg: 0, noInt: 0 }, AR: { total: 0, dealers: 0, qual: 0, neg: 0, noInt: 0 }, MX: { total: 0, dealers: 0, qual: 0, neg: 0, noInt: 0 } };
             let matchedExpoEmails = new Set();
 
             const dealerGrid = document.getElementById('dealer-grid');
@@ -790,6 +825,7 @@
                     // Aggregate
                     m.total += dt.total; m.qual += dt.qual; m.neg += dt.neg; m.noInt += dt.noInt; m.stopped += dt.stop;
                     cMetrics[country].total += dt.total; cMetrics[country].dealers += 1;
+                    cMetrics[country].qual += dt.qual; cMetrics[country].neg += dt.neg; cMetrics[country].noInt += dt.noInt;
 
                     // Ocultador solicitado pelo usuário:
                     // Se o distribuidor não tem NENHUM lead após os filtros calculados da vez, pula a montagem da UI
@@ -855,9 +891,14 @@
             document.getElementById('m-noint').textContent = m.noInt;
             document.getElementById('m-stop').textContent = m.stopped;
 
+            const globalAtendidos = m.qual + m.neg + m.noInt;
+            document.getElementById('m-txatend').textContent = m.total > 0 ? ((globalAtendidos / m.total) * 100).toFixed(0) + '%' : '0%';
+
             ['BR', 'AR', 'MX'].forEach(c => {
                 document.getElementById(`c-${c}-total`).textContent = cMetrics[c].total;
                 document.getElementById(`c-${c}-dealers`).textContent = cMetrics[c].dealers + ' configurados';
+                const cAtendidos = cMetrics[c].qual + cMetrics[c].neg + cMetrics[c].noInt;
+                document.getElementById(`c-${c}-txatend`).textContent = cMetrics[c].total > 0 ? ((cAtendidos / cMetrics[c].total) * 100).toFixed(0) + '%' : '0%';
             });
         }
 
