@@ -431,24 +431,25 @@
         ];
         
         async function fetchWithProxyFallback(rawUrl) {
-            let lastErr = null;
-            // Embaralha o array para que as frotas ataquem os túneis de forma verdadeiramente aleatória e distribuída.
-            const shuffledProxies = [...PROXIES].sort(() => Math.random() - 0.5);
+            const TIMEOUT_MS = 8000;
 
-            for (let i = 0; i < shuffledProxies.length; i++) {
-                const proxy = shuffledProxies[i];
+            const attempts = PROXIES.map(proxy => {
                 const proxyUrl = proxy.url + (proxy.encode ? encodeURIComponent(rawUrl) : rawUrl);
-                
-                try {
-                    const response = await fetch(proxyUrl);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    return await response.text();
-                } catch (err) {
-                    lastErr = err;
-                    // Seletor silencioso: falha e varre automaticamente pro próximo
-                }
-            }
-            throw new Error(`Conexões Recusadas Pelo Bypass (Proxy Offline). Última Resposta: ${lastErr}`);
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+                return fetch(proxyUrl, { signal: controller.signal })
+                    .then(r => {
+                        clearTimeout(timer);
+                        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                        return r.text();
+                    })
+                    .catch(err => { clearTimeout(timer); throw err; });
+            });
+
+            // Dispara todos os proxies em paralelo e usa o primeiro que responder
+            return Promise.any(attempts).catch(() => {
+                throw new Error('Todos os proxies falharam ou expiraram.');
+            });
         }
 
         // Funções de Date Regex
@@ -903,9 +904,15 @@
             });
         }
 
+        let _renderTimer = null;
+        function scheduleRender() {
+            clearTimeout(_renderTimer);
+            _renderTimer = setTimeout(() => applyFilter(CURRENT_FILTER), 120);
+        }
+
         async function fetchAllData() {
             const dealerNames = Object.keys(DEALERS_CONFIG).filter(n => n !== "Expoagro");
-            
+
             const fetchDealer = async (dealerName) => {
                 const config = DEALERS_CONFIG[dealerName];
                 try {
@@ -915,16 +922,12 @@
                     console.error(`Erro buscando ${dealerName}:`, err);
                     GLOBAL_ALL_DATA[dealerName] = { error: err.message, leads: [] };
                 }
+                scheduleRender(); // Renderiza progressivamente conforme cada dealer chega
             };
 
-            // Retorno à tática de Lotes (3 a 3) para esfriar o firewall dos servidores proxy anti-spam
-            for (let i = 0; i < dealerNames.length; i += 3) {
-                const batch = dealerNames.slice(i, i + 3).map(fetchDealer);
-                await Promise.all(batch);
-                // Pausa restauradora de 800 milissegundos pro proxy respirar
-                await new Promise(resolve => setTimeout(resolve, 800)); 
-            }
-            
+            // Busca todos os dealers em paralelo, sem delay artificial
+            await Promise.all(dealerNames.map(fetchDealer));
+
             // Expoagro fetch (não é obrigatório sucesso de 100% pra parar tela)
             await loadExpoagroCentral();
         }
