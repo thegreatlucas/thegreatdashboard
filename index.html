@@ -233,15 +233,25 @@
         .dealer-header img { width: 20px; height: auto; }
         
         .dealer-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 14px; }
+        .dealer-stats div { display: flex; flex-direction: column; gap: 4px; }
         .dealer-stats .label { color: var(--text-muted); font-size: 10px; text-transform: uppercase; font-weight: 800; letter-spacing: 1.5px; }
-        .dealer-stats .val { font-weight: 700; font-size: 18px; font-family: 'Montserrat', sans-serif; }
+        .dealer-stats .val { font-weight: 700; font-size: 20px; font-family: 'Montserrat', sans-serif; line-height: 1.2; }
         
         .perf-indicator { font-size: 16px; margin-left: 6px; vertical-align: middle; }
         .star { color: var(--accent); }
         .alert { color: var(--error); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        .grid-full-width { grid-column: 1 / -1; flex-direction: row !important; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 8px; margin-top: 4px; }
+        .grid-full-width { 
+            grid-column: 1 / -1; 
+            display: flex !important;
+            flex-direction: column !important; 
+            align-items: flex-start !important;
+            justify-content: flex-start !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.05); 
+            padding-top: 12px; 
+            margin-top: 10px; 
+        }
 
         .dealer-error {
             color: #ff5252; font-size: 13px; margin-top: 10px; padding: 10px;
@@ -1032,9 +1042,9 @@
                                 </div>
                             </div>
 
-                            <div class="grid-full-width" style="margin-top: 6px; border-top: 1px solid rgba(255,222,0,0.15); padding-top: 12px;">
-                                <span class="label" style="font-size: 13px;">Total Leads</span>
-                                <span class="val" style="color: var(--accent); font-size: 28px; font-family: 'Bebas Neue', sans-serif;">${dt.total}</span>
+                            <div class="grid-full-width">
+                                <span class="label" style="font-size: 11px; margin-bottom: 4px;">Total Leads</span>
+                                <span class="val" style="color: var(--accent); font-size: 36px; font-family: 'Bebas Neue', sans-serif; line-height: 1;">${dt.total}</span>
                             </div>
                         </div>
                     `;
