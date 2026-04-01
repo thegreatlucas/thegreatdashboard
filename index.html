@@ -892,6 +892,29 @@
             dealerGrid.innerHTML = '';
 
             for (const dealerName in DEALERS_CONFIG) {
+                // Regra: Expoagro é frota virtual apenas para cálculo global. Não renderizar card nem contar como dealer.
+                if (dealerName === 'Expoagro') {
+                    // Mas acumulamos os leads dela no total global se o filtro permitir (já feito na lógica original de leads)
+                    // porém não queremos que incremente cMetrics[ARG].dealers nem gere card.
+                    const dData = GLOBAL_ALL_DATA[dealerName] || { leads: [] };
+                    if (!dData.error) {
+                        // Lógica de leads para Expoagro (apenas acumula em m.total/m.qual/etc, sem mexer em cMetrics.dealers)
+                        let filtered = dData.leads.filter(lead => {
+                             if (filterType === 'conexpo') return false; 
+                             return !matchedExpoEmails.has(lead.email); 
+                        });
+                        filtered.forEach(ld => {
+                            m.total++;
+                            if (ld.status === 'qualificado') m.qual++;
+                            const isNeg = ld.postStatus.includes('negocia') || ld.postStatus.includes('se envia propuesta') || ld.postStatus.includes('venta sujeta a obra') || ld.status.includes('cotizando obra');
+                            if (isNeg) m.neg++;
+                            if (ld.postStatus === 'sem intenção de compra') m.noInt++;
+                            if (ld.postStatus.includes('parou')) m.stopped++;
+                        });
+                    }
+                    continue; 
+                }
+
                 const country = DEALERS_CONFIG[dealerName].country;
                 const dData = GLOBAL_ALL_DATA[dealerName] || { error: 'Sem dados', leads: [] };
                 
@@ -975,10 +998,6 @@
                         continue;
                     }
                     
-                    // Regra: Expoagro é frota virtual apenas para cálculo global. Não renderizar card pra não poluir.
-                    if (dealerName === 'Expoagro') {
-                        continue;
-                    }
 
                     // Cálculos de Taxas (% baseadas no volume de Leads do Card atual)
                     const txQualNum = dt.total > 0 ? (dt.qual / dt.total) * 100 : 0;
