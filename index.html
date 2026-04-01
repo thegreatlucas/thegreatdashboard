@@ -283,6 +283,10 @@
                         <span id="c-BR-total" class="country-metric-value" style="color: var(--accent);">-</span>
                     </div>
                     <div>
+                        <span class="country-metric-label">Qualificados</span>
+                        <span id="c-BR-qual" class="country-metric-value" style="color: var(--success);">-</span>
+                    </div>
+                    <div>
                         <span class="country-metric-label">Tx Atendimento</span>
                         <span id="c-BR-txatend" class="country-metric-value">-</span>
                     </div>
@@ -305,6 +309,10 @@
                         <span id="c-AR-total" class="country-metric-value" style="color: var(--accent);">-</span>
                     </div>
                     <div>
+                        <span class="country-metric-label">Qualificados</span>
+                        <span id="c-AR-qual" class="country-metric-value" style="color: var(--success);">-</span>
+                    </div>
+                    <div>
                         <span class="country-metric-label">Tx Atendimento</span>
                         <span id="c-AR-txatend" class="country-metric-value">-</span>
                     </div>
@@ -325,6 +333,10 @@
                     <div>
                         <span class="country-metric-label">Leads</span>
                         <span id="c-MX-total" class="country-metric-value" style="color: var(--accent);">-</span>
+                    </div>
+                    <div>
+                        <span class="country-metric-label">Qualificados</span>
+                        <span id="c-MX-qual" class="country-metric-value" style="color: var(--success);">-</span>
                     </div>
                     <div>
                         <span class="country-metric-label">Tx Atendimento</span>
@@ -911,6 +923,7 @@
                 const cm = cMetrics[c];
                 document.getElementById(`c-${c}-total`).textContent = cm.total;
                 document.getElementById(`c-${c}-dealers`).textContent = cm.dealers + ' configurados';
+                document.getElementById(`c-${c}-qual`).textContent = cm.qual;
                 document.getElementById(`c-${c}-txatend`).textContent = cm.total > 0 ? (((cm.total - cm.stopped) / cm.total) * 100).toFixed(0) + '%' : '0%';
                 document.getElementById(`c-${c}-txqual`).textContent = cm.total > 0 ? ((cm.qual / cm.total) * 100).toFixed(0) + '%' : '0%';
             });
