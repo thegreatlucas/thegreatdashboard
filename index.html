@@ -6,28 +6,30 @@
     <title>Dashboard AON 26 - Brasil, Argentina & México</title>
     <!-- Papa Parse para leitura de CSV -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <!-- Fontes premium e modernas -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <!-- Montserrat for headings, Inter for body -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&family=Inter:wght@400;600&family=Bebas+Neue&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* John Deere Construction Colors */
-            --bg-start: #111111;         /* Heavy Machinery Black */
-            --bg-end: #1a1a1a;           /* Charcoal */
-            --accent: #FFC800;           /* Signature JD Construction Yellow */
-            --accent-dark: #cc9f00;      /* Darker Yellow for Hover */
-            --highlight: #FFC800; 
+            /* John Deere Construction Colors (Official Mar/26) */
+            --bg-start: #0a0a0a;         /* Deep Black */
+            --bg-end: #1a1a1a;           /* JD Charcoal */
+            --accent: #FFDE00;           /* Official JD Yellow */
+            --accent-dark: #ccb100;      /* Darker Yellow for Hover */
+            --highlight: #FFDE00; 
             
             /* Interfaces */
-            --card-bg: rgba(255, 255, 255, 0.03);
-            --card-border: rgba(255, 200, 0, 0.15); /* Faint yellow border */
-            --card-hover: rgba(255, 200, 0, 0.08);
+            --card-bg: rgba(255, 255, 255, 0.035);
+            --card-border: rgba(255, 222, 0, 0.2); /* Faint yellow border */
+            --card-hover: rgba(255, 222, 0, 0.08);
 
             /* Status */
             --success: #4caf50;
+            --error: #ff5252;
+            --warning: #ffC107;
 
             /* Texts */
             --text-main: #f5f5f5;
-            --text-muted: #8e8e9e;
+            --text-muted: #9e9ea7;
         }
         
         * { box-sizing: border-box; }
@@ -35,7 +37,7 @@
         body {
             margin: 0;
             font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at 50% 0%, var(--bg-end) 0%, var(--bg-start) 100%);
+            background: radial-gradient(circle at 50% -20%, #1a1a1a 0%, #0a0a0a 100%);
             background-attachment: fixed;
             color: var(--text-main);
             min-height: 100vh;
@@ -45,35 +47,44 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.2rem 2.5rem;
-            border-bottom: 2px solid var(--accent); /* Barras grossas amarelas típicas da C&F */
-            background: #090909;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            padding: 1.5rem 2.5rem;
+            background: #000;
+            border-bottom: 4px solid var(--accent); /* JD Industrial Thick Bar */
             position: sticky;
             top: 0;
             z-index: 100;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        /* Industrial Pattern Sidebar */
+        header::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 10px;
+            background: repeating-linear-gradient(
+                -45deg,
+                var(--accent),
+                var(--accent) 5px,
+                #000 5px,
+                #000 10px
+            );
         }
 
         .header-titles h1 {
             margin: 0; 
-            font-size: 28px; 
-            color: var(--text-main);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 32px; 
+            color: white;
             font-weight: 800;
-            letter-spacing: -0.5px;
+            text-transform: uppercase;
+            letter-spacing: -1px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
         }
         
-        /* Acento do logo no título */
-        .header-titles h1::before {
-            content: '';
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            background: var(--accent);
-            border-radius: 2px;
-        }
+        .header-titles h1 span { color: var(--accent); }
 
         .header-titles p {
             margin: 5px 0 0 24px; color: var(--text-muted); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
@@ -105,26 +116,29 @@
             align-items: center;
         }
         .filters-label {
-            font-size: 13px; font-weight: 800; color: var(--text-muted); margin-right: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+            font-size: 11px; font-weight: 800; color: var(--text-muted); margin-right: 15px; text-transform: uppercase; letter-spacing: 2px; font-family: 'Montserrat', sans-serif;
         }
         .filter-btn {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-muted);
-            padding: 10px 20px;
-            border-radius: 4px; /* Cantos secos de construção */
+            padding: 12px 24px;
+            border-radius: 2px;
             cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: all 0.2s ease;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
         }
-        .filter-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        .filter-btn:hover { background: rgba(255, 255, 255, 0.1); color: white; border-color: rgba(255, 222, 0, 0.3); }
         .filter-btn.active {
             background: var(--accent);
             border-color: var(--accent);
             color: #000;
             font-weight: 800;
-            box-shadow: 0 4px 15px rgba(255, 200, 0, 0.4);
+            box-shadow: 0 4px 20px rgba(255, 222, 0, 0.3);
         }
 
         .metrics-main {
@@ -134,51 +148,85 @@
 
         .card {
             background: var(--card-bg); 
-            border-radius: 8px; padding: 25px; border: 1px solid var(--card-border);
-            transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 4px; padding: 25px; border: 1px solid var(--card-border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
         }
         .card:hover {
-            transform: translateY(-3px); 
+            transform: translateY(-5px); 
             background: var(--card-hover);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
             border-color: var(--accent);
         }
-        .card h3 { margin: 0 0 10px 0; font-size: 13px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .card .value { margin: 0; font-size: 46px; font-family: 'Bebas Neue', 'Inter', sans-serif; font-weight: normal; letter-spacing: 2px; color: var(--highlight); }
+        .card h3 { 
+            margin: 0 0 12px 0; 
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; 
+        }
+        .card .value { 
+            margin: 0; 
+            font-size: 48px; 
+            font-family: 'Bebas Neue', sans-serif; 
+            font-weight: normal; letter-spacing: 2px; 
+            color: white; 
+            line-height: 1;
+        }
+        .card .value span { font-size: 20px; vertical-align: middle; margin-left: 5px; opacity: 0.6; }
+
+        .card.kpi-main::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, transparent 50%, rgba(255, 222, 0, 0.1) 50%);
+        }
 
         .country-cards {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;
         }
 
-        .country-card { display: flex; flex-direction: column; gap: 16px; border-left: 4px solid var(--accent); }
-        .country-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        .country-header h3 { font-size: 20px; margin: 0 0 5px 0; color: white; display: flex; align-items: center; gap: 10px; font-weight: 800; }
-        .country-header p { margin: 0; color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-        .country-main-stat { display: flex; flex-direction: column; gap: 3px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.06); }
-        .country-main-value { font-size: 54px; font-family: 'Bebas Neue', 'Inter', sans-serif; font-weight: normal; letter-spacing: 2px; color: var(--accent); line-height: 1; }
+        .country-card { 
+            display: flex; flex-direction: column; gap: 16px; 
+            border-top: 1px solid var(--card-border);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
+        }
+        .country-header h3 { font-family: 'Montserrat', sans-serif; font-size: 22px; margin: 0 0 5px 0; color: white; display: flex; align-items: center; gap: 15px; font-weight: 800; }
+        .country-header h3 img { width: 32px; height: auto; border-radius: 2px; }
+        .country-main-stat { display: flex; flex-direction: column; gap: 3px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .country-main-value { font-size: 64px; font-family: 'Bebas Neue', sans-serif; font-weight: normal; letter-spacing: 2px; color: var(--accent); line-height: 1; }
         .country-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
         .country-stat-block { display: flex; flex-direction: column; gap: 4px; }
-        .country-metric-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; }
-        .country-stat-value { font-size: 26px; font-family: 'Bebas Neue', 'Inter', sans-serif; font-weight: normal; letter-spacing: 1px; }
+        .country-metric-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; letter-spacing: 1.5px; }
+        .country-stat-value { font-size: 28px; font-family: 'Bebas Neue', sans-serif; font-weight: normal; letter-spacing: 1px; }
         .country-stat-sub { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-top: -2px; }
 
         .metrics-dealers {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;
         }
 
-        .dealer-card { padding: 20px; border-left: 2px solid transparent; }
-        .dealer-card:hover { border-left: 2px solid var(--accent); }
-        .dealer-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 18px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 15px;
+        .dealer-card { 
+            padding: 24px; border-left: 3px solid transparent; 
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(5px);
         }
-        .dealer-header h4 { margin: 0; font-size: 16px; font-weight: 800; color: #fff; letter-spacing: 0.5px; text-transform: uppercase; }
-        .dealer-header .flag { font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .dealer-card:hover { border-left: 3px solid var(--accent); background: rgba(255, 255, 255, 0.05); }
+        .dealer-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 15px;
+        }
+        .dealer-header h4 { margin: 0; font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 800; color: #fff; letter-spacing: 0.5px; text-transform: uppercase; }
+        .dealer-header .flag-container { display: flex; align-items: center; gap: 8px; }
+        .dealer-header img { width: 20px; height: auto; }
         
         .dealer-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 14px; }
-        .dealer-stats div { display: flex; flex-direction: column; gap: 4px; }
-        .dealer-stats .label { color: var(--text-muted); font-size: 11px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; }
-        .dealer-stats .val { font-weight: 800; font-size: 18px; }
+        .dealer-stats .label { color: var(--text-muted); font-size: 10px; text-transform: uppercase; font-weight: 800; letter-spacing: 1.5px; }
+        .dealer-stats .val { font-weight: 700; font-size: 18px; font-family: 'Montserrat', sans-serif; }
+        
+        .perf-indicator { font-size: 16px; margin-left: 6px; vertical-align: middle; }
+        .star { color: var(--accent); }
+        .alert { color: var(--error); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
         .grid-full-width { grid-column: 1 / -1; flex-direction: row !important; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 8px; margin-top: 4px; }
 
@@ -189,21 +237,47 @@
 
         .loading-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(26, 26, 46, 0.85); backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(15px);
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 9999; visibility: hidden; opacity: 0; transition: opacity 0.3s ease;
+            z-index: 9999; visibility: hidden; opacity: 0; transition: all 0.5s ease;
         }
         .loading-overlay.visible { visibility: visible; opacity: 1; }
         .spinner {
-            width: 60px; height: 60px; border: 4px solid rgba(255, 255, 255, 0.1);
-            border-left-color: var(--highlight); border-bottom-color: var(--accent);
-            border-radius: 50%; animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+            width: 80px; height: 80px; border: 2px solid rgba(255, 222, 0, 0.1);
+            border-left-color: var(--accent); border-bottom-color: var(--accent);
+            border-radius: 50%; animation: spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite;
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        .loading-text { margin-top: 25px; font-weight: bold; font-size: 18px; letter-spacing: 1px; color: var(--text-main); }
-        .loading-subtext { margin-top: 8px; font-size: 13px; color: var(--text-muted); }
+        .loading-text { 
+            margin-top: 30px; 
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800; font-size: 20px; letter-spacing: 2px; color: var(--text-main); text-transform: uppercase;
+        }
+        .loading-subtext { margin-top: 10px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
 
-        h2.section-title { font-weight: 400; color: var(--text-muted); font-size: 20px; margin-bottom: 20px; margin-top: 10px; }
+        #auth-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000; z-index: 10000; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; transition: all 0.5s ease;
+        }
+        #auth-screen input {
+            padding: 18px; border-radius: 2px; border: 1px solid rgba(255,222,0,0.3); 
+            background: rgba(255,255,255,0.05); color: white; outline: none; 
+            font-size: 18px; width: 300px; text-align: center; font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+        #auth-screen input:focus { border-color: var(--accent); background: rgba(255,255,255,0.1); box-shadow: 0 0 20px rgba(255,222,0,0.2); }
+
+        h2.section-title { 
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800; color: var(--text-main); font-size: 18px; 
+            margin-bottom: 25px; margin-top: 20px; 
+            text-transform: uppercase; letter-spacing: 2px;
+            display: flex; align-items: center; gap: 15px;
+        }
+        h2.section-title::after {
+            content: ''; height: 2px; flex-grow: 1; background: rgba(255,222,0,0.15);
+        }
 
         @media(max-width: 900px) {
             .country-cards { grid-template-columns: 1fr; }
@@ -215,25 +289,26 @@
 <body>
 
     <!-- Access Control Security Layer (Front-End) -->
-    <div id="auth-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-start); z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; transition: opacity 0.3s ease;">
-        <h2 style="color:var(--highlight); font-family:'Bebas Neue', sans-serif; font-size:56px; margin-bottom:5px; letter-spacing:3px;">ACESSO RESTRITO</h2>
-        <p style="color:var(--text-muted); margin-top:0; margin-bottom:30px; text-transform:uppercase; font-size:14px; font-weight:800; letter-spacing:1px;">Dashboard AON 26 &mdash; John Deere</p>
-        <div style="display:flex; gap:10px;">
-            <input type="password" id="pass-input" placeholder="Senha Institucional" style="padding:15px; border-radius:4px; border:1px solid var(--card-border); background:rgba(0,0,0,0.5); color:white; outline:none; font-size:16px; width:260px; text-align:center; font-family:'Inter', sans-serif;">
-            <button onclick="checkPassword()" class="btn-refresh" style="margin:0;">Desbloquear</button>
+    <div id="auth-screen">
+        <div style="position:absolute; top:0; left:0; width:100%; height:8px; background:repeating-linear-gradient(-45deg, var(--accent), var(--accent) 10px, #000 10px, #000 20px);"></div>
+        <h2 style="color:var(--accent); font-family:'Montserrat', sans-serif; font-size:64px; margin-bottom:5px; letter-spacing:4px; font-weight:800; text-transform:uppercase;">RESTRITO</h2>
+        <p style="color:var(--text-muted); margin-top:0; margin-bottom:40px; text-transform:uppercase; font-size:13px; font-weight:600; letter-spacing:2px;">Dashboard Corporativo · John Deere Construção</p>
+        <div style="display:flex; flex-direction:column; gap:15px; align-items:center;">
+            <input type="password" id="pass-input" placeholder="Senha Institucional">
+            <button onclick="checkPassword()" class="btn-refresh" style="width:100%; margin:0; padding:18px;">DESBLOQUEAR ACESSO</button>
         </div>
-        <p id="auth-error" style="color:#ff5252; margin-top:20px; font-size:14px; font-weight:600; display:none;">Acesso Negado. Tente novamente.</p>
+        <p id="auth-error" style="color:var(--error); margin-top:25px; font-size:13px; font-weight:800; display:none; letter-spacing:1px; text-transform:uppercase;">Acesso Negado. Tente novamente.</p>
     </div>
 
     <!-- Removed legacy CORS warnings. The application works autonomously via Double-Click proxy tunneling -->
     <header>
         <div class="header-titles">
-            <h1>Dashboard AON 26</h1>
-            <p>Consolidação de Leads: Brasil, Argentina & México</p>
+            <h1><span>JOHN DEERE</span> CONSTRUÇÃO</h1>
+            <p>Dashboard AON 26 · Consolidação LATAM</p>
         </div>
         <div class="controls">
             <span id="status-indicator" class="status-indicator">Aguardando...</span>
-            <button id="btn-refresh" class="btn-refresh" onclick="refreshData()">Atualizar Dados</button>
+            <button id="btn-refresh" class="btn-refresh" onclick="refreshData()">Sincronizar Planilhas</button>
         </div>
     </header>
 
@@ -249,37 +324,37 @@
         </div>
         
         <div class="metrics-main">
-            <div class="card">
+            <div class="card kpi-main">
                 <h3>Total Filtrado</h3>
-                <p id="m-total" class="value" style="color: #fff;">-</p>
+                <p id="m-total" class="value">-</p>
             </div>
-            <div class="card" style="border-top: 3px solid var(--success);">
+            <div class="card kpi-main" style="border-top: 3px solid var(--success);">
                 <h3>Qualificados</h3>
                 <p id="m-qual" class="value" style="color: var(--success);">-</p>
             </div>
-            <div class="card">
+            <div class="card kpi-main">
                 <h3>Em Negociação</h3>
-                <p id="m-neg" class="value">-</p>
+                <p id="m-neg" class="value" style="color: #4da6ff;">-</p>
             </div>
-            <div class="card">
+            <div class="card kpi-main">
                 <h3>Sem Intenção</h3>
                 <p id="m-noint" class="value">-</p>
             </div>
-            <div class="card">
+            <div class="card kpi-main">
                 <h3>Pararam de Resp.</h3>
-                <p id="m-stop" class="value">-</p>
+                <p id="m-stop" class="value" style="color: var(--error);">-</p>
             </div>
-            <div class="card" style="border-top: 3px solid var(--accent);">
-                <h3>Tx Atendimento Geral</h3>
-                <p id="m-txatend" class="value">-</p>
+            <div class="card kpi-main" style="border-top: 3px solid var(--accent);">
+                <h3>Tx Atendimento</h3>
+                <p id="m-txatend" class="value" style="color: var(--accent);">-</p>
             </div>
         </div>
 
         <div class="country-cards">
             <div class="card country-card">
                 <div class="country-header">
-                    <h3><span>🇧🇷</span> Brasil</h3>
-                    <p id="c-BR-dealers">- dealers</p>
+                    <h3><img src="https://flagcdn.com/br.svg" alt="BR"> Brasil</h3>
+                    <p id="c-BR-dealers">-</p>
                 </div>
                 <div class="country-main-stat">
                     <span class="country-metric-label">Total de Leads</span>
@@ -307,8 +382,8 @@
             </div>
             <div class="card country-card">
                 <div class="country-header">
-                    <h3><span>🇦🇷</span> Argentina</h3>
-                    <p id="c-AR-dealers">- dealers</p>
+                    <h3><img src="https://flagcdn.com/ar.svg" alt="AR"> Argentina</h3>
+                    <p id="c-AR-dealers">-</p>
                 </div>
                 <div class="country-main-stat">
                     <span class="country-metric-label">Total de Leads</span>
@@ -336,8 +411,8 @@
             </div>
             <div class="card country-card">
                 <div class="country-header">
-                    <h3><span>🇲🇽</span> México</h3>
-                    <p id="c-MX-dealers">- dealers</p>
+                    <h3><img src="https://flagcdn.com/mx.svg" alt="MX"> México</h3>
+                    <p id="c-MX-dealers">-</p>
                 </div>
                 <div class="country-main-stat">
                     <span class="country-metric-label">Total de Leads</span>
@@ -431,7 +506,11 @@
             "Expoagro": { country: "AR", sheetUrl: "https://docs.google.com/spreadsheets/d/1D4PxV6UzK4YOPAHBGUGjRb15I9UVf8jUlAg4yjRXppY/edit?gid=356962129", statusCol: "Status", postStatusCol: "Fase pós qualificação" }
         };
 
-        const FLAGS = { 'BR': '🇧🇷', 'AR': '🇦🇷', 'MX': '🇲🇽' };
+        const FLAGS = { 
+            'BR': 'https://flagcdn.com/br.svg', 
+            'AR': 'https://flagcdn.com/ar.svg', 
+            'MX': 'https://flagcdn.com/mx.svg' 
+        };
         const COUNTRY_NAMES = { 'BR': 'Brasil', 'AR': 'Argentina', 'MX': 'México' };
 
         // GLOBAL CACHE DE DADOS
@@ -879,32 +958,70 @@
                     }
 
                     // Cálculos de Taxas (% baseadas no volume de Leads do Card atual)
-                    const txQual = dt.total > 0 ? ((dt.qual / dt.total) * 100).toFixed(0) + '%' : '0%';
-                    // Atendidos = Tudo aquilo que NÃO foi "Pararam de responder" (Contato Mudo/inválido)
+                    const txQualNum = dt.total > 0 ? (dt.qual / dt.total) * 100 : 0;
+                    const txQual = txQualNum.toFixed(0) + '%';
+                    
                     const atendidos = dt.total - dt.stop;
-                    const txAtend = dt.total > 0 ? ((atendidos / dt.total) * 100).toFixed(0) + '%' : '0%';
+                    const txAtendNum = dt.total > 0 ? (atendidos / dt.total) * 100 : 0;
+                    const txAtend = txAtendNum.toFixed(0) + '%';
+
+                    // INDICADORES DE PERFORMANCE (Baseados no doc Mar/26)
+                    let indicators = '';
+                    if (txQualNum >= 40 || txAtendNum === 100) {
+                        indicators += '<span class="perf-indicator star" title="Alta Performance">⭐</span>';
+                    }
+                    if (dt.total > 0 && txAtendNum < 50) {
+                        indicators += '<span class="perf-indicator alert" title="Atenção: Baixo Atendimento">⚠️</span>';
+                    } else if (dt.total > 150 && txQualNum < 10) {
+                        indicators += '<span class="perf-indicator alert" title="Atenção: Baixa Qualificação">⚠️</span>';
+                    }
 
                     // Append card
                     const card = document.createElement('div');
                     card.className = 'card dealer-card';
                     card.innerHTML = `
                         <div class="dealer-header">
-                            <h4>${dealerName}</h4>
-                            <span class="flag" title="${COUNTRY_NAMES[country]}">${FLAGS[country]}</span>
+                            <div>
+                                <h4>${dealerName}</h4>
+                                ${indicators}
+                            </div>
+                            <div class="flag-container">
+                                <img src="${FLAGS[country]}" alt="${country}" title="${COUNTRY_NAMES[country]}">
+                            </div>
                         </div>
                         <div class="dealer-stats">
-                            <div><span class="label">Qualificados</span> <span class="val" style="color:var(--success)">${dt.qual}</span></div>
-                            <div><span class="label">Em Negociação</span> <span class="val" style="color: #4da6ff;">${dt.neg}</span></div>
+                            <div>
+                                <span class="label">Qualificados</span> 
+                                <span class="val" style="color:var(--success)">${dt.qual}</span>
+                            </div>
+                            <div>
+                                <span class="label">Em Negociação</span> 
+                                <span class="val" style="color: #4da6ff;">${dt.neg}</span>
+                            </div>
                             
-                            <div><span class="label">Sem Intenção</span> <span class="val">${dt.noInt}</span></div>
-                            <div><span class="label">P. de Responder</span> <span class="val" style="color: #ff5252">${dt.stop}</span></div>
+                            <div>
+                                <span class="label">Sem Intenção</span> 
+                                <span class="val">${dt.noInt}</span>
+                            </div>
+                            <div>
+                                <span class="label">P. Responder</span> 
+                                <span class="val" style="color: var(--error)">${dt.stop}</span>
+                            </div>
                             
-                            <div><span class="label">Tx Qualificação</span> <span class="val">${txQual}</span></div>
-                            <div><span class="label">Tx Atendimento</span> <span class="val">${txAtend}</span></div>
+                            <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                                <div>
+                                    <span class="label">Tx Qualificação</span> 
+                                    <span class="val" style="${txQualNum >= 40 ? 'color:var(--accent)' : ''}">${txQual}</span>
+                                </div>
+                                <div>
+                                    <span class="label">Tx Atendimento</span> 
+                                    <span class="val" style="${txAtendNum === 100 ? 'color:var(--success)' : ''}">${txAtend}</span>
+                                </div>
+                            </div>
 
-                            <div class="grid-full-width" style="margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px;">
-                                <span class="label" style="font-size: 13px;">Total de Leads</span>
-                                <span class="val" style="color: var(--accent); font-size: 26px;">${dt.total}</span>
+                            <div class="grid-full-width" style="margin-top: 6px; border-top: 1px solid rgba(255,222,0,0.15); padding-top: 12px;">
+                                <span class="label" style="font-size: 13px;">Total Leads</span>
+                                <span class="val" style="color: var(--accent); font-size: 28px; font-family: 'Bebas Neue', sans-serif;">${dt.total}</span>
                             </div>
                         </div>
                     `;
@@ -916,9 +1033,11 @@
                     card.innerHTML = `
                         <div class="dealer-header">
                             <h4>${dealerName}</h4>
-                            <span class="flag">${FLAGS[country]}</span>
+                            <div class="flag-container">
+                                <img src="${FLAGS[country]}" alt="${country}">
+                            </div>
                         </div>
-                        <div class="dealer-error">Erro ao carregar<br><small>${dData.error}</small></div>
+                        <div class="dealer-error">Erro na Sincronização<br><small>${dData.error}</small></div>
                     `;
                     dealerGrid.appendChild(card);
                 }
@@ -937,10 +1056,10 @@
             ['BR', 'AR', 'MX'].forEach(c => {
                 const cm = cMetrics[c];
                 document.getElementById(`c-${c}-total`).textContent = cm.total;
-                document.getElementById(`c-${c}-dealers`).textContent = cm.dealers + ' configurados';
+                document.getElementById(`c-${c}-dealers`).textContent = cm.dealers + ' PONTOS DE VENDA';
                 document.getElementById(`c-${c}-qual`).textContent = cm.qual;
                 document.getElementById(`c-${c}-neg`).textContent = cm.neg;
-                document.getElementById(`c-${c}-neg-pct`).textContent = cm.qual > 0 ? ((cm.neg / cm.qual) * 100).toFixed(0) + '% dos qualificados' : '- dos qualificados';
+                document.getElementById(`c-${c}-neg-pct`).textContent = cm.qual > 0 ? ((cm.neg / cm.qual) * 100).toFixed(0) + '% dos QUALIF.' : '-';
                 document.getElementById(`c-${c}-txatend`).textContent = cm.total > 0 ? (((cm.total - cm.stopped) / cm.total) * 100).toFixed(0) + '%' : '0%';
                 document.getElementById(`c-${c}-txqual`).textContent = cm.total > 0 ? ((cm.qual / cm.total) * 100).toFixed(0) + '%' : '0%';
             });
