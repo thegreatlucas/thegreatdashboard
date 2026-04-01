@@ -744,7 +744,7 @@
             document.getElementById('btn-filter-' + filterType).classList.add('active');
 
             let m = { total: 0, qual: 0, neg: 0, noInt: 0, stopped: 0 };
-            let cMetrics = { BR: { total: 0, dealers: 0, qual: 0, neg: 0, noInt: 0 }, AR: { total: 0, dealers: 0, qual: 0, neg: 0, noInt: 0 }, MX: { total: 0, dealers: 0, qual: 0, neg: 0, noInt: 0 } };
+            let cMetrics = { BR: { total: 0, dealers: 0, stopped: 0 }, AR: { total: 0, dealers: 0, stopped: 0 }, MX: { total: 0, dealers: 0, stopped: 0 } };
             let matchedExpoEmails = new Set();
 
             const dealerGrid = document.getElementById('dealer-grid');
@@ -826,7 +826,7 @@
                     // Aggregate
                     m.total += dt.total; m.qual += dt.qual; m.neg += dt.neg; m.noInt += dt.noInt; m.stopped += dt.stop;
                     cMetrics[country].total += dt.total; cMetrics[country].dealers += 1;
-                    cMetrics[country].qual += dt.qual; cMetrics[country].neg += dt.neg; cMetrics[country].noInt += dt.noInt;
+                    cMetrics[country].stopped += dt.stop;
 
                     // Ocultador solicitado pelo usuário:
                     // Se o distribuidor não tem NENHUM lead após os filtros calculados da vez, pula a montagem da UI
@@ -842,7 +842,7 @@
                     // Cálculos de Taxas (% baseadas no volume de Leads do Card atual)
                     const txQual = dt.total > 0 ? ((dt.qual / dt.total) * 100).toFixed(0) + '%' : '0%';
                     // Atendidos = Tudo aquilo que NÃO foi "Pararam de responder" (Contato Mudo/inválido)
-                    const atendidos = (dt.qual + dt.neg + dt.noInt);
+                    const atendidos = dt.total - dt.stop;
                     const txAtend = dt.total > 0 ? ((atendidos / dt.total) * 100).toFixed(0) + '%' : '0%';
 
                     // Append card
@@ -892,13 +892,13 @@
             document.getElementById('m-noint').textContent = m.noInt;
             document.getElementById('m-stop').textContent = m.stopped;
 
-            const globalAtendidos = m.qual + m.neg + m.noInt;
+            const globalAtendidos = m.total - m.stopped;
             document.getElementById('m-txatend').textContent = m.total > 0 ? ((globalAtendidos / m.total) * 100).toFixed(0) + '%' : '0%';
 
             ['BR', 'AR', 'MX'].forEach(c => {
                 document.getElementById(`c-${c}-total`).textContent = cMetrics[c].total;
                 document.getElementById(`c-${c}-dealers`).textContent = cMetrics[c].dealers + ' configurados';
-                const cAtendidos = cMetrics[c].qual + cMetrics[c].neg + cMetrics[c].noInt;
+                const cAtendidos = cMetrics[c].total - cMetrics[c].stopped;
                 document.getElementById(`c-${c}-txatend`).textContent = cMetrics[c].total > 0 ? ((cAtendidos / cMetrics[c].total) * 100).toFixed(0) + '%' : '0%';
             });
         }
