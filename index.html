@@ -987,11 +987,19 @@
                 const statusRaw = findCol(config.statusCol);
                 const postRaw   = findCol(config.postStatusCol);
                 
-                // O Python checa if 'AON?' in df.columns (Case-sensitive e cego para barras/espaços ocultos)
-                // Se algum dealer brasileiro escreveu "aON?" ou "AON? ", o script Python dá BYPASS no filtro 
-                // e aceita o lixo por não achar a chave exata. Mimetizando esse comportamento cego fielmente:
-                const aonKey = keys.find(k => k === 'AON?');
-                const aonRaw = aonKey ? normalizeString(row[aonKey]) : '';
+                // =====================================================================
+                // FIX AON — v2
+                // Problema anterior: k === 'AON?' era case-sensitive e não tolerava
+                // espaços extras no header (ex: 'AON? ', 'aon?') vindos do CSV exportado.
+                // Além disso, normalizeString() no valor AON podia corromper o conteúdo
+                // antes do check, impedindo a validação correta.
+                //
+                // Fix 1: aonKey — tolerante a trim + case insensitive
+                // Fix 2: aonRaw — preserva valor original sem normalizeString
+                // Fix 3: isAonValid — usa toString().trim() seguro (evita falsy em "0")
+                // =====================================================================
+                const aonKey = keys.find(k => k.trim() === 'AON?' || k.trim().toUpperCase() === 'AON?');
+                const aonRaw = aonKey ? (row[aonKey] ?? '').toString().trim() : '';
                 const hasAonCol = !!aonKey;
 
                 // Email
@@ -1229,8 +1237,10 @@
                         
                         if (country === 'BR') {
                             if (lead.hasAonCol) {
-                                const aon = lead.aonRaw ? lead.aonRaw.trim() : '';
-                                isAonValid = aon !== '' && aon !== 'nan' && !aon.startsWith('#');
+                                // FIX AON v2: usa toString().trim() seguro para não tratar "0" como falsy
+                                // e compara toLowerCase() para pegar variações de "NaN" / "nan"
+                                const aon = (lead.aonRaw ?? '').toString().trim();
+                                isAonValid = aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#');
                             }
                         }
 
@@ -1316,7 +1326,6 @@
                         }
                     });
 
-                    // Aggregate
                     // Aggregate
                     m.total += dt.total; m.qual += dt.qual; m.neg += dt.neg; m.noInt += dt.noInt; m.stopped += dt.stop;
                     cMetrics[country].total += dt.total; cMetrics[country].dealers += 1;
