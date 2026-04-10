@@ -1236,19 +1236,27 @@
                         let isAonValid = true;
                         
                         if (country === 'BR') {
-                            // FIX AON v3: Leads de 2026 entram sempre no filtro AON 26.
-                            // A coluna AON? só é exigida para leads anteriores a 2026 (capturados em 2025 ou sem data).
+                            // FIX AON v4: Leads de 2026 entram no AON 26, EXCETO Conexpo (campanha separada).
+                            // A coluna AON? só é exigida para leads de 2025 ou sem data.
                             const leadDate = parseDateAny(lead.dateRaw);
                             const is2026 = leadDate && leadDate.getFullYear() >= 2026;
+                            const isConexpoLead = isConexpo(lead.dateRaw);
 
-                            if (is2026) {
-                                isAonValid = true; // 2026+ → entra sempre no AON 26
+                            if (is2026 && !isConexpoLead) {
+                                isAonValid = true; // 2026 não-Conexpo → entra no AON 26
+                            } else if (isConexpoLead) {
+                                isAonValid = false; // Conexpo → campanha separada, fora do AON
                             } else if (lead.hasAonCol) {
                                 const aon = (lead.aonRaw ?? '').toString().trim();
                                 isAonValid = aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#');
                             } else {
                                 isAonValid = false; // Sem data 2026 e sem coluna AON? → fora
                             }
+                        }
+
+                        // Para AR e MX: Conexpo também é campanha separada, fora do AON
+                        if ((country === 'AR' || country === 'MX') && isConexpo(lead.dateRaw)) {
+                            isAonValid = false;
                         }
 
                         if (filterType === 'aon') return isAonValid;
