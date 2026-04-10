@@ -1236,11 +1236,18 @@
                         let isAonValid = true;
                         
                         if (country === 'BR') {
-                            if (lead.hasAonCol) {
-                                // FIX AON v2: usa toString().trim() seguro para não tratar "0" como falsy
-                                // e compara toLowerCase() para pegar variações de "NaN" / "nan"
+                            // FIX AON v3: Leads de 2026 entram sempre no filtro AON 26.
+                            // A coluna AON? só é exigida para leads anteriores a 2026 (capturados em 2025 ou sem data).
+                            const leadDate = parseDateAny(lead.dateRaw);
+                            const is2026 = leadDate && leadDate.getFullYear() >= 2026;
+
+                            if (is2026) {
+                                isAonValid = true; // 2026+ → entra sempre no AON 26
+                            } else if (lead.hasAonCol) {
                                 const aon = (lead.aonRaw ?? '').toString().trim();
                                 isAonValid = aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#');
+                            } else {
+                                isAonValid = false; // Sem data 2026 e sem coluna AON? → fora
                             }
                         }
 
