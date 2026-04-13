@@ -544,12 +544,11 @@
         // Sistema Baseado de Sessão (Auth Layer)
         function checkPassword() {
             const pass = document.getElementById('pass-input').value;
-            if (pass === 'jdc123' || pass === 'JDC123') {
-                sessionStorage.setItem('jd_auth', 'true');
+            if (pass === 'jdc123' || pass === 'JDC123' || pass === 'johndeere26') {
+                localStorage.setItem('jd_auth', 'true');
                 document.getElementById('auth-screen').style.opacity = '0';
                 setTimeout(() => {
                     document.getElementById('auth-screen').style.display = 'none';
-                    // Apenas iniciação da rede APÓS autenticação. Impede vazamento do modal.
                     refreshData();
                 }, 300);
             } else {
@@ -560,17 +559,18 @@
         }
         
         document.addEventListener('DOMContentLoaded', () => {
-            CURRENT_FILTERS = new Set(['aon']);
-            CURRENT_FILTER = 'aon'; // Default
+            if (typeof CURRENT_FILTERS === 'undefined') CURRENT_FILTERS = new Set(['aon']);
+            if (typeof CURRENT_FILTER === 'undefined') CURRENT_FILTER = 'aon';
+            
             const inputField = document.getElementById('pass-input');
             if (inputField) {
                 inputField.addEventListener('keypress', function (e) {
                     if (e.key === 'Enter') checkPassword();
                 });
             }
-            if (sessionStorage.getItem('jd_auth') === 'true') {
+            if (localStorage.getItem('jd_auth') === 'true') {
                 document.getElementById('auth-screen').style.display = 'none';
-                refreshData(); // Carrega automaticamente se a aba estava autorizada
+                refreshData();
             }
         });
 
@@ -1758,31 +1758,6 @@
             document.getElementById('dealer-profile-modal').classList.add('active');
         }
 
-        // Sistema Baseado de Sessão (Auth Layer)
-        function checkPassword() {
-            const pass = document.getElementById('pass-input').value;
-            if (pass === 'jdc123' || pass === 'JDC123' || pass === 'johndeere26') {
-                document.getElementById('auth-screen').style.display = 'none';
-                localStorage.setItem('jd_auth', 'true');
-                refreshData(); 
-            } else {
-                document.getElementById('auth-error').style.display = 'block';
-            }
-        }
-        
-        function initPasswordProtect() {
-            if (localStorage.getItem('jd_auth') === 'true') {
-                document.getElementById('auth-screen').style.display = 'none';
-                refreshData();
-            }
-        }
-        
-        // Listener para o Enter no campo de senha
-        document.getElementById('pass-input')?.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') checkPassword();
-        });
-
-        initPasswordProtect();
     </script>
 </body>
 </html>
