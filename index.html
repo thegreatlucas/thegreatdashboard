@@ -1289,27 +1289,25 @@
 
                         // Helper: testa se um lead passa por UM tipo de filtro específico
                         const passesFilter = (ft) => {
-                            const _ld   = parseDateAny(lead.dateRaw);
-                            const _isConexpoL = isConexpo(lead.dateRaw);
-                            const _isECL = isExpertConnect(lead);
-                            const _isDec2025plus = _ld && (_ld.getFullYear() > 2025 || (_ld.getFullYear() === 2025 && _ld.getMonth() >= 11));
+                            const _ld        = parseDateAny(lead.dateRaw);
+                            const _isConexpo = isConexpo(lead.dateRaw);           // 19/03 = Conexpo, sempre
+                            const _isEC      = isExpertConnect(lead);             // fleet+app vazios, exceto 19/03
+                            const _dec2025plus = _ld && (_ld.getFullYear() > 2025 || (_ld.getFullYear() === 2025 && _ld.getMonth() >= 11));
 
                             if (ft === 'all') return true;
 
                             if (ft === 'conexpo') {
-                                if (dealerName === 'Expoagro') return false;
-                                if (country === 'AR' && isExpoLead) return false;
-                                return _isConexpoL;
+                                return _isConexpo; // 19/03, independente de qualquer outra coisa
                             }
-
-                            if (ft === 'expoagro') return false; // Tratado acima no bloco expoagro
 
                             if (ft === 'expertconnect') {
-                                return _isECL && !_isConexpoL;
+                                return _isEC && !_isConexpo; // EC exceto 19/03
                             }
 
+                            if (ft === 'expoagro') return false; // tratado no bloco expoagro acima
+
                             if (ft === 'aon25') {
-                                if (_isConexpoL || _isECL) return false;
+                                if (_isEC || _isConexpo) return false;
                                 if (country === 'BR' && lead.hasAonCol) {
                                     const aon = (lead.aonRaw ?? '').toString().trim();
                                     return aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#') && isUpToDec2025(lead.dateRaw);
@@ -1318,14 +1316,14 @@
                             }
 
                             if (ft === 'aon') {
-                                if (_isConexpoL || _isECL) return false;
+                                if (_isEC || _isConexpo) return false;
                                 if (country === 'AR' || country === 'MX') return true;
-                                // BR
+                                // BR: AON? preenchido OU dez/2025 em diante
                                 const _aonFilled = lead.hasAonCol && (() => {
                                     const aon = (lead.aonRaw ?? '').toString().trim();
                                     return aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#');
                                 })();
-                                return _aonFilled || _isDec2025plus;
+                                return _aonFilled || _dec2025plus;
                             }
 
                             return false;
