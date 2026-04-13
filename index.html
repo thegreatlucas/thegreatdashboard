@@ -591,13 +591,16 @@
             "Maqro": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/1bFT6drlfD9jvBg7KsXXyJ7dNBb2jOw2_jcQYQMoyq0w/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Post-calificación" },
             "Dimasur": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/1OY7vHQD1nn7oTsCCvgWqvIofqf02sney3XEX00mhaGA/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Post-calificación" },
             "Dimanor": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/1Kvp3Ia-jhqQpDt4lNg2lprPr4_WeMaPRYU-_TdbL9uc/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Post-calificación" },
+            "Deltamaq (Inativo)": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1P2WyuYdnRkbuYFc7MHOdudp3NkqlR6jXI7EXaq822yY/edit?gid=975982445#gid=975982445", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
+            "Rota Oeste (Inativo)": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1Dh31ethvDDLlmZ6NeRvdk6Brr7kYh1UcNN8Saviu8ao/edit?gid=975982445#gid=975982445", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
+            "Etbsa (Inativo)": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/14duWKdvb5V4KoOyT3Tip0F9FmFr3Ow_ZTLyHHwZS3O0/edit?gid=975982445#gid=975982445", statusCol: "Status", postStatusCol: "Post-calificación" },
             "Expoagro": { country: "AR", sheetUrl: "https://docs.google.com/spreadsheets/d/1D4PxV6UzK4YOPAHBGUGjRb15I9UVf8jUlAg4yjRXppY/edit?gid=356962129", statusCol: "Status", postStatusCol: "Fase pós qualificação" }
         };
 
         const FLAGS = { 
             'BR': 'https://flagcdn.com/br.svg', 
             'AR': 'https://flagcdn.com/ar.svg', 
-            'MX': 'https://flagcdn.com/mx.svg' 
+            'MX': 'https://flagcdn.com/mx.svg'
         };
         const COUNTRY_NAMES = { 'BR': 'Brasil', 'AR': 'Argentina', 'MX': 'México' };
 
@@ -766,65 +769,76 @@
             });
         }
 
-        async function loadExpoagroCentral() {
+        // ID da planilha central (Lead Geral BR / AR / MX + Expoagro)
+        const GENERAL_SHEET_ID = '1D4PxV6UzK4YOPAHBGUGjRb15I9UVf8jUlAg4yjRXppY';
+        const GENERAL_GIDS = {
+            'BR': '356962129',
+            'AR': '0',
+            'MX': '2048582454'
+        };
+
+        async function loadGeneralSheetCSV(gid, cacheKey) {
+            const rawUrl = `https://docs.google.com/spreadsheets/d/${GENERAL_SHEET_ID}/export?format=csv&gid=${gid}&_t=${Date.now()}`;
+            let csvText;
             try {
-                const rawUrl = `https://docs.google.com/spreadsheets/d/${expoId}/export?format=csv&gid=356962129&_t=${Date.now()}`;
-                
-                let csvText;
-                try {
-                    csvText = await fetchWithProxyFallback(rawUrl);
-                    // Sucesso: Persiste no banco de dados local do navegador
-                    try { localStorage.setItem('cache_Expoagro', csvText); } catch(e) {}
-                } catch (err) {
-                    // Blecaute na rede: Tenta reanimar o último cache local!
-                    const cached = localStorage.getItem('cache_Expoagro');
-                    if (cached) {
-                        console.warn("[OFFLINE] Servidores Proxy inoperantes. Lendo Expoagro da memória Cache local.");
-                        csvText = cached;
-                    } else {
-                        throw err; // Sem internet e sem cache
-                    }
+                csvText = await fetchWithProxyFallback(rawUrl);
+                try { localStorage.setItem('cache_' + cacheKey, csvText); } catch(e) {}
+            } catch (err) {
+                const cached = localStorage.getItem('cache_' + cacheKey);
+                if (cached) {
+                    console.warn(`[OFFLINE] Proxy inoperante. Lendo ${cacheKey} do cache local.`);
+                    csvText = cached;
+                } else {
+                    throw err;
                 }
-                
-                const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
-                const rows = parsed.data;
-                
-                console.log(`[EXPO] Total rows na aba: ${rows.length}`);
+            }
+            return Papa.parse(csvText, { header: true, skipEmptyLines: true }).data;
+        }
 
-                EXPOAGRO_EMAILS.clear();
-                EXPOAGRO_PHONES.clear();
+        async function loadGeneralSheetsData() {
+            try {
+                const countries = ['BR', 'AR', 'MX'];
+                const fetchPromises = countries.map(async (c) => {
+                    try {
+                        const rows = await loadGeneralSheetCSV(GENERAL_GIDS[c], 'LeadGeral' + c);
+                        console.log(`[GERAL ${c}] Total rows: ${rows.length}`);
+                        
+                        GENERAL_LEADS_DATA[c] = rows.map(r => {
+                            const camp = normalizeString(r['campaign_name'] || r['Campaign_name'] || '');
+                            const email = normalizeString(r['email'] || r['Email'] || '');
+                            const phone = normalizeString(r['phone_number'] || r['Telefone'] || r['whatsapp'] || '');
+                            const date = normalizeString(r['created_time'] || r['Data do Lead'] || r['data'] || r['fecha'] || '');
+                            const status = normalizeString(r['Status'] || r['lead_status'] || '');
+                            
+                            // BR precisa filtrar campanha AON. AR/MX são 100% AON.
+                            const isAon = (c === 'BR') ? (camp.includes('aon') && !camp.includes('expo')) : true;
+                            const isExpo = camp.includes('expo');
 
-                // Filtrar apenas linhas com campaign_name contendo 'expo'
-                const expoRows = rows.filter(r => {
-                    const camp = normalizeString(r['campaign_name'] || r['Campaign_name'] || '');
-                    return camp.includes('expo');
+                            if (isExpo && c === 'BR') {
+                                if (email) EXPOAGRO_EMAILS.add(email);
+                                if (phone) EXPOAGRO_PHONES.add(phone);
+                            }
+
+                            return {
+                                email, phone, date, status, country: c, isAon, isExpo,
+                                machineRaw: r['que_tipo_de_maquina_john_deere_voce_tem_interesse?'] || r['que_tipo_de_máquina_john_deere_você_tem_interesse?'] || ''
+                            };
+                        });
+                    } catch (e) {
+                        console.error(`Falha ao carregar geral ${c}:`, e);
+                    }
                 });
 
-                console.log(`[EXPO] Leads Expoagro encontrados: ${expoRows.length}`);
-
-                expoRows.forEach(r => {
-                    const email = normalizeString(r['email'] || r['Email'] || '');
-                    const phone = normalizeString(r['phone_number'] || r['Telefone'] || '');
-                    if (email) EXPOAGRO_EMAILS.add(email);
-                    if (phone) EXPOAGRO_PHONES.add(phone);
-                });
-
-                // Montar leads virtuais da Expoagro
-                const expoLeads = expoRows.map(r => ({
-                    status: normalizeString(r['Status'] || r['lead_status'] || ''),
-                    postStatus: normalizeString(r['Fase pós qualificação'] || r['Post-calificación'] || ''),
-                    aonRaw: '',
-                    hasAonCol: false,
-                    dateRaw: normalizeString(r['created_time'] || r['Data do Lead'] || ''),
-                    email: normalizeString(r['email'] || ''),
-                    phone: normalizeString(r['phone_number'] || '')
-                }));
-
+                await Promise.all(fetchPromises);
+                
+                // Expoagro virtual dealer leads (mantido por compatibilidade de filtro)
+                const expoLeads = GENERAL_LEADS_DATA.BR.filter(l => l.isExpo);
                 GLOBAL_ALL_DATA["Expoagro"] = { leads: expoLeads, error: null };
+                
+                console.log(`[GERAL] Carregamento completo. BR AON: ${GENERAL_LEADS_DATA.BR.filter(l=>l.isAon).length}`);
 
             } catch (err) {
-                console.warn("[EXPO] Falha ao carregar Expoagro:", err);
-                GLOBAL_ALL_DATA["Expoagro"] = { leads: [], error: err.message };
+                console.warn("[GERAL] Falha crítica nas planilhas gerais:", err);
             }
         }
 
@@ -1176,6 +1190,9 @@
             clearDates();
         }
 
+        // Leads das planilhas gerais (BR, AR, MX)
+        let GENERAL_LEADS_DATA = { BR: [], AR: [], MX: [] };
+
         function applyFilter(filterType) {
             // Sincroniza CURRENT_FILTERS com o filterType passado
             if (!CURRENT_FILTERS || CURRENT_FILTERS.size === 0) CURRENT_FILTERS = new Set([filterType]);
@@ -1198,8 +1215,12 @@
                 document.getElementById('country-filter-indicator').style.display = 'none';
             }
 
-            let m = { total: 0, qual: 0, neg: 0, noInt: 0, stopped: 0 };
-            let cMetrics = { BR: { total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 }, AR: { total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 }, MX: { total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 } };
+            let m = { total: 0, attended: 0, qual: 0, neg: 0, noInt: 0, stopped: 0 };
+            let cMetrics = { 
+                BR: { total: 0, attended: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 }, 
+                AR: { total: 0, attended: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 }, 
+                MX: { total: 0, attended: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 } 
+            };
             let matchedExpoEmails = new Set();
             
             // Analytics Reservoirs
@@ -1207,157 +1228,88 @@
             let gProducts = {};
             let gLoss = {};
             GLOBAL_FILTERED_LEADS = {};
+            let uniqueLeadsGlobal = new Map(); 
+            const getUniqueKey = (ld) => (ld.email && ld.email !== 'nan') ? ld.email : (ld.phone || '');
 
             const dealerGrid = document.getElementById('dealer-grid');
             dealerGrid.innerHTML = '';
 
             for (const dealerName in DEALERS_CONFIG) {
                 const country = DEALERS_CONFIG[dealerName].country;
-                
-                // Regra: Filtro por País (Apenas para o grid de baixo, conforme solicitado)
-                if (CURRENT_COUNTRY_FILTER && country !== CURRENT_COUNTRY_FILTER && dealerName !== 'Expoagro') {
-                    // Mas acumularemos os leads dela no total global m.total (que o usuário pediu para manter geral)
-                    // ... e o Expoagro também.
-                    // O loop original já processa as globais.
-                }
-
-                // Regra: Expoagro é frota virtual apenas para cálculo global. Não renderizar card nem contar como dealer.
-                if (dealerName === 'Expoagro') {
-                    // Mas acumulamos os leads dela no total global se o filtro permitir (já feito na lógica original de leads)
-                    // porém não queremos que incremente cMetrics[ARG].dealers nem gere card.
-                    const dData = GLOBAL_ALL_DATA[dealerName] || { leads: [] };
-                    if (!dData.error) {
-                        // Lógica de leads para Expoagro (apenas acumula em m.total/m.qual/etc, sem mexer em cMetrics.dealers)
-                        let filtered = dData.leads.filter(lead => {
-                             if (filterType === 'conexpo') return false; 
-                             return !matchedExpoEmails.has(lead.email); 
-                        });
-                        filtered.forEach(ld => {
-                            m.total++;
-                            if (ld.status === 'qualificado') m.qual++;
-                            const isNeg = ld.postStatus.includes('negocia') || ld.postStatus.includes('se envia propuesta') || ld.postStatus.includes('venta sujeta a obra') || ld.status.includes('cotizando obra');
-                            if (isNeg) m.neg++;
-                            if (ld.postStatus === 'sem intenção de compra') m.noInt++;
-                            if (ld.postStatus.includes('parou')) m.stopped++;
-                        });
-                    }
-                    continue; 
-                }
+                if (dealerName === 'Expoagro') continue;
 
                 const dData = GLOBAL_ALL_DATA[dealerName] || { error: 'Sem dados', leads: [] };
-                
                 let filtered = [];
 
                 if (!dData.error) {
                     filtered = dData.leads.filter(lead => {
-                        // NOVO: Filtro de Período Cronológico
                         if (CURRENT_START_DATE || CURRENT_END_DATE) {
                             const leadDate = parseDateAny(lead.dateRaw);
                             if (leadDate) {
                                 if (CURRENT_START_DATE && leadDate < CURRENT_START_DATE) return false;
                                 if (CURRENT_END_DATE && leadDate > CURRENT_END_DATE) return false;
-                            } else {
-                                // Se o lead não tem data e um filtro está ativo, por precaução ele é removido
-                                return false; 
-                            }
+                            } else return false;
                         }
 
-                        // O Python exclui duplicadas SOMENTE por e-mail ("Cruzar por e-mail com os arquivos AR").
                         const isExpoLead = lead.email && EXPOAGRO_EMAILS.has(lead.email);
-                        
-                        // LÓGICA DE CRUZAMENTO EXPOAGRO:
-                        // Dealers AR têm o status atualizado. A frota virtual 'Expoagro' tem o status original (obsoleto).
-                        if (filterType === 'expoagro') {
-                            if (dealerName === 'Expoagro') {
-                                return !matchedExpoEmails.has(lead.email); // Retorna os leads que a Argentina não cobriu (Órfãos)
-                            }
-                            if (country === 'AR' && isExpoLead) {
-                                matchedExpoEmails.add(lead.email); // AR tem prioridade - Adere o Status Atualizado!
-                                return true;
-                            }
-                            return false;
-                        }
 
-                        if (filterType === 'all' || filterType === 'aon' || filterType === 'aon25') {
-                            if (dealerName === 'Expoagro') {
-                                return !matchedExpoEmails.has(lead.email); // Evita duplicar no volume Geral e campanhas globais
-                            }
-                            if (country === 'AR' && isExpoLead) {
-                                matchedExpoEmails.add(lead.email); 
-                            }
-                        }
-
-                        // Helper: testa se um lead passa por UM tipo de filtro específico
                         const passesFilter = (ft) => {
-                            const _ld        = parseDateAny(lead.dateRaw);
-                            const _isConexpo = isConexpo(lead.dateRaw);           // 19/03 = Conexpo, sempre
-                            const _isEC      = isExpertConnect(lead);             // fleet+app vazios, exceto 19/03
-                            const _dec2025plus = _ld && (_ld.getFullYear() > 2025 || (_ld.getFullYear() === 2025 && _ld.getMonth() >= 11));
+                            const _ld = parseDateAny(lead.dateRaw);
+                            const _isConexpo = isConexpo(lead.dateRaw);
+                            const _isEC = isExpertConnect(lead);
 
-                            if (ft === 'all') return true;
+                            if (ft === 'all') return passesFilter('aon') || passesFilter('expertconnect') || passesFilter('conexpo') || isExpoLead;
+                            if (ft === 'conexpo') return _isConexpo;
+                            if (ft === 'expertconnect') return _isEC && !_isConexpo;
+                            if (ft === 'expoagro') return isExpoLead;
 
-                            if (ft === 'conexpo') {
-                                return _isConexpo; // 19/03, independente de qualquer outra coisa
-                            }
-
-                            if (ft === 'expertconnect') {
-                                return _isEC && !_isConexpo; // EC exceto 19/03
-                            }
-
-                            if (ft === 'expoagro') return false; // tratado no bloco expoagro acima
-
-                            if (ft === 'aon25') {
+                            if (ft === 'aon' || ft === 'aon25') {
                                 if (_isEC || _isConexpo) return false;
-                                if (country === 'BR' && lead.hasAonCol) {
-                                    const aon = (lead.aonRaw ?? '').toString().trim();
-                                    return aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#') && isUpToDec2025(lead.dateRaw);
-                                }
-                                return false;
-                            }
-
-                            if (ft === 'aon') {
-                                if (_isEC || _isConexpo) return false;
+                                if (ft === 'aon25') return country === 'BR' && lead.hasAonCol && isUpToDec2025(lead.dateRaw) && lead.aonRaw !== '' && lead.aonRaw !== 'nan';
+                                
                                 if (country === 'AR' || country === 'MX') return true;
-                                // BR: AON? preenchido OU dez/2025 em diante
                                 const _aonFilled = lead.hasAonCol && (() => {
                                     const aon = (lead.aonRaw ?? '').toString().trim();
                                     return aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#');
                                 })();
-                                return _aonFilled || _dec2025plus;
+                                return _aonFilled;
                             }
-
                             return false;
                         };
 
-                        // Lead passa se atender QUALQUER filtro ativo (OR logic)
                         const activeFilters = [...CURRENT_FILTERS];
-                        if (!activeFilters.some(ft => passesFilter(ft))) return false;
-
-                        // Lógica de filtro migrada para passesFilter() acima (multi-select)
-                        return true; // Fallback — nunca deve chegar aqui 
+                        return activeFilters.some(ft => passesFilter(ft));
                     });
 
-                    // Count metrics baseadas rigidamente nas regras do Prompt Skill "jd-leads-analysis"
-                    let dt = { total: 0, qual: 0, neg: 0, noInt: 0, stop: 0 };
+                    let dt = { total: 0, attended: 0, qual: 0, neg: 0, noInt: 0, stop: 0 };
                     filtered.forEach(ld => {
                         dt.total++;
-                        
-                        if (ld.status === 'qualificado') dt.qual++;
-                        
-                        const isNeg = ld.postStatus.includes('negocia') || 
-                                      ld.postStatus.includes('se envia propuesta') || 
-                                      ld.postStatus.includes('venta sujeta a obra') || 
-                                      ld.status.includes('cotizando obra');
-                                      
+                        const st = normalizeString(ld.status);
+                        const ps = normalizeString(ld.postStatus);
+                        if (st !== '' || ps !== '') dt.attended++;
+                        if (st === 'qualificado') dt.qual++;
+                        const isNeg = ps.includes('negocia') || ps.includes('se envia propuesta') || ps.includes('venta sujeta a obra') || st.includes('cotizando obra');
                         if (isNeg) dt.neg++;
-                        if (ld.postStatus === 'sem intenção de compra') dt.noInt++;
-                        if (ld.postStatus.includes('parou')) dt.stop++;
+                        if (ps === 'sem intencao de compra' || ps.includes('sin intencion')) dt.noInt++;
+                        if (ps === 'parou de responder' || ps.includes('paro de responder')) dt.stop++;
 
-                        // == NOVO: ANALYTICS AGGREGATION ==
-                        // Apenas acumula analytics se o dealer for do país selecionado (ou se nenhum país estiver selecionado)
+                        // Global Deduplication Engine
+                        const key = getUniqueKey(ld);
+                        if (key) {
+                            if (!uniqueLeadsGlobal.has(key)) {
+                                uniqueLeadsGlobal.set(key, { ...ld, country, source: 'dealer' });
+                            } else {
+                                // Merge status: prioritize any attended status
+                                const existing = uniqueLeadsGlobal.get(key);
+                                if (!existing.status && st) {
+                                    existing.status = st;
+                                    existing.postStatus = ps;
+                                }
+                            }
+                        }
+
                         const isTargetCountry = (!CURRENT_COUNTRY_FILTER || country === CURRENT_COUNTRY_FILTER);
                         if (isTargetCountry) {
-                            // 1. Timeline
                             if (ld.dateRaw) {
                                 const pDate = parseDateAny(ld.dateRaw);
                                 if (pDate) {
@@ -1365,58 +1317,36 @@
                                     gTimeline[yyyyMmDd] = (gTimeline[yyyyMmDd] || 0) + 1;
                                 }
                             }
-                            
-                            // 2. Products (Mesclando PT, ES e variações, e barrando lixo)
                             if (ld.machineRaw !== undefined && ld.machineRaw !== '') {
                                 let pStr = normalizeString(ld.machineRaw).toUpperCase();
-                                
-                                // --- BARRICADA ANTI-LIXO (Ignora respostas de outras colunas que vazaram ou opções inúteis) ---
-                                if (pStr.includes('NAO TENHO') || pStr.includes('OUTRA MARCA') || pStr.includes('JOHN DEERE') || 
-                                    pStr.includes('INDEFINIDO') || pStr.includes('BUSCANDO') || pStr.includes('USAD') || 
-                                    pStr.includes('NOVAS')) {
-                                    pStr = ''; 
-                                }
-
-                                // --- TRADUTOR / UNIFICADOR LATAM ---
+                                if (pStr.includes('NAO TENHO') || pStr.includes('OUTRA MARCA') || pStr.includes('JOHN DEERE')) pStr = ''; 
                                 if (pStr.includes('RETROESCAV') || pStr.includes('RETROEXCAV')) pStr = 'RETROESCAVADEIRA';
-                                else if (pStr.includes('MINI ESC') || pStr.includes('MINIESC') || pStr.includes('MINI EXC')) pStr = 'MINIESCAVADEIRA';
+                                else if (pStr.includes('MINI ESC') || pStr.includes('MINIESC')) pStr = 'MINIESCAVADEIRA';
                                 else if (pStr.includes('ESCAVA') || pStr.includes('EXCAVA')) pStr = 'ESCAVADEIRA';
-                                else if (pStr.includes('MINI CAR') || pStr.includes('MINICAR') || pStr.includes('MINI CARG')) pStr = 'MINICARREGADEIRA';
-                                else if (pStr.includes('PA CARREG') || pStr.includes('CARGADOR') || pStr.includes('CARGA')) pStr = 'PÁ-CARREGADEIRA';
-                                else if (pStr.includes('MOTONI') || pStr.includes('NIVELA')) pStr = 'MOTONIVELADORA';
-                                else if (pStr.includes('TRATOR') || pStr.includes('TRACTOR')) pStr = 'TRATOR DE ESTEIRA';
-                                else if (pStr.includes('ROLO') || pStr.includes('COMPACTA')) pStr = 'ROLO COMPACTADOR';
-                                else if (pStr.includes('OUTROS') || pStr.includes('OTROS')) pStr = 'OUTROS';
-
-                                if (pStr.length > 2 && pStr !== 'NAN' && !pStr.includes('UNDEFINED')) {
-                                    gProducts[pStr] = (gProducts[pStr] || 0) + 1;
-                                }
+                                else if (pStr.includes('PÁ CARREG') || pStr.includes('CARGADOR')) pStr = 'PÁ-CARREGADEIRA';
+                                else if (pStr.includes('MOTONI')) pStr = 'MOTONIVELADORA';
+                                if (pStr.length > 2 && pStr !== 'NAN') gProducts[pStr] = (gProducts[pStr] || 0) + 1;
                             }
-
-                            // 3. Loss Reasons (Apenas se não converteu)
-                            if (ld.postStatus === 'sem intenção de compra' || ld.postStatus.includes('parou')) {
+                            if (ps === 'sem intenção de compra' || ps.includes('parou')) {
                                 if (ld.lossRaw !== undefined && ld.lossRaw !== '' && ld.lossRaw !== 'nan') {
                                     let rStr = ld.lossRaw.toUpperCase();
-                                    // Clean up common generics to group better
-                                    if(rStr.includes('PREÇO') || rStr.includes('CARO') || rStr.includes('VALOR')) rStr = 'PREÇO / VALOR EXTREMO';
-                                    else if(rStr.includes('CONCORREN') || rStr.includes('CATERPILLAR') || rStr.includes('KOMATSU')) rStr = 'PERDA PARA CONCORRÊNCIA';
-                                    else if(rStr.includes('CURIO') || rStr.includes('SÓ QUERIA SABER') || rStr.includes('APENAS')) rStr = 'LEAD CURIOSO / ESPECULADOR';
-                                    else if(rStr.includes('ESTUDAN') || rStr.includes('ESCOLA') || rStr.includes('TCC')) rStr = 'ESTUDANTE / TRABALHO ACADÊMICO';
-                                    else if(rStr.includes('CRÉDITO') || rStr.includes('FINANCIA') || rStr.includes('REPROV') || rStr.includes('BANCO')) rStr = 'REPROVAÇÃO DE CRÉDITO';
-                                    else if(rStr.includes('PEÇA') || rStr.includes('MECÂNIC') || rStr.includes('OFICINA')) rStr = 'BUSCANDO PEÇAS / SERVIÇO';
-                                    else if(rStr.includes('USAD') || rStr.includes('SEMINOV')) rStr = 'BUSCANDO USADOS';
-                                    else if(rStr.length > 25) rStr = 'OUTROS MOTIVOS MISTOS'; 
-                                    
+                                    if(rStr.includes('PREÇO') || rStr.includes('CARO')) rStr = 'PREÇO / VALOR EXTREMO';
+                                    else if(rStr.includes('CONCORREN')) rStr = 'PERDA PARA CONCORRÊNCIA';
                                     gLoss[rStr] = (gLoss[rStr] || 0) + 1;
                                 }
                             }
                         }
                     });
 
-                    // Aggregate
-                    m.total += dt.total; m.qual += dt.qual; m.neg += dt.neg; m.noInt += dt.noInt; m.stopped += dt.stop;
-                    cMetrics[country].total += dt.total; cMetrics[country].dealers += 1;
-                    cMetrics[country].stopped += dt.stop; cMetrics[country].qual += dt.qual; cMetrics[country].neg += dt.neg;
+                    // Metrics per Card (keep dealer-specific count)
+                    cMetrics[country].dealers += 1;
+                    cMetrics[country].total_dealer_sum += dt.total; // purely informational
+
+                    if (dt.total === 0 || (CURRENT_COUNTRY_FILTER && country !== CURRENT_COUNTRY_FILTER)) continue;
+
+                    GLOBAL_FILTERED_LEADS[dealerName] = filtered; 
+                    const txQual = dt.total > 0 ? ((dt.qual / dt.total) * 100).toFixed(0) + '%' : '0%';
+                    const txAtend = dt.total > 0 ? ((dt.attended / dt.total) * 100).toFixed(0) + '%' : '0%';
 
                     // Ocultador solicitado pelo usuário:
                     // Se o distribuidor não tem NENHUM lead após os filtros calculados da vez, pula a montagem da UI
@@ -1435,8 +1365,7 @@
                     const txQualNum = dt.total > 0 ? (dt.qual / dt.total) * 100 : 0;
                     const txQual = txQualNum.toFixed(0) + '%';
                     
-                    const atendidos = dt.total - dt.stop;
-                    const txAtendNum = dt.total > 0 ? (atendidos / dt.total) * 100 : 0;
+                    const txAtendNum = dt.total > 0 ? (dt.attended / dt.total) * 100 : 0;
                     const txAtend = txAtendNum.toFixed(0) + '%';
 
                     // INDICADORES DE PERFORMANCE (Baseados no doc Mar/26)
@@ -1530,6 +1459,40 @@
                 }
             }
 
+            // ADD GENERAL SHEETS LEADS TO UNIQUE GLOBAL POOL
+            ['BR', 'AR', 'MX'].forEach(c => {
+                const activeFilters = [...CURRENT_FILTERS];
+                GENERAL_LEADS_DATA[c].forEach(ld => {
+                    if (CURRENT_FILTERS.has('all') || (CURRENT_FILTERS.has('aon') && ld.isAon) || (CURRENT_FILTERS.has('expoagro') && ld.isExpo)) {
+                        const key = getUniqueKey(ld);
+                        if (key && !uniqueLeadsGlobal.has(key)) {
+                            uniqueLeadsGlobal.set(key, { ...ld, source: 'orphan' });
+                        }
+                    }
+                });
+            });
+
+            // FINAL UNIQUE CALCULATION FOR GLOBAL CARDS
+            uniqueLeadsGlobal.forEach(ld => {
+                m.total++;
+                const st = normalizeString(ld.status);
+                const ps = normalizeString(ld.postStatus || ld.status); // General sheets only have 'Status'
+                if (st !== '' || ps !== '') m.attended++;
+                if (st === 'qualificado') m.qual++;
+                const isNeg = ps.includes('negocia') || ps.includes('se envia propuesta') || ps.includes('venta sujeta a obra');
+                if (isNeg) m.neg++;
+                if (ps === 'sem intencao de compra' || ps.includes('sin intencion')) m.noInt++;
+                if (ps === 'parou de responder' || ps.includes('paro de responder')) m.stopped++;
+
+                // Per Country Unique Count
+                cMetrics[ld.country].total++;
+                if (st !== '' || ps !== '') cMetrics[ld.country].attended++;
+                if (st === 'qualificado') cMetrics[ld.country].qual++;
+                if (isNeg) cMetrics[ld.country].neg++;
+            });
+
+            console.log(`[DEDUP] Unique Leads Total: ${uniqueLeadsGlobal.size} | Target benchmark: ~1072-1076`);
+
             // Update DOM headers
             document.getElementById('m-total').textContent = m.total;
             document.getElementById('m-qual').textContent = m.qual;
@@ -1537,8 +1500,7 @@
             document.getElementById('m-noint').textContent = m.noInt;
             document.getElementById('m-stop').textContent = m.stopped;
 
-            const globalAtendidos = m.total - m.stopped;
-            document.getElementById('m-txatend').textContent = m.total > 0 ? ((globalAtendidos / m.total) * 100).toFixed(0) + '%' : '0%';
+            document.getElementById('m-txatend').textContent = m.total > 0 ? ((m.attended / m.total) * 100).toFixed(0) + '%' : '0%';
 
             ['BR', 'AR', 'MX'].forEach(c => {
                 const cm = cMetrics[c];
@@ -1547,7 +1509,7 @@
                 document.getElementById(`c-${c}-qual`).textContent = cm.qual;
                 document.getElementById(`c-${c}-neg`).textContent = cm.neg;
                 document.getElementById(`c-${c}-neg-pct`).textContent = cm.qual > 0 ? ((cm.neg / cm.qual) * 100).toFixed(0) + '% dos QUALIF.' : '-';
-                document.getElementById(`c-${c}-txatend`).textContent = cm.total > 0 ? (((cm.total - cm.stopped) / cm.total) * 100).toFixed(0) + '%' : '0%';
+                document.getElementById(`c-${c}-txatend`).textContent = cm.total > 0 ? ((cm.attended / cm.total) * 100).toFixed(0) + '%' : '0%';
                 document.getElementById(`c-${c}-txqual`).textContent = cm.total > 0 ? ((cm.qual / cm.total) * 100).toFixed(0) + '%' : '0%';
             });
 
@@ -1582,8 +1544,8 @@
             // Busca todos os dealers em paralelo, sem delay artificial
             await Promise.all(dealerNames.map(fetchDealer));
 
-            // Expoagro fetch (não é obrigatório sucesso de 100% pra parar tela)
-            await loadExpoagroCentral();
+            // Expoagro/General fetch
+            await loadGeneralSheetsData();
         }
 
         async function refreshData() {
@@ -1795,6 +1757,32 @@
 
             document.getElementById('dealer-profile-modal').classList.add('active');
         }
+
+        // Sistema Baseado de Sessão (Auth Layer)
+        function checkPassword() {
+            const pass = document.getElementById('pass-input').value;
+            if (pass === 'jdc123' || pass === 'JDC123' || pass === 'johndeere26') {
+                document.getElementById('auth-screen').style.display = 'none';
+                localStorage.setItem('jd_auth', 'true');
+                refreshData(); 
+            } else {
+                document.getElementById('auth-error').style.display = 'block';
+            }
+        }
+        
+        function initPasswordProtect() {
+            if (localStorage.getItem('jd_auth') === 'true') {
+                document.getElementById('auth-screen').style.display = 'none';
+                refreshData();
+            }
+        }
+        
+        // Listener para o Enter no campo de senha
+        document.getElementById('pass-input')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkPassword();
+        });
+
+        initPasswordProtect();
     </script>
 </body>
 </html>
