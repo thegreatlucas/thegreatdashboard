@@ -702,6 +702,21 @@
             return cleanStr.includes('19/03') || cleanStr.includes('Date(2026,2,19)');
         }
 
+        // Detecta lead ExpertConnect: não vem do formulário Meta, então não tem
+        // o campo "Setor/Negócio de Atuação" (PT) ou "aplicación principal" (ES).
+        // Regra: campo de setor/aplicação vazio + data >= dez/2025 → ExpertConnect
+        function isExpertConnect(lead) {
+            const hasSetor = lead.applicationRaw && lead.applicationRaw.trim() !== '' && lead.applicationRaw.trim() !== 'nan';
+            if (hasSetor) return false; // tem setor → veio do formulário Meta, não é EC
+            
+            // Sem setor: verifica se data é dez/2025 em diante
+            const leadDate = parseDateAny(lead.dateRaw);
+            if (!leadDate) return true; // sem data + sem setor = EC
+            
+            const dec2025 = new Date(2025, 11, 1); // 01/12/2025
+            return leadDate >= dec2025;
+        }
+
         // Fetcher Central de JSONP
         function fetchViaJSONP(url, globalCallbackName) {
             return new Promise((resolve, reject) => {
@@ -1045,7 +1060,8 @@
                 
                 const applicationKey = keys.find(k => {
                     const n = normalizeString(k);
-                    return n.includes('aplica') || n.includes('principal');
+                    return n.includes('aplica') || n.includes('principal') || 
+                           n.includes('setor') || n.includes('negocio') || n.includes('ramo');
                 });
                 
                 const timeframeKey = keys.find(k => {
@@ -1236,26 +1252,34 @@
                         let isAonValid = true;
                         
                         if (country === 'BR') {
-                            // FIX AON v4: Leads de 2026 entram no AON 26, EXCETO Conexpo (campanha separada).
-                            // A coluna AON? só é exigida para leads de 2025 ou sem data.
+                            // FIX AON v7:
+                            // AON 26 = 2026 (direto) + 2025 com AON? preenchido + ExpertConnect (dez/2025+)
+                            // Conexpo (19/03) sempre fora — campanha separada
                             const leadDate = parseDateAny(lead.dateRaw);
                             const is2026 = leadDate && leadDate.getFullYear() >= 2026;
                             const isConexpoLead = isConexpo(lead.dateRaw);
+                            const isEC = isExpertConnect(lead);
 
-                            if (is2026 && !isConexpoLead) {
-                                isAonValid = true; // 2026 não-Conexpo → entra no AON 26
-                            } else if (isConexpoLead) {
-                                isAonValid = false; // Conexpo → campanha separada, fora do AON
+                            if (isConexpoLead) {
+                                isAonValid = false; // Conexpo → campanha separada
+                            } else if (is2026 || isEC) {
+                                isAonValid = true; // 2026 ou ExpertConnect dez/2025+ → entra
                             } else if (lead.hasAonCol) {
+                                // 2025 não-EC: exige AON? preenchido
                                 const aon = (lead.aonRaw ?? '').toString().trim();
                                 isAonValid = aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#');
                             } else {
-                                isAonValid = false; // Sem data 2026 e sem coluna AON? → fora
+                                isAonValid = false;
                             }
                         }
 
-                        // Para AR e MX: Conexpo também é campanha separada, fora do AON
-                        if ((country === 'AR' || country === 'MX') && isConexpo(lead.dateRaw)) {
+                        // AR e MX: ExpertConnect dez/2025+ também entra no AON 26
+                        if ((country === 'AR' || country === 'MX') && isExpertConnect(lead) && !isConexpo(lead.dateRaw)) {
+                            isAonValid = true;
+                        }
+
+                        // Conexpo (19/03) é campanha separada — remove do AON independente do país
+                        if (isConexpo(lead.dateRaw)) {
                             isAonValid = false;
                         }
 
