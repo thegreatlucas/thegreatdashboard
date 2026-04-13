@@ -702,16 +702,22 @@
             return cleanStr.includes('19/03') || cleanStr.includes('Date(2026,2,19)');
         }
 
-        // Detecta lead ExpertConnect: não vem do formulário Meta, então não tem
-        // o campo "Setor/Negócio de Atuação" (PT) ou "aplicación principal" (ES).
-        // Regra: campo de setor/aplicação vazio + data >= dez/2025 → ExpertConnect
+        // Detecta lead ExpertConnect: não vem do formulário Meta.
+        // Critério: "Tem maquinaria?" (fleetRaw) E "Setor/Negócio" (applicationRaw) ambos vazios.
+        // Esses dois campos juntos nunca ficam vazios num lead Meta legítimo.
+        // Requisito adicional: data >= dez/2025 (ou sem data).
         function isExpertConnect(lead) {
-            const hasSetor = lead.applicationRaw && lead.applicationRaw.trim() !== '' && lead.applicationRaw.trim() !== 'nan';
-            if (hasSetor) return false; // tem setor → veio do formulário Meta, não é EC
+            const isEmpty = (v) => !v || v.trim() === '' || v.trim().toLowerCase() === 'nan';
             
-            // Sem setor: verifica se data é dez/2025 em diante
+            const semSetor = isEmpty(lead.applicationRaw);
+            const semFrota = isEmpty(lead.fleetRaw);
+            
+            // Se tem qualquer um dos dois preenchido → veio do Meta, não é EC
+            if (!semSetor || !semFrota) return false;
+            
+            // Ambos vazios: verifica data >= dez/2025
             const leadDate = parseDateAny(lead.dateRaw);
-            if (!leadDate) return true; // sem data + sem setor = EC
+            if (!leadDate) return true; // sem data + sem setor + sem frota = EC
             
             const dec2025 = new Date(2025, 11, 1); // 01/12/2025
             return leadDate >= dec2025;
@@ -1050,7 +1056,10 @@
                 // NOVO: Extratores de Perfil com os Aliases oficiais que você passou cruzados com a América Latina
                 const fleetKey = keys.find(k => {
                     const n = normalizeString(k);
-                    return n.includes('ja tem maquina') || n.includes('frota') || n.includes('se tem ou n') || n.includes('equipamento');
+                    return n.includes('ja tem maquina') || n.includes('tem maquinaria') || 
+                           n.includes('maquinario') || n.includes('frota') || 
+                           n.includes('se tem ou n') || n.includes('equipamento') ||
+                           n.includes('actualmente contas') || n.includes('contás con');
                 });
                 
                 const conditionKey = keys.find(k => {
