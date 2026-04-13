@@ -297,13 +297,15 @@
 
         <div class="filters-row">
             <span class="label-sm">Campanha:</span>
-            <div class="btn-group">
-                <button id="btn-filter-all" class="filter-btn" onclick="applyFilter('all')">Geral</button>
-                <button id="btn-filter-aon" class="filter-btn" onclick="applyFilter('aon')">AON 26</button>
-                <button id="btn-filter-aon25" class="filter-btn" onclick="applyFilter('aon25')">2025</button>
-                <button id="btn-filter-expoagro" class="filter-btn" onclick="applyFilter('expoagro')">Expoagro</button>
-                <button id="btn-filter-conexpo" class="filter-btn" onclick="applyFilter('conexpo')">Conexpo</button>
+            <div class="btn-group" id="campaign-btn-group">
+                <button id="btn-filter-all" class="filter-btn" onclick="toggleFilter('all')">Geral</button>
+                <button id="btn-filter-aon" class="filter-btn" onclick="toggleFilter('aon')">AON 26</button>
+                <button id="btn-filter-aon25" class="filter-btn" onclick="toggleFilter('aon25')">2025</button>
+                <button id="btn-filter-expoagro" class="filter-btn" onclick="toggleFilter('expoagro')">Expoagro</button>
+                <button id="btn-filter-expertconnect" class="filter-btn" onclick="toggleFilter('expertconnect')">ExpertConnect</button>
+                <button id="btn-filter-conexpo" class="filter-btn" onclick="toggleFilter('conexpo')">Conexpo</button>
             </div>
+            <button class="btn-clear" id="btn-clear-filters" onclick="clearAllFilters()" style="border-radius:99px; padding:8px 14px; font-size:11px; font-weight:700; letter-spacing:0.5px;">✕ Limpar Filtros</button>
 
             <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.1);"></div>
 
@@ -558,7 +560,8 @@
         }
         
         document.addEventListener('DOMContentLoaded', () => {
-            CURRENT_FILTER = 'aon'; // Default genérico
+            CURRENT_FILTERS = new Set(['aon']);
+            CURRENT_FILTER = 'aon'; // Default
             const inputField = document.getElementById('pass-input');
             if (inputField) {
                 inputField.addEventListener('keypress', function (e) {
@@ -602,7 +605,8 @@
         let GLOBAL_ALL_DATA = {};
         let EXPOAGRO_EMAILS = new Set();
         let EXPOAGRO_PHONES = new Set();
-        let CURRENT_FILTER = 'aon';
+        let CURRENT_FILTERS = new Set(['aon']); // Agora multi-select
+        let CURRENT_FILTER = 'aon'; // Mantido para compatibilidade interna
         let CURRENT_COUNTRY_FILTER = null;
         let CURRENT_START_DATE = null;
         let CURRENT_END_DATE = null;
@@ -1145,12 +1149,44 @@
             applyFilter(CURRENT_FILTER);
         }
 
+        function toggleFilter(filterType) {
+            // 'all' (Geral) é exclusivo — limpa tudo e ativa só ele
+            if (filterType === 'all') {
+                CURRENT_FILTERS = new Set(['all']);
+            } else {
+                // Remove 'all' se estava ativo
+                CURRENT_FILTERS.delete('all');
+                // Toggle o filtro clicado
+                if (CURRENT_FILTERS.has(filterType)) {
+                    CURRENT_FILTERS.delete(filterType);
+                    // Se ficou vazio, volta pro geral
+                    if (CURRENT_FILTERS.size === 0) CURRENT_FILTERS.add('all');
+                } else {
+                    CURRENT_FILTERS.add(filterType);
+                }
+            }
+            CURRENT_FILTER = [...CURRENT_FILTERS][0]; // Compatibilidade
+            applyFilter(CURRENT_FILTER);
+        }
+
+        function clearAllFilters() {
+            CURRENT_FILTERS = new Set(['aon']);
+            CURRENT_FILTER = 'aon';
+            CURRENT_COUNTRY_FILTER = null;
+            clearDates();
+        }
+
         function applyFilter(filterType) {
+            // Sincroniza CURRENT_FILTERS com o filterType passado
+            if (!CURRENT_FILTERS || CURRENT_FILTERS.size === 0) CURRENT_FILTERS = new Set([filterType]);
             CURRENT_FILTER = filterType;
             
-            // UI Toggle Campaign Filter
+            // UI Toggle Campaign Filter — marca todos os ativos
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-filter-' + filterType).classList.add('active');
+            CURRENT_FILTERS.forEach(f => {
+                const btn = document.getElementById('btn-filter-' + f);
+                if (btn) btn.classList.add('active');
+            });
 
             // UI Toggle Country Filter
             document.querySelectorAll('.country-card').forEach(c => c.classList.remove('active'));
@@ -1251,46 +1287,56 @@
                             }
                         }
 
-                        // A única campanha que ignora Expoagro é a Conexpo (pois foi num dia específico e isolado nos USA).
-                        if (filterType === 'conexpo') {
-                            if (dealerName === 'Expoagro') return false; 
-                            if (country === 'AR' && isExpoLead) return false; 
-                            return isConexpo(lead.dateRaw);
-                        }
+                        // Helper: testa se um lead passa por UM tipo de filtro específico
+                        const passesFilter = (ft) => {
+                            const _ld   = parseDateAny(lead.dateRaw);
+                            const _isConexpoL = isConexpo(lead.dateRaw);
+                            const _isECL = isExpertConnect(lead);
+                            const _isDec2025plus = _ld && (_ld.getFullYear() > 2025 || (_ld.getFullYear() === 2025 && _ld.getMonth() >= 11));
 
-                        // FIX AON v8 — lógica unificada para os 3 países
-                        // Regras:
-                        //   Conexpo (19/03)           → FORA sempre
-                        //   Lead 2026 não-Conexpo      → DENTRO
-                        //   ExpertConnect (dez/2025+)  → DENTRO
-                        //   BR 2025 + AON? preenchido  → DENTRO
-                        //   Resto                      → FORA
-                        const _leadDate  = parseDateAny(lead.dateRaw);
-                        const _is2026    = _leadDate && _leadDate.getFullYear() >= 2026;
-                        const _isConexpo = isConexpo(lead.dateRaw);
-                        const _isEC      = isExpertConnect(lead);
+                            if (ft === 'all') return true;
 
-                        let isAonValid;
+                            if (ft === 'conexpo') {
+                                if (dealerName === 'Expoagro') return false;
+                                if (country === 'AR' && isExpoLead) return false;
+                                return _isConexpoL;
+                            }
 
-                        if (_isConexpo) {
-                            isAonValid = false; // Conexpo → campanha separada, fora de tudo
+                            if (ft === 'expoagro') return false; // Tratado acima no bloco expoagro
 
-                        } else if (_is2026 || _isEC) {
-                            isAonValid = true;  // 2026 ou ExpertConnect dez/2025+ → entra
+                            if (ft === 'expertconnect') {
+                                return _isECL && !_isConexpoL;
+                            }
 
-                        } else if (country === 'BR' && lead.hasAonCol) {
-                            // BR 2025: aceita se AON? preenchido
-                            const aon = (lead.aonRaw ?? '').toString().trim();
-                            isAonValid = aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#');
+                            if (ft === 'aon25') {
+                                if (_isConexpoL || _isECL) return false;
+                                if (country === 'BR' && lead.hasAonCol) {
+                                    const aon = (lead.aonRaw ?? '').toString().trim();
+                                    return aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#') && isUpToDec2025(lead.dateRaw);
+                                }
+                                return false;
+                            }
 
-                        } else {
-                            isAonValid = false; // AR/MX 2025 sem EC → fora do AON 26
-                        }
+                            if (ft === 'aon') {
+                                if (_isConexpoL || _isECL) return false;
+                                if (country === 'AR' || country === 'MX') return true;
+                                // BR
+                                const _aonFilled = lead.hasAonCol && (() => {
+                                    const aon = (lead.aonRaw ?? '').toString().trim();
+                                    return aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#');
+                                })();
+                                return _aonFilled || _isDec2025plus;
+                            }
 
-                        if (filterType === 'aon') return isAonValid;
-                        if (filterType === 'aon25') return isAonValid && isUpToDec2025(lead.dateRaw);
-                        
-                        return true; 
+                            return false;
+                        };
+
+                        // Lead passa se atender QUALQUER filtro ativo (OR logic)
+                        const activeFilters = [...CURRENT_FILTERS];
+                        if (!activeFilters.some(ft => passesFilter(ft))) return false;
+
+                        // Lógica de filtro migrada para passesFilter() acima (multi-select)
+                        return true; // Fallback — nunca deve chegar aqui 
                     });
 
                     // Count metrics baseadas rigidamente nas regras do Prompt Skill "jd-leads-analysis"
@@ -1555,7 +1601,7 @@
             try {
                 GLOBAL_ALL_DATA = {}; // limpa cache
                 await fetchAllData();
-                applyFilter(CURRENT_FILTER);
+                applyFilter([...CURRENT_FILTERS][0]);
                 
                 const now = new Date();
                 status.textContent = `Puxado com Sucesso às ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
