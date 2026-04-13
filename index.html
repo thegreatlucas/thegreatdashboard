@@ -1258,38 +1258,33 @@
                             return isConexpo(lead.dateRaw);
                         }
 
-                        let isAonValid = true;
-                        
-                        if (country === 'BR') {
-                            // FIX AON v7:
-                            // AON 26 = 2026 (direto) + 2025 com AON? preenchido + ExpertConnect (dez/2025+)
-                            // Conexpo (19/03) sempre fora — campanha separada
-                            const leadDate = parseDateAny(lead.dateRaw);
-                            const is2026 = leadDate && leadDate.getFullYear() >= 2026;
-                            const isConexpoLead = isConexpo(lead.dateRaw);
-                            const isEC = isExpertConnect(lead);
+                        // FIX AON v8 — lógica unificada para os 3 países
+                        // Regras:
+                        //   Conexpo (19/03)           → FORA sempre
+                        //   Lead 2026 não-Conexpo      → DENTRO
+                        //   ExpertConnect (dez/2025+)  → DENTRO
+                        //   BR 2025 + AON? preenchido  → DENTRO
+                        //   Resto                      → FORA
+                        const _leadDate  = parseDateAny(lead.dateRaw);
+                        const _is2026    = _leadDate && _leadDate.getFullYear() >= 2026;
+                        const _isConexpo = isConexpo(lead.dateRaw);
+                        const _isEC      = isExpertConnect(lead);
 
-                            if (isConexpoLead) {
-                                isAonValid = false; // Conexpo → campanha separada
-                            } else if (is2026 || isEC) {
-                                isAonValid = true; // 2026 ou ExpertConnect dez/2025+ → entra
-                            } else if (lead.hasAonCol) {
-                                // 2025 não-EC: exige AON? preenchido
-                                const aon = (lead.aonRaw ?? '').toString().trim();
-                                isAonValid = aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#');
-                            } else {
-                                isAonValid = false;
-                            }
-                        }
+                        let isAonValid;
 
-                        // AR e MX: ExpertConnect dez/2025+ também entra no AON 26
-                        if ((country === 'AR' || country === 'MX') && isExpertConnect(lead) && !isConexpo(lead.dateRaw)) {
-                            isAonValid = true;
-                        }
+                        if (_isConexpo) {
+                            isAonValid = false; // Conexpo → campanha separada, fora de tudo
 
-                        // Conexpo (19/03) é campanha separada — remove do AON independente do país
-                        if (isConexpo(lead.dateRaw)) {
-                            isAonValid = false;
+                        } else if (_is2026 || _isEC) {
+                            isAonValid = true;  // 2026 ou ExpertConnect dez/2025+ → entra
+
+                        } else if (country === 'BR' && lead.hasAonCol) {
+                            // BR 2025: aceita se AON? preenchido
+                            const aon = (lead.aonRaw ?? '').toString().trim();
+                            isAonValid = aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#');
+
+                        } else {
+                            isAonValid = false; // AR/MX 2025 sem EC → fora do AON 26
                         }
 
                         if (filterType === 'aon') return isAonValid;
