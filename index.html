@@ -541,10 +541,26 @@
     </div>
 
     <script>
+        // --- GLOBAL STATE & CONFIG ---
+        let GLOBAL_ALL_DATA = {};
+        let GLOBAL_FILTERED_LEADS = {};
+        let EXPOAGRO_EMAILS = new Set();
+        let EXPOAGRO_PHONES = new Set();
+        let CURRENT_FILTERS = new Set(['aon']);
+        let CURRENT_FILTER = 'aon';
+        let CURRENT_COUNTRY_FILTER = null;
+        let CURRENT_START_DATE = null;
+        let CURRENT_END_DATE = null;
+        let GENERAL_LEADS_DATA = { BR: [], AR: [], MX: [] };
+        
+        const COUNTRY_NAMES = { BR: 'Brasil', AR: 'Argentina', MX: 'México' };
+        
         // Sistema Baseado de Sessão (Auth Layer)
         function checkPassword() {
-            const pass = document.getElementById('pass-input').value;
-            if (pass === 'jdc123' || pass === 'JDC123' || pass === 'johndeere26') {
+            const passField = document.getElementById('pass-input');
+            const pass = passField.value.trim().toLowerCase();
+            
+            if (pass === 'jdc123' || pass === 'johndeere26') {
                 localStorage.setItem('jd_auth', 'true');
                 document.getElementById('auth-screen').style.opacity = '0';
                 setTimeout(() => {
@@ -555,6 +571,8 @@
                 const err = document.getElementById('auth-error');
                 err.style.display = 'block';
                 setTimeout(() => err.style.display = 'none', 2500);
+                passField.value = '';
+                passField.focus();
             }
         }
         
@@ -602,18 +620,6 @@
             'AR': 'https://flagcdn.com/ar.svg', 
             'MX': 'https://flagcdn.com/mx.svg'
         };
-        const COUNTRY_NAMES = { 'BR': 'Brasil', 'AR': 'Argentina', 'MX': 'México' };
-
-        // GLOBAL CACHE DE DADOS
-        let GLOBAL_ALL_DATA = {};
-        let EXPOAGRO_EMAILS = new Set();
-        let EXPOAGRO_PHONES = new Set();
-        let CURRENT_FILTERS = new Set(['aon']); // Agora multi-select
-        let CURRENT_FILTER = 'aon'; // Mantido para compatibilidade interna
-        let CURRENT_COUNTRY_FILTER = null;
-        let CURRENT_START_DATE = null;
-        let CURRENT_END_DATE = null;
-        let GLOBAL_FILTERED_LEADS = {};
 
         function normalizeString(str) {
             if (!str) return "";
@@ -1191,7 +1197,6 @@
         }
 
         // Leads das planilhas gerais (BR, AR, MX)
-        let GENERAL_LEADS_DATA = { BR: [], AR: [], MX: [] };
 
         function applyFilter(filterType) {
             // Sincroniza CURRENT_FILTERS com o filterType passado
