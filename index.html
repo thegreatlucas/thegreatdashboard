@@ -614,6 +614,8 @@
         // Arquitetura v2: planilha geral como fonte de verdade AON
         const GENERAL_SHEET_ID = '1D4PxV6UzK4YOPAHBGUGjRb15I9UVf8jUlAg4yjRXppY';
         const GENERAL_GIDS = { 'BR': '356962129', 'AR': '0', 'MX': '2048582454' };
+        // Armazena todos os leads da planilha geral por país
+        let GENERAL_AON_DATA = { BR: [], AR: [], MX: [] };
         let GENERAL_AON_EMAILS = { BR: new Set(), AR: new Set(), MX: new Set() };
 
         function getEmailFromGeneralRow(row) {
@@ -646,13 +648,14 @@
                     }
                     const rows = Papa.parse(csvText, { header: true, skipEmptyLines: true }).data;
                     GENERAL_AON_EMAILS[c].clear();
+                    GENERAL_AON_DATA[c] = [];
                     rows.forEach(r => {
                         const camp = normalizeString(r['campaign_name'] || '');
                         const email = getEmailFromGeneralRow(r);
                         const phone = normalizeString(r['phone_number'] || '');
                         if (email && email !== 'nan') {
                             GENERAL_AON_EMAILS[c].add(email);
-                            // Captura e-mails Expoagro para deduplicação
+                            GENERAL_AON_DATA[c].push({ email, phone, country: c, dateRaw: normalizeString(r['Data do Lead'] || r['created_time'] || '') });
                             if (camp.includes('expo')) {
                                 EXPOAGRO_EMAILS.add(email);
                                 if (phone) EXPOAGRO_PHONES.add(phone);
@@ -1576,6 +1579,35 @@
                     `;
                     dealerGrid.appendChild(card);
                 }
+            }
+
+            // === ORPHAN LEADS: da geral mas não encontrados em nenhum dealer ===
+            // Construir set de e-mails já contabilizados pelos dealers
+            const dealerEmailsSeen = new Set();
+            for (const dn in GLOBAL_FILTERED_LEADS) {
+                GLOBAL_FILTERED_LEADS[dn].forEach(ld => {
+                    if (ld.email && ld.email !== 'nan') dealerEmailsSeen.add(ld.email);
+                });
+            }
+
+            const activeFilters = [...CURRENT_FILTERS];
+            if (activeFilters.some(ft => ft === 'aon' || ft === 'all')) {
+                ['BR', 'AR', 'MX'].forEach(c => {
+                    if (CURRENT_COUNTRY_FILTER && c !== CURRENT_COUNTRY_FILTER) return;
+                    (GENERAL_AON_DATA[c] || []).forEach(gLead => {
+                        if (!gLead.email || dealerEmailsSeen.has(gLead.email)) return;
+                        // Filtro de data se ativo
+                        if (CURRENT_START_DATE || CURRENT_END_DATE) {
+                            const ld = parseDateAny(gLead.dateRaw);
+                            if (!ld) return;
+                            if (CURRENT_START_DATE && ld < CURRENT_START_DATE) return;
+                            if (CURRENT_END_DATE && ld > CURRENT_END_DATE) return;
+                        }
+                        // Contabiliza como lead sem status (aguardando dealer)
+                        m.total++;
+                        cMetrics[c].total++;
+                    });
+                });
             }
 
             // Update DOM headers
