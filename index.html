@@ -613,14 +613,15 @@
 
         // Arquitetura v2: planilha geral como fonte de verdade AON
         const GENERAL_SHEET_ID = '1D4PxV6UzK4YOPAHBGUGjRb15I9UVf8jUlAg4yjRXppY';
-        const GENERAL_GIDS = { 'BR': '975982445', 'AR': '0', 'MX': '2048582454' };
+        // Usar sheet name no export — mais robusto que gid
+        const GENERAL_SHEET_NAMES = { 'BR': 'Brasil', 'AR': 'Argentina', 'MX': 'México' };
         let GENERAL_AON_EMAILS = { BR: new Set(), AR: new Set(), MX: new Set() };
 
         function getEmailFromGeneralRow(row) {
             const keys = Object.keys(row);
             const emailKey = keys.find(k => {
                 const n = normalizeString(k);
-                return n === 'email' || n === 'correo electronico' || n === 'correo_electronico' || n.includes('e-mail');
+                return n === 'email' || n.includes('correo') || n.includes('e-mail') || n === 'correo electronico';
             });
             return emailKey ? normalizeString(row[emailKey]) : '';
         }
@@ -634,7 +635,8 @@
         async function loadGeneralSheets() {
             await Promise.all(['BR', 'AR', 'MX'].map(async (c) => {
                 try {
-                    const rawUrl = `https://docs.google.com/spreadsheets/d/${GENERAL_SHEET_ID}/export?format=csv&gid=${GENERAL_GIDS[c]}&_t=${Date.now()}`;
+                    const sheetName = encodeURIComponent(GENERAL_SHEET_NAMES[c]);
+                    const rawUrl = `https://docs.google.com/spreadsheets/d/${GENERAL_SHEET_ID}/export?format=csv&sheet=${sheetName}&_t=${Date.now()}`;
                     let csvText;
                     try {
                         csvText = await fetchWithProxyFallback(rawUrl);
