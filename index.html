@@ -1318,14 +1318,17 @@
                              if (filterType === 'conexpo') return false; 
                              return !matchedExpoEmails.has(lead.email); 
                         });
-                        filtered.forEach(ld => {
-                            m.total++;
-                            if (ld.status === 'qualificado') m.qual++;
-                            const isNeg = ld.postStatus.includes('negocia') || ld.postStatus.includes('se envia propuesta') || ld.postStatus.includes('venta sujeta a obra') || ld.status.includes('cotizando obra');
-                            if (isNeg) m.neg++;
-                            if (ld.postStatus === 'sem intenção de compra') m.noInt++;
-                            if (ld.postStatus.includes('parou')) m.stopped++;
-                        });
+                        // Expoagro é sempre AR
+                        if (!CURRENT_COUNTRY_FILTER || CURRENT_COUNTRY_FILTER === 'AR') {
+                            filtered.forEach(ld => {
+                                m.total++;
+                                if (ld.status === 'qualificado') m.qual++;
+                                const isNeg = ld.postStatus.includes('negocia') || ld.postStatus.includes('se envia propuesta') || ld.postStatus.includes('venta sujeta a obra') || ld.status.includes('cotizando obra');
+                                if (isNeg) m.neg++;
+                                if (ld.postStatus === 'sem intenção de compra') m.noInt++;
+                                if (ld.postStatus.includes('parou')) m.stopped++;
+                            });
+                        }
                     }
                     continue; 
                 }
@@ -1491,10 +1494,12 @@
                         }
                     });
 
-                    // Aggregate
-                    m.total += dt.total; m.qual += dt.qual; m.neg += dt.neg; m.noInt += dt.noInt; m.stopped += dt.stop;
+                    // Aggregate — m reflete o país filtrado (ou todos se sem filtro)
                     cMetrics[country].total += dt.total; cMetrics[country].dealers += 1;
                     cMetrics[country].stopped += dt.stop; cMetrics[country].qual += dt.qual; cMetrics[country].neg += dt.neg;
+                    if (!CURRENT_COUNTRY_FILTER || CURRENT_COUNTRY_FILTER === country) {
+                        m.total += dt.total; m.qual += dt.qual; m.neg += dt.neg; m.noInt += dt.noInt; m.stopped += dt.stop;
+                    }
 
                     // Ocultador solicitado pelo usuário:
                     // Se o distribuidor não tem NENHUM lead após os filtros calculados da vez, pula a montagem da UI
