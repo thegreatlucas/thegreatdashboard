@@ -613,8 +613,7 @@
 
         // Arquitetura v2: planilha geral como fonte de verdade AON
         const GENERAL_SHEET_ID = '1D4PxV6UzK4YOPAHBGUGjRb15I9UVf8jUlAg4yjRXppY';
-        // Usar sheet name no export — mais robusto que gid
-        const GENERAL_SHEET_NAMES = { 'BR': 'Brasil', 'AR': 'Argentina', 'MX': 'México' };
+        const GENERAL_GIDS = { 'BR': '356962129', 'AR': '0', 'MX': '2048582454' };
         let GENERAL_AON_EMAILS = { BR: new Set(), AR: new Set(), MX: new Set() };
 
         function getEmailFromGeneralRow(row) {
@@ -635,8 +634,7 @@
         async function loadGeneralSheets() {
             await Promise.all(['BR', 'AR', 'MX'].map(async (c) => {
                 try {
-                    const sheetName = encodeURIComponent(GENERAL_SHEET_NAMES[c]);
-                    const rawUrl = `https://docs.google.com/spreadsheets/d/${GENERAL_SHEET_ID}/export?format=csv&sheet=${sheetName}&_t=${Date.now()}`;
+                    const rawUrl = `https://docs.google.com/spreadsheets/d/${GENERAL_SHEET_ID}/export?format=csv&gid=${GENERAL_GIDS[c]}&_t=${Date.now()}`;
                     let csvText;
                     try {
                         csvText = await fetchWithProxyFallback(rawUrl);
