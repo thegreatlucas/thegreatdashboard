@@ -1164,7 +1164,34 @@
                 });
             });
 
-            return leadsObjArr;
+            // Deduplicação por e-mail dentro da mesma planilha de dealer
+            // Mantém o lead com status mais avançado (ex: Qualificado > Aguardando)
+            const statusPriority = (s) => {
+                const v = (s || '').toLowerCase();
+                if (v.includes('qualificado') || v.includes('calificado')) return 3;
+                if (v.includes('negociac') || v.includes('propuesta') || v.includes('cotizando')) return 2;
+                if (v.includes('aguardando') || v.includes('esperando') || v.includes('contactado')) return 1;
+                return 0;
+            };
+            const seenEmails = new Map();
+            const dedupedLeads = [];
+            leadsObjArr.forEach(ld => {
+                if (!ld.email || ld.email === 'nan' || ld.email === '') {
+                    dedupedLeads.push(ld); // sem e-mail: não deduplica
+                    return;
+                }
+                if (!seenEmails.has(ld.email)) {
+                    seenEmails.set(ld.email, dedupedLeads.length);
+                    dedupedLeads.push(ld);
+                } else {
+                    // Já visto: mantém o de status mais alto
+                    const existingIdx = seenEmails.get(ld.email);
+                    if (statusPriority(ld.status) > statusPriority(dedupedLeads[existingIdx].status)) {
+                        dedupedLeads[existingIdx] = ld;
+                    }
+                }
+            });
+            return dedupedLeads;
         }
 
         function setDateFilter() {
