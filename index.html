@@ -1314,9 +1314,9 @@
 
                             if (ft === 'aon') {
                                 if (_isEC || _isConexpo) return false;
-                                // AR e MX: todos os leads a partir da data mínima por país
-                                if (country === 'AR' || country === 'MX') return _afterStart;
-                                // BR: apenas AON? preenchido (o filtro de data não se aplica ao BR)
+                                // AR e MX: todos os leads sem restrição de data
+                                if (country === 'AR' || country === 'MX') return true;
+                                // BR: apenas AON? preenchido
                                 if (!lead.hasAonCol) return false;
                                 const aon = (lead.aonRaw ?? '').toString().trim();
                                 return aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#');
