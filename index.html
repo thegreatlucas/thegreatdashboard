@@ -185,6 +185,12 @@
         
         .dealer-error { color: var(--error); font-size: 13px; margin-top: 10px; padding: 10px; background: rgba(255, 82, 82, 0.1); border-radius: 4px; border: 1px solid rgba(255, 82, 82, 0.2); }
 
+        #auth-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.5s ease; }
+        #auth-screen input { padding: 18px; border-radius: 2px; border: 1px solid rgba(255,222,0,0.3); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 18px; width: 300px; text-align: center; font-family: 'Inter', sans-serif; transition: all 0.3s ease; }
+        #auth-screen input:focus { border-color: var(--accent); background: rgba(255,255,255,0.1); box-shadow: 0 0 20px rgba(255,222,0,0.2); }
+        
+        .auth-ok-btn { width:100%; background: var(--accent); color: #000; border: none; padding: 18px; font-weight: 800; font-size: 14px; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: background 0.2s; margin-top: 15px; }
+        .auth-ok-btn:hover { background: var(--accent-hover); }
 
         .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(15px); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; visibility: hidden; opacity: 0; transition: all 0.5s ease; }
         .loading-overlay.visible { visibility: visible; opacity: 1; }
@@ -263,10 +269,17 @@
     </style>
 </head>
 <body>
-    <div id="loading" class="loading-overlay">
-        <div class="spinner"></div>
-        <div class="loading-text">Sincronizando Dados</div>
-        <div class="loading-subtext">Isso pode levar alguns segundos devido aos filtros paralelos</div>
+
+    <!-- Access Control Security Layer (Front-End) -->
+    <div id="auth-screen">
+        <div style="position:absolute; top:0; left:0; width:100%; height:8px; background:repeating-linear-gradient(-45deg, var(--accent), var(--accent) 10px, #000 10px, #000 20px);"></div>
+        <h2 style="color:var(--accent); font-family:'Montserrat', sans-serif; font-size:64px; margin-bottom:5px; letter-spacing:4px; font-weight:800; text-transform:uppercase;">RESTRITO</h2>
+        <p style="color:var(--text-muted); margin-top:0; margin-bottom:40px; text-transform:uppercase; font-size:13px; font-weight:600; letter-spacing:2px;">Dashboard Corporativo · John Deere Construção</p>
+        <div style="display:flex; flex-direction:column; gap:15px; align-items:center;">
+            <input type="password" id="pass-input" placeholder="Senha Institucional">
+            <button onclick="checkPassword()" class="auth-ok-btn" style="width:100%; margin:0; padding:18px;">DESBLOQUEAR ACESSO</button>
+        </div>
+        <p id="auth-error" style="color:var(--error); margin-top:25px; font-size:13px; font-weight:800; display:none; letter-spacing:1px; text-transform:uppercase;">Acesso Negado. Tente novamente.</p>
     </div>
 
     <div class="dashboard-header">
@@ -528,24 +541,37 @@
     </div>
 
     <script>
-        // --- GLOBAL STATE & CONFIG ---
-        let GLOBAL_ALL_DATA = {};
-        let GLOBAL_FILTERED_LEADS = {};
-        let EXPOAGRO_EMAILS = new Set();
-        let EXPOAGRO_PHONES = new Set();
-        let CURRENT_FILTERS = new Set(['aon']);
-        let CURRENT_FILTER = 'aon';
-        let CURRENT_COUNTRY_FILTER = null;
-        let CURRENT_START_DATE = null;
-        let CURRENT_END_DATE = null;
-        let GENERAL_LEADS_DATA = { BR: [], AR: [], MX: [] };
-        
-        const COUNTRY_NAMES = { BR: 'Brasil', AR: 'Argentina', MX: 'México' };
+        // Sistema Baseado de Sessão (Auth Layer)
+        function checkPassword() {
+            const pass = document.getElementById('pass-input').value;
+            if (pass === 'jdc123' || pass === 'JDC123') {
+                sessionStorage.setItem('jd_auth', 'true');
+                document.getElementById('auth-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('auth-screen').style.display = 'none';
+                    // Apenas iniciação da rede APÓS autenticação. Impede vazamento do modal.
+                    refreshData();
+                }, 300);
+            } else {
+                const err = document.getElementById('auth-error');
+                err.style.display = 'block';
+                setTimeout(() => err.style.display = 'none', 2500);
+            }
+        }
         
         document.addEventListener('DOMContentLoaded', () => {
-            if (typeof CURRENT_FILTERS === 'undefined') CURRENT_FILTERS = new Set(['aon']);
-            if (typeof CURRENT_FILTER === 'undefined') CURRENT_FILTER = 'aon';
-            refreshData();
+            CURRENT_FILTERS = new Set(['aon']);
+            CURRENT_FILTER = 'aon'; // Default
+            const inputField = document.getElementById('pass-input');
+            if (inputField) {
+                inputField.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') checkPassword();
+                });
+            }
+            if (sessionStorage.getItem('jd_auth') === 'true') {
+                document.getElementById('auth-screen').style.display = 'none';
+                refreshData(); // Carrega automaticamente se a aba estava autorizada
+            }
         });
 
         const DEALERS_CONFIG = {
@@ -565,17 +591,26 @@
             "Maqro": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/1bFT6drlfD9jvBg7KsXXyJ7dNBb2jOw2_jcQYQMoyq0w/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Post-calificación" },
             "Dimasur": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/1OY7vHQD1nn7oTsCCvgWqvIofqf02sney3XEX00mhaGA/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Post-calificación" },
             "Dimanor": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/1Kvp3Ia-jhqQpDt4lNg2lprPr4_WeMaPRYU-_TdbL9uc/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Post-calificación" },
-            "Deltamaq (Inativo)": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1P2WyuYdnRkbuYFc7MHOdudp3NkqlR6jXI7EXaq822yY/edit?gid=975982445#gid=975982445", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
-            "Rota Oeste (Inativo)": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1Dh31ethvDDLlmZ6NeRvdk6Brr7kYh1UcNN8Saviu8ao/edit?gid=975982445#gid=975982445", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
-            "Etbsa (Inativo)": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/14duWKdvb5V4KoOyT3Tip0F9FmFr3Ow_ZTLyHHwZS3O0/edit?gid=975982445#gid=975982445", statusCol: "Status", postStatusCol: "Post-calificación" },
             "Expoagro": { country: "AR", sheetUrl: "https://docs.google.com/spreadsheets/d/1D4PxV6UzK4YOPAHBGUGjRb15I9UVf8jUlAg4yjRXppY/edit?gid=356962129", statusCol: "Status", postStatusCol: "Fase pós qualificação" }
         };
 
         const FLAGS = { 
             'BR': 'https://flagcdn.com/br.svg', 
             'AR': 'https://flagcdn.com/ar.svg', 
-            'MX': 'https://flagcdn.com/mx.svg'
+            'MX': 'https://flagcdn.com/mx.svg' 
         };
+        const COUNTRY_NAMES = { 'BR': 'Brasil', 'AR': 'Argentina', 'MX': 'México' };
+
+        // GLOBAL CACHE DE DADOS
+        let GLOBAL_ALL_DATA = {};
+        let EXPOAGRO_EMAILS = new Set();
+        let EXPOAGRO_PHONES = new Set();
+        let CURRENT_FILTERS = new Set(['aon']); // Agora multi-select
+        let CURRENT_FILTER = 'aon'; // Mantido para compatibilidade interna
+        let CURRENT_COUNTRY_FILTER = null;
+        let CURRENT_START_DATE = null;
+        let CURRENT_END_DATE = null;
+        let GLOBAL_FILTERED_LEADS = {};
 
         function normalizeString(str) {
             if (!str) return "";
@@ -731,76 +766,65 @@
             });
         }
 
-        // ID da planilha central (Lead Geral BR / AR / MX + Expoagro)
-        const GENERAL_SHEET_ID = '1D4PxV6UzK4YOPAHBGUGjRb15I9UVf8jUlAg4yjRXppY';
-        const GENERAL_GIDS = {
-            'BR': '356962129',
-            'AR': '0',
-            'MX': '2048582454'
-        };
-
-        async function loadGeneralSheetCSV(gid, cacheKey) {
-            const rawUrl = `https://docs.google.com/spreadsheets/d/${GENERAL_SHEET_ID}/export?format=csv&gid=${gid}&_t=${Date.now()}`;
-            let csvText;
+        async function loadExpoagroCentral() {
             try {
-                csvText = await fetchWithProxyFallback(rawUrl);
-                try { localStorage.setItem('cache_' + cacheKey, csvText); } catch(e) {}
-            } catch (err) {
-                const cached = localStorage.getItem('cache_' + cacheKey);
-                if (cached) {
-                    console.warn(`[OFFLINE] Proxy inoperante. Lendo ${cacheKey} do cache local.`);
-                    csvText = cached;
-                } else {
-                    throw err;
-                }
-            }
-            return Papa.parse(csvText, { header: true, skipEmptyLines: true }).data;
-        }
-
-        async function loadGeneralSheetsData() {
-            try {
-                const countries = ['BR', 'AR', 'MX'];
-                const fetchPromises = countries.map(async (c) => {
-                    try {
-                        const rows = await loadGeneralSheetCSV(GENERAL_GIDS[c], 'LeadGeral' + c);
-                        console.log(`[GERAL ${c}] Total rows: ${rows.length}`);
-                        
-                        GENERAL_LEADS_DATA[c] = rows.map(r => {
-                            const camp = normalizeString(r['campaign_name'] || r['Campaign_name'] || '');
-                            const email = normalizeString(r['email'] || r['Email'] || '');
-                            const phone = normalizeString(r['phone_number'] || r['Telefone'] || r['whatsapp'] || '');
-                            const date = normalizeString(r['created_time'] || r['Data do Lead'] || r['data'] || r['fecha'] || '');
-                            const status = normalizeString(r['Status'] || r['lead_status'] || '');
-                            
-                            // BR precisa filtrar campanha AON. AR/MX são 100% AON.
-                            const isAon = (c === 'BR') ? (camp.includes('aon') && !camp.includes('expo')) : true;
-                            const isExpo = camp.includes('expo');
-
-                            if (isExpo && c === 'BR') {
-                                if (email) EXPOAGRO_EMAILS.add(email);
-                                if (phone) EXPOAGRO_PHONES.add(phone);
-                            }
-
-                            return {
-                                email, phone, date, status, country: c, isAon, isExpo,
-                                machineRaw: r['que_tipo_de_maquina_john_deere_voce_tem_interesse?'] || r['que_tipo_de_máquina_john_deere_você_tem_interesse?'] || ''
-                            };
-                        });
-                    } catch (e) {
-                        console.error(`Falha ao carregar geral ${c}:`, e);
+                const rawUrl = `https://docs.google.com/spreadsheets/d/${expoId}/export?format=csv&gid=356962129&_t=${Date.now()}`;
+                
+                let csvText;
+                try {
+                    csvText = await fetchWithProxyFallback(rawUrl);
+                    // Sucesso: Persiste no banco de dados local do navegador
+                    try { localStorage.setItem('cache_Expoagro', csvText); } catch(e) {}
+                } catch (err) {
+                    // Blecaute na rede: Tenta reanimar o último cache local!
+                    const cached = localStorage.getItem('cache_Expoagro');
+                    if (cached) {
+                        console.warn("[OFFLINE] Servidores Proxy inoperantes. Lendo Expoagro da memória Cache local.");
+                        csvText = cached;
+                    } else {
+                        throw err; // Sem internet e sem cache
                     }
+                }
+                
+                const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+                const rows = parsed.data;
+                
+                console.log(`[EXPO] Total rows na aba: ${rows.length}`);
+
+                EXPOAGRO_EMAILS.clear();
+                EXPOAGRO_PHONES.clear();
+
+                // Filtrar apenas linhas com campaign_name contendo 'expo'
+                const expoRows = rows.filter(r => {
+                    const camp = normalizeString(r['campaign_name'] || r['Campaign_name'] || '');
+                    return camp.includes('expo');
                 });
 
-                await Promise.all(fetchPromises);
-                
-                // Expoagro virtual dealer leads (mantido por compatibilidade de filtro)
-                const expoLeads = GENERAL_LEADS_DATA.BR.filter(l => l.isExpo);
+                console.log(`[EXPO] Leads Expoagro encontrados: ${expoRows.length}`);
+
+                expoRows.forEach(r => {
+                    const email = normalizeString(r['email'] || r['Email'] || '');
+                    const phone = normalizeString(r['phone_number'] || r['Telefone'] || '');
+                    if (email) EXPOAGRO_EMAILS.add(email);
+                    if (phone) EXPOAGRO_PHONES.add(phone);
+                });
+
+                // Montar leads virtuais da Expoagro
+                const expoLeads = expoRows.map(r => ({
+                    status: normalizeString(r['Status'] || r['lead_status'] || ''),
+                    postStatus: normalizeString(r['Fase pós qualificação'] || r['Post-calificación'] || ''),
+                    aonRaw: '',
+                    hasAonCol: false,
+                    dateRaw: normalizeString(r['created_time'] || r['Data do Lead'] || ''),
+                    email: normalizeString(r['email'] || ''),
+                    phone: normalizeString(r['phone_number'] || '')
+                }));
+
                 GLOBAL_ALL_DATA["Expoagro"] = { leads: expoLeads, error: null };
-                
-                console.log(`[GERAL] Carregamento completo. BR AON: ${GENERAL_LEADS_DATA.BR.filter(l=>l.isAon).length}`);
 
             } catch (err) {
-                console.warn("[GERAL] Falha crítica nas planilhas gerais:", err);
+                console.warn("[EXPO] Falha ao carregar Expoagro:", err);
+                GLOBAL_ALL_DATA["Expoagro"] = { leads: [], error: err.message };
             }
         }
 
@@ -1152,8 +1176,6 @@
             clearDates();
         }
 
-        // Leads das planilhas gerais (BR, AR, MX)
-
         function applyFilter(filterType) {
             // Sincroniza CURRENT_FILTERS com o filterType passado
             if (!CURRENT_FILTERS || CURRENT_FILTERS.size === 0) CURRENT_FILTERS = new Set([filterType]);
@@ -1176,12 +1198,8 @@
                 document.getElementById('country-filter-indicator').style.display = 'none';
             }
 
-            let m = { total: 0, attended: 0, qual: 0, neg: 0, noInt: 0, stopped: 0 };
-            let cMetrics = { 
-                BR: { total: 0, attended: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 }, 
-                AR: { total: 0, attended: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 }, 
-                MX: { total: 0, attended: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 } 
-            };
+            let m = { total: 0, qual: 0, neg: 0, noInt: 0, stopped: 0 };
+            let cMetrics = { BR: { total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 }, AR: { total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 }, MX: { total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 } };
             let matchedExpoEmails = new Set();
             
             // Analytics Reservoirs
@@ -1189,88 +1207,155 @@
             let gProducts = {};
             let gLoss = {};
             GLOBAL_FILTERED_LEADS = {};
-            let uniqueLeadsGlobal = new Map(); 
-            const getUniqueKey = (ld) => (ld.email && ld.email !== 'nan') ? ld.email : (ld.phone || '');
 
             const dealerGrid = document.getElementById('dealer-grid');
             dealerGrid.innerHTML = '';
 
             for (const dealerName in DEALERS_CONFIG) {
                 const country = DEALERS_CONFIG[dealerName].country;
-                if (dealerName === 'Expoagro') continue;
+                
+                // Regra: Filtro por País (Apenas para o grid de baixo, conforme solicitado)
+                if (CURRENT_COUNTRY_FILTER && country !== CURRENT_COUNTRY_FILTER && dealerName !== 'Expoagro') {
+                    // Mas acumularemos os leads dela no total global m.total (que o usuário pediu para manter geral)
+                    // ... e o Expoagro também.
+                    // O loop original já processa as globais.
+                }
+
+                // Regra: Expoagro é frota virtual apenas para cálculo global. Não renderizar card nem contar como dealer.
+                if (dealerName === 'Expoagro') {
+                    // Mas acumulamos os leads dela no total global se o filtro permitir (já feito na lógica original de leads)
+                    // porém não queremos que incremente cMetrics[ARG].dealers nem gere card.
+                    const dData = GLOBAL_ALL_DATA[dealerName] || { leads: [] };
+                    if (!dData.error) {
+                        // Lógica de leads para Expoagro (apenas acumula em m.total/m.qual/etc, sem mexer em cMetrics.dealers)
+                        let filtered = dData.leads.filter(lead => {
+                             if (filterType === 'conexpo') return false; 
+                             return !matchedExpoEmails.has(lead.email); 
+                        });
+                        filtered.forEach(ld => {
+                            m.total++;
+                            if (ld.status === 'qualificado') m.qual++;
+                            const isNeg = ld.postStatus.includes('negocia') || ld.postStatus.includes('se envia propuesta') || ld.postStatus.includes('venta sujeta a obra') || ld.status.includes('cotizando obra');
+                            if (isNeg) m.neg++;
+                            if (ld.postStatus === 'sem intenção de compra') m.noInt++;
+                            if (ld.postStatus.includes('parou')) m.stopped++;
+                        });
+                    }
+                    continue; 
+                }
 
                 const dData = GLOBAL_ALL_DATA[dealerName] || { error: 'Sem dados', leads: [] };
+                
                 let filtered = [];
 
                 if (!dData.error) {
                     filtered = dData.leads.filter(lead => {
+                        // NOVO: Filtro de Período Cronológico
                         if (CURRENT_START_DATE || CURRENT_END_DATE) {
                             const leadDate = parseDateAny(lead.dateRaw);
                             if (leadDate) {
                                 if (CURRENT_START_DATE && leadDate < CURRENT_START_DATE) return false;
                                 if (CURRENT_END_DATE && leadDate > CURRENT_END_DATE) return false;
-                            } else return false;
+                            } else {
+                                // Se o lead não tem data e um filtro está ativo, por precaução ele é removido
+                                return false; 
+                            }
                         }
 
+                        // O Python exclui duplicadas SOMENTE por e-mail ("Cruzar por e-mail com os arquivos AR").
                         const isExpoLead = lead.email && EXPOAGRO_EMAILS.has(lead.email);
+                        
+                        // LÓGICA DE CRUZAMENTO EXPOAGRO:
+                        // Dealers AR têm o status atualizado. A frota virtual 'Expoagro' tem o status original (obsoleto).
+                        if (filterType === 'expoagro') {
+                            if (dealerName === 'Expoagro') {
+                                return !matchedExpoEmails.has(lead.email); // Retorna os leads que a Argentina não cobriu (Órfãos)
+                            }
+                            if (country === 'AR' && isExpoLead) {
+                                matchedExpoEmails.add(lead.email); // AR tem prioridade - Adere o Status Atualizado!
+                                return true;
+                            }
+                            return false;
+                        }
 
+                        if (filterType === 'all' || filterType === 'aon' || filterType === 'aon25') {
+                            if (dealerName === 'Expoagro') {
+                                return !matchedExpoEmails.has(lead.email); // Evita duplicar no volume Geral e campanhas globais
+                            }
+                            if (country === 'AR' && isExpoLead) {
+                                matchedExpoEmails.add(lead.email); 
+                            }
+                        }
+
+                        // Helper: testa se um lead passa por UM tipo de filtro específico
                         const passesFilter = (ft) => {
-                            const _ld = parseDateAny(lead.dateRaw);
+                            const _ld        = parseDateAny(lead.dateRaw);
                             const _isConexpo = isConexpo(lead.dateRaw);
-                            const _isEC = isExpertConnect(lead);
+                            const _isEC      = isExpertConnect(lead);
+                            const _dec2025plus = _ld && (_ld.getFullYear() > 2025 || (_ld.getFullYear() === 2025 && _ld.getMonth() >= 11));
 
-                            if (ft === 'all') return passesFilter('aon') || passesFilter('expertconnect') || passesFilter('conexpo') || isExpoLead;
+                            // Data mínima de início AON 26 por país
+                            const AON_START = { BR: new Date(2025, 10, 20), AR: new Date(2025, 10, 19), MX: new Date(2025, 10, 21) };
+                            const _afterStart = _ld && AON_START[country] && _ld >= AON_START[country];
+
+                            if (ft === 'all') return true;
                             if (ft === 'conexpo') return _isConexpo;
                             if (ft === 'expertconnect') return _isEC && !_isConexpo;
-                            if (ft === 'expoagro') return isExpoLead;
+                            if (ft === 'expoagro') return false;
 
-                            if (ft === 'aon' || ft === 'aon25') {
+                            if (ft === 'aon25') {
                                 if (_isEC || _isConexpo) return false;
-                                if (ft === 'aon25') return country === 'BR' && lead.hasAonCol && isUpToDec2025(lead.dateRaw) && lead.aonRaw !== '' && lead.aonRaw !== 'nan';
-                                
+                                if (country === 'BR' && lead.hasAonCol) {
+                                    const aon = (lead.aonRaw ?? '').toString().trim();
+                                    return aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#') && isUpToDec2025(lead.dateRaw);
+                                }
+                                return false;
+                            }
+
+                            if (ft === 'aon') {
+                                if (_isEC || _isConexpo) return false;
+                                if (!_afterStart) return false; // fora do período AON 26
                                 if (country === 'AR' || country === 'MX') return true;
+                                // BR: AON? preenchido OU dez/2025 em diante
                                 const _aonFilled = lead.hasAonCol && (() => {
                                     const aon = (lead.aonRaw ?? '').toString().trim();
                                     return aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#');
                                 })();
-                                return _aonFilled;
+                                return _aonFilled || _dec2025plus;
                             }
+
                             return false;
                         };
 
+                        // Lead passa se atender QUALQUER filtro ativo (OR logic)
                         const activeFilters = [...CURRENT_FILTERS];
-                        return activeFilters.some(ft => passesFilter(ft));
+                        if (!activeFilters.some(ft => passesFilter(ft))) return false;
+
+                        // Lógica de filtro migrada para passesFilter() acima (multi-select)
+                        return true; // Fallback — nunca deve chegar aqui 
                     });
 
-                    let dt = { total: 0, attended: 0, qual: 0, neg: 0, noInt: 0, stop: 0 };
+                    // Count metrics baseadas rigidamente nas regras do Prompt Skill "jd-leads-analysis"
+                    let dt = { total: 0, qual: 0, neg: 0, noInt: 0, stop: 0 };
                     filtered.forEach(ld => {
                         dt.total++;
-                        const st = normalizeString(ld.status);
-                        const ps = normalizeString(ld.postStatus);
-                        if (st !== '' || ps !== '') dt.attended++;
-                        if (st === 'qualificado') dt.qual++;
-                        const isNeg = ps.includes('negocia') || ps.includes('se envia propuesta') || ps.includes('venta sujeta a obra') || st.includes('cotizando obra');
+                        
+                        if (ld.status === 'qualificado') dt.qual++;
+                        
+                        const isNeg = ld.postStatus.includes('negocia') || 
+                                      ld.postStatus.includes('se envia propuesta') || 
+                                      ld.postStatus.includes('venta sujeta a obra') || 
+                                      ld.status.includes('cotizando obra');
+                                      
                         if (isNeg) dt.neg++;
-                        if (ps === 'sem intencao de compra' || ps.includes('sin intencion')) dt.noInt++;
-                        if (ps === 'parou de responder' || ps.includes('paro de responder')) dt.stop++;
+                        if (ld.postStatus === 'sem intenção de compra') dt.noInt++;
+                        if (ld.postStatus.includes('parou')) dt.stop++;
 
-                        // Global Deduplication Engine
-                        const key = getUniqueKey(ld);
-                        if (key) {
-                            if (!uniqueLeadsGlobal.has(key)) {
-                                uniqueLeadsGlobal.set(key, { ...ld, country, source: 'dealer' });
-                            } else {
-                                // Merge status: prioritize any attended status
-                                const existing = uniqueLeadsGlobal.get(key);
-                                if (!existing.status && st) {
-                                    existing.status = st;
-                                    existing.postStatus = ps;
-                                }
-                            }
-                        }
-
+                        // == NOVO: ANALYTICS AGGREGATION ==
+                        // Apenas acumula analytics se o dealer for do país selecionado (ou se nenhum país estiver selecionado)
                         const isTargetCountry = (!CURRENT_COUNTRY_FILTER || country === CURRENT_COUNTRY_FILTER);
                         if (isTargetCountry) {
+                            // 1. Timeline
                             if (ld.dateRaw) {
                                 const pDate = parseDateAny(ld.dateRaw);
                                 if (pDate) {
@@ -1278,36 +1363,58 @@
                                     gTimeline[yyyyMmDd] = (gTimeline[yyyyMmDd] || 0) + 1;
                                 }
                             }
+                            
+                            // 2. Products (Mesclando PT, ES e variações, e barrando lixo)
                             if (ld.machineRaw !== undefined && ld.machineRaw !== '') {
                                 let pStr = normalizeString(ld.machineRaw).toUpperCase();
-                                if (pStr.includes('NAO TENHO') || pStr.includes('OUTRA MARCA') || pStr.includes('JOHN DEERE')) pStr = ''; 
+                                
+                                // --- BARRICADA ANTI-LIXO (Ignora respostas de outras colunas que vazaram ou opções inúteis) ---
+                                if (pStr.includes('NAO TENHO') || pStr.includes('OUTRA MARCA') || pStr.includes('JOHN DEERE') || 
+                                    pStr.includes('INDEFINIDO') || pStr.includes('BUSCANDO') || pStr.includes('USAD') || 
+                                    pStr.includes('NOVAS')) {
+                                    pStr = ''; 
+                                }
+
+                                // --- TRADUTOR / UNIFICADOR LATAM ---
                                 if (pStr.includes('RETROESCAV') || pStr.includes('RETROEXCAV')) pStr = 'RETROESCAVADEIRA';
-                                else if (pStr.includes('MINI ESC') || pStr.includes('MINIESC')) pStr = 'MINIESCAVADEIRA';
+                                else if (pStr.includes('MINI ESC') || pStr.includes('MINIESC') || pStr.includes('MINI EXC')) pStr = 'MINIESCAVADEIRA';
                                 else if (pStr.includes('ESCAVA') || pStr.includes('EXCAVA')) pStr = 'ESCAVADEIRA';
-                                else if (pStr.includes('PÁ CARREG') || pStr.includes('CARGADOR')) pStr = 'PÁ-CARREGADEIRA';
-                                else if (pStr.includes('MOTONI')) pStr = 'MOTONIVELADORA';
-                                if (pStr.length > 2 && pStr !== 'NAN') gProducts[pStr] = (gProducts[pStr] || 0) + 1;
+                                else if (pStr.includes('MINI CAR') || pStr.includes('MINICAR') || pStr.includes('MINI CARG')) pStr = 'MINICARREGADEIRA';
+                                else if (pStr.includes('PA CARREG') || pStr.includes('CARGADOR') || pStr.includes('CARGA')) pStr = 'PÁ-CARREGADEIRA';
+                                else if (pStr.includes('MOTONI') || pStr.includes('NIVELA')) pStr = 'MOTONIVELADORA';
+                                else if (pStr.includes('TRATOR') || pStr.includes('TRACTOR')) pStr = 'TRATOR DE ESTEIRA';
+                                else if (pStr.includes('ROLO') || pStr.includes('COMPACTA')) pStr = 'ROLO COMPACTADOR';
+                                else if (pStr.includes('OUTROS') || pStr.includes('OTROS')) pStr = 'OUTROS';
+
+                                if (pStr.length > 2 && pStr !== 'NAN' && !pStr.includes('UNDEFINED')) {
+                                    gProducts[pStr] = (gProducts[pStr] || 0) + 1;
+                                }
                             }
-                            if (ps === 'sem intenção de compra' || ps.includes('parou')) {
+
+                            // 3. Loss Reasons (Apenas se não converteu)
+                            if (ld.postStatus === 'sem intenção de compra' || ld.postStatus.includes('parou')) {
                                 if (ld.lossRaw !== undefined && ld.lossRaw !== '' && ld.lossRaw !== 'nan') {
                                     let rStr = ld.lossRaw.toUpperCase();
-                                    if(rStr.includes('PREÇO') || rStr.includes('CARO')) rStr = 'PREÇO / VALOR EXTREMO';
-                                    else if(rStr.includes('CONCORREN')) rStr = 'PERDA PARA CONCORRÊNCIA';
+                                    // Clean up common generics to group better
+                                    if(rStr.includes('PREÇO') || rStr.includes('CARO') || rStr.includes('VALOR')) rStr = 'PREÇO / VALOR EXTREMO';
+                                    else if(rStr.includes('CONCORREN') || rStr.includes('CATERPILLAR') || rStr.includes('KOMATSU')) rStr = 'PERDA PARA CONCORRÊNCIA';
+                                    else if(rStr.includes('CURIO') || rStr.includes('SÓ QUERIA SABER') || rStr.includes('APENAS')) rStr = 'LEAD CURIOSO / ESPECULADOR';
+                                    else if(rStr.includes('ESTUDAN') || rStr.includes('ESCOLA') || rStr.includes('TCC')) rStr = 'ESTUDANTE / TRABALHO ACADÊMICO';
+                                    else if(rStr.includes('CRÉDITO') || rStr.includes('FINANCIA') || rStr.includes('REPROV') || rStr.includes('BANCO')) rStr = 'REPROVAÇÃO DE CRÉDITO';
+                                    else if(rStr.includes('PEÇA') || rStr.includes('MECÂNIC') || rStr.includes('OFICINA')) rStr = 'BUSCANDO PEÇAS / SERVIÇO';
+                                    else if(rStr.includes('USAD') || rStr.includes('SEMINOV')) rStr = 'BUSCANDO USADOS';
+                                    else if(rStr.length > 25) rStr = 'OUTROS MOTIVOS MISTOS'; 
+                                    
                                     gLoss[rStr] = (gLoss[rStr] || 0) + 1;
                                 }
                             }
                         }
                     });
 
-                    // Metrics per Card (keep dealer-specific count)
-                    cMetrics[country].dealers += 1;
-                    cMetrics[country].total_dealer_sum += dt.total; // purely informational
-
-                    if (dt.total === 0 || (CURRENT_COUNTRY_FILTER && country !== CURRENT_COUNTRY_FILTER)) continue;
-
-                    GLOBAL_FILTERED_LEADS[dealerName] = filtered; 
-                    const txQual = dt.total > 0 ? ((dt.qual / dt.total) * 100).toFixed(0) + '%' : '0%';
-                    const txAtend = dt.total > 0 ? ((dt.attended / dt.total) * 100).toFixed(0) + '%' : '0%';
+                    // Aggregate
+                    m.total += dt.total; m.qual += dt.qual; m.neg += dt.neg; m.noInt += dt.noInt; m.stopped += dt.stop;
+                    cMetrics[country].total += dt.total; cMetrics[country].dealers += 1;
+                    cMetrics[country].stopped += dt.stop; cMetrics[country].qual += dt.qual; cMetrics[country].neg += dt.neg;
 
                     // Ocultador solicitado pelo usuário:
                     // Se o distribuidor não tem NENHUM lead após os filtros calculados da vez, pula a montagem da UI
@@ -1326,7 +1433,8 @@
                     const txQualNum = dt.total > 0 ? (dt.qual / dt.total) * 100 : 0;
                     const txQual = txQualNum.toFixed(0) + '%';
                     
-                    const txAtendNum = dt.total > 0 ? (dt.attended / dt.total) * 100 : 0;
+                    const atendidos = dt.total - dt.stop;
+                    const txAtendNum = dt.total > 0 ? (atendidos / dt.total) * 100 : 0;
                     const txAtend = txAtendNum.toFixed(0) + '%';
 
                     // INDICADORES DE PERFORMANCE (Baseados no doc Mar/26)
@@ -1420,40 +1528,6 @@
                 }
             }
 
-            // ADD GENERAL SHEETS LEADS TO UNIQUE GLOBAL POOL
-            ['BR', 'AR', 'MX'].forEach(c => {
-                const activeFilters = [...CURRENT_FILTERS];
-                GENERAL_LEADS_DATA[c].forEach(ld => {
-                    if (CURRENT_FILTERS.has('all') || (CURRENT_FILTERS.has('aon') && ld.isAon) || (CURRENT_FILTERS.has('expoagro') && ld.isExpo)) {
-                        const key = getUniqueKey(ld);
-                        if (key && !uniqueLeadsGlobal.has(key)) {
-                            uniqueLeadsGlobal.set(key, { ...ld, source: 'orphan' });
-                        }
-                    }
-                });
-            });
-
-            // FINAL UNIQUE CALCULATION FOR GLOBAL CARDS
-            uniqueLeadsGlobal.forEach(ld => {
-                m.total++;
-                const st = normalizeString(ld.status);
-                const ps = normalizeString(ld.postStatus || ld.status); // General sheets only have 'Status'
-                if (st !== '' || ps !== '') m.attended++;
-                if (st === 'qualificado') m.qual++;
-                const isNeg = ps.includes('negocia') || ps.includes('se envia propuesta') || ps.includes('venta sujeta a obra');
-                if (isNeg) m.neg++;
-                if (ps === 'sem intencao de compra' || ps.includes('sin intencion')) m.noInt++;
-                if (ps === 'parou de responder' || ps.includes('paro de responder')) m.stopped++;
-
-                // Per Country Unique Count
-                cMetrics[ld.country].total++;
-                if (st !== '' || ps !== '') cMetrics[ld.country].attended++;
-                if (st === 'qualificado') cMetrics[ld.country].qual++;
-                if (isNeg) cMetrics[ld.country].neg++;
-            });
-
-            console.log(`[DEDUP] Unique Leads Total: ${uniqueLeadsGlobal.size} | Target benchmark: ~1072-1076`);
-
             // Update DOM headers
             document.getElementById('m-total').textContent = m.total;
             document.getElementById('m-qual').textContent = m.qual;
@@ -1461,7 +1535,8 @@
             document.getElementById('m-noint').textContent = m.noInt;
             document.getElementById('m-stop').textContent = m.stopped;
 
-            document.getElementById('m-txatend').textContent = m.total > 0 ? ((m.attended / m.total) * 100).toFixed(0) + '%' : '0%';
+            const globalAtendidos = m.total - m.stopped;
+            document.getElementById('m-txatend').textContent = m.total > 0 ? ((globalAtendidos / m.total) * 100).toFixed(0) + '%' : '0%';
 
             ['BR', 'AR', 'MX'].forEach(c => {
                 const cm = cMetrics[c];
@@ -1470,7 +1545,7 @@
                 document.getElementById(`c-${c}-qual`).textContent = cm.qual;
                 document.getElementById(`c-${c}-neg`).textContent = cm.neg;
                 document.getElementById(`c-${c}-neg-pct`).textContent = cm.qual > 0 ? ((cm.neg / cm.qual) * 100).toFixed(0) + '% dos QUALIF.' : '-';
-                document.getElementById(`c-${c}-txatend`).textContent = cm.total > 0 ? ((cm.attended / cm.total) * 100).toFixed(0) + '%' : '0%';
+                document.getElementById(`c-${c}-txatend`).textContent = cm.total > 0 ? (((cm.total - cm.stopped) / cm.total) * 100).toFixed(0) + '%' : '0%';
                 document.getElementById(`c-${c}-txqual`).textContent = cm.total > 0 ? ((cm.qual / cm.total) * 100).toFixed(0) + '%' : '0%';
             });
 
@@ -1505,8 +1580,8 @@
             // Busca todos os dealers em paralelo, sem delay artificial
             await Promise.all(dealerNames.map(fetchDealer));
 
-            // Expoagro/General fetch
-            await loadGeneralSheetsData();
+            // Expoagro fetch (não é obrigatório sucesso de 100% pra parar tela)
+            await loadExpoagroCentral();
         }
 
         async function refreshData() {
@@ -1718,7 +1793,6 @@
 
             document.getElementById('dealer-profile-modal').classList.add('active');
         }
-
     </script>
 </body>
 </html>
