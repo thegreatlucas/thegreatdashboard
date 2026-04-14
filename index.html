@@ -1314,14 +1314,12 @@
 
                             if (ft === 'aon') {
                                 if (_isEC || _isConexpo) return false;
-                                if (!_afterStart) return false; // fora do período AON 26
-                                if (country === 'AR' || country === 'MX') return true;
-                                // BR: AON? preenchido OU dez/2025 em diante
-                                const _aonFilled = lead.hasAonCol && (() => {
-                                    const aon = (lead.aonRaw ?? '').toString().trim();
-                                    return aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#');
-                                })();
-                                return _aonFilled || _dec2025plus;
+                                // AR e MX: todos os leads a partir da data mínima por país
+                                if (country === 'AR' || country === 'MX') return _afterStart;
+                                // BR: apenas AON? preenchido (o filtro de data não se aplica ao BR)
+                                if (!lead.hasAonCol) return false;
+                                const aon = (lead.aonRaw ?? '').toString().trim();
+                                return aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#');
                             }
 
                             return false;
