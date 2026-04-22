@@ -1407,8 +1407,11 @@
 
                             if (ft === 'aon') {
                                 if (_isEC || _isConexpo) return false;
-                                // AON = lead está na planilha geral do país (cruzamento por e-mail)
-                                return isAonLead(lead, country);
+                                // Primário: cruzamento por e-mail com a planilha geral
+                                if (isAonLead(lead, country)) return true;
+                                // Fallback para AR/MX: leads sem e-mail contam pela data de início do AON
+                                if ((country === 'AR' || country === 'MX') && !lead.email && _afterStart) return true;
+                                return false;
                             }
 
                             return false;
