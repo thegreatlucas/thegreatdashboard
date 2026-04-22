@@ -622,7 +622,7 @@
             const keys = Object.keys(row);
             const emailKey = keys.find(k => {
                 const n = normalizeString(k);
-                return n === 'email' || n.includes('correo') || n.includes('e-mail') || n === 'correo electronico';
+                return n.includes('mail') || n.includes('correo');
             });
             return emailKey ? normalizeString(row[emailKey]) : '';
         }
@@ -1315,7 +1315,7 @@
                     if (!dData.error) {
                         // Lógica de leads para Expoagro (apenas acumula em m.total/m.qual/etc, sem mexer em cMetrics.dealers)
                         let filtered = dData.leads.filter(lead => {
-                             if (filterType === 'conexpo') return false; 
+                             if (CURRENT_FILTERS.has('conexpo') && !CURRENT_FILTERS.has('expoagro') && !CURRENT_FILTERS.has('aon') && !CURRENT_FILTERS.has('all')) return false;
                              return !matchedExpoEmails.has(lead.email); 
                         });
                         // Expoagro é sempre AR
@@ -1356,7 +1356,11 @@
                         
                         // LÓGICA DE CRUZAMENTO EXPOAGRO:
                         // Dealers AR têm o status atualizado. A frota virtual 'Expoagro' tem o status original (obsoleto).
-                        if (filterType === 'expoagro') {
+                        const _onlyExpoagro = CURRENT_FILTERS.has('expoagro') && CURRENT_FILTERS.size === 1;
+                        const _hasAonish = [...CURRENT_FILTERS].some(ft => ft === 'all' || ft === 'aon' || ft === 'aon25');
+                        const _hasExpoagro = CURRENT_FILTERS.has('expoagro');
+
+                        if (_onlyExpoagro) {
                             if (dealerName === 'Expoagro') {
                                 return !matchedExpoEmails.has(lead.email); // Retorna os leads que a Argentina não cobriu (Órfãos)
                             }
@@ -1367,12 +1371,12 @@
                             return false;
                         }
 
-                        if (filterType === 'all' || filterType === 'aon' || filterType === 'aon25') {
+                        if (_hasAonish || _hasExpoagro) {
                             if (dealerName === 'Expoagro') {
                                 return !matchedExpoEmails.has(lead.email); // Evita duplicar no volume Geral e campanhas globais
                             }
                             if (country === 'AR' && isExpoLead) {
-                                matchedExpoEmails.add(lead.email); 
+                                matchedExpoEmails.add(lead.email);
                             }
                         }
 
