@@ -304,6 +304,7 @@
                 <button id="btn-filter-expoagro" class="filter-btn" onclick="toggleFilter('expoagro')">Expoagro</button>
                 <button id="btn-filter-expertconnect" class="filter-btn" onclick="toggleFilter('expertconnect')">ExpertConnect</button>
                 <button id="btn-filter-conexpo" class="filter-btn" onclick="toggleFilter('conexpo')">Conexpo</button>
+                <button id="btn-filter-olx" class="filter-btn" onclick="toggleFilter('olx')">OLX</button>
             </div>
             <button class="btn-clear" id="btn-clear-filters" onclick="clearAllFilters()" style="border-radius:99px; padding:8px 14px; font-size:11px; font-weight:700; letter-spacing:0.5px;">✕ Limpar Filtros</button>
 
@@ -768,6 +769,10 @@
         // Critério: "Tem maquinaria?" (fleetRaw) E "Setor/Negócio" (applicationRaw) ambos vazios.
         // Esses dois campos juntos nunca ficam vazios num lead Meta legítimo.
         // Requisito adicional: data >= dez/2025 (ou sem data).
+        function isOlxLead(lead) {
+            return !!(lead.rawAll && lead.rawAll.includes('olx'));
+        }
+
         function isExpertConnect(lead) {
             const isEmpty = (v) => !v || v.trim() === '' || v.trim().toLowerCase() === 'nan';
             
@@ -1014,7 +1019,8 @@
                     email: format(safeVal(row, emailIdx)),
                     phone: format(safeVal(row, phoneIdx)),
                     machineRaw: format(safeVal(row, machineIdx)),
-                    lossRaw: format(safeVal(row, lossIdx))
+                    lossRaw: format(safeVal(row, lossIdx)),
+                    rawAll: (row.c || []).map(cell => normalizeString(cell ? (cell.f || cell.v || '') : '')).join(' ')
                 });
             });
 
@@ -1160,7 +1166,8 @@
                     conditionRaw: conditionKey ? normalizeString(row[conditionKey]) : '',
                     applicationRaw: applicationKey ? normalizeString(row[applicationKey]) : '',
                     timeframeRaw: timeframeKey ? normalizeString(row[timeframeKey]) : '',
-                    paymentRaw: paymentKey ? normalizeString(row[paymentKey]) : ''
+                    paymentRaw: paymentKey ? normalizeString(row[paymentKey]) : '',
+                    rawAll: Object.values(row).map(v => normalizeString(v)).join(' ')
                 });
             });
 
@@ -1385,16 +1392,18 @@
                             const _ld        = parseDateAny(lead.dateRaw);
                             const _isConexpo = isConexpo(lead.dateRaw);
                             const _isEC      = isExpertConnect(lead);
+                            const _isOlx     = isOlxLead(lead);
                             const _dec2025plus = _ld && (_ld.getFullYear() > 2025 || (_ld.getFullYear() === 2025 && _ld.getMonth() >= 11));
 
                             // Data mínima de início AON 26 por país
                             const AON_START = { BR: new Date(2025, 10, 20), AR: new Date(2025, 10, 19), MX: new Date(2025, 10, 21) };
                             const _afterStart = _ld && AON_START[country] && _ld >= AON_START[country];
 
-                            if (ft === 'all') return isAonLead(lead, country) || _isEC || _isConexpo || isExpoLead;
+                            if (ft === 'all') return isAonLead(lead, country) || _isEC || _isConexpo || isExpoLead || _isOlx;
                             if (ft === 'conexpo') return _isConexpo;
                             if (ft === 'expertconnect') return _isEC && !_isConexpo;
                             if (ft === 'expoagro') return isExpoLead;
+                            if (ft === 'olx') return _isOlx;
 
                             if (ft === 'aon25') {
                                 if (_isEC || _isConexpo) return false;
