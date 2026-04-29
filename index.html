@@ -1068,12 +1068,13 @@
                 // Encontrar colunas de forma case-insensitive
                 const keys = Object.keys(row);
                 const findCol = (name) => {
-                    const norm = normalizeString(name);
-                    // Exact match first; fallback: coluna que contenha as palavras-chave principais
-                    let key = keys.find(k => normalizeString(k) === norm);
+                    // Normaliza hífens como espaços para tolerar variações como
+                    // "Post-calificación" vs "Post calificación"
+                    const norm = normalizeString(name).replace(/-/g, ' ');
+                    let key = keys.find(k => normalizeString(k).replace(/-/g, ' ') === norm);
                     if (!key) {
                         const words = norm.split(' ').filter(w => w.length > 3);
-                        key = keys.find(k => words.every(w => normalizeString(k).includes(w)));
+                        key = keys.find(k => words.every(w => normalizeString(k).replace(/-/g, ' ').includes(w)));
                     }
                     return key ? normalizeString(row[key]) : '';
                 };
