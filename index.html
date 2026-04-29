@@ -1069,7 +1069,12 @@
                 const keys = Object.keys(row);
                 const findCol = (name) => {
                     const norm = normalizeString(name);
-                    const key = keys.find(k => normalizeString(k) === norm);
+                    // Exact match first; fallback: coluna que contenha as palavras-chave principais
+                    let key = keys.find(k => normalizeString(k) === norm);
+                    if (!key) {
+                        const words = norm.split(' ').filter(w => w.length > 3);
+                        key = keys.find(k => words.every(w => normalizeString(k).includes(w)));
+                    }
                     return key ? normalizeString(row[key]) : '';
                 };
 
@@ -1535,7 +1540,8 @@
                     const txQualNum = dt.total > 0 ? (dt.qual / dt.total) * 100 : 0;
                     const txQual = txQualNum.toFixed(0) + '%';
                     
-                    const atendidos = dt.attended;
+                    // Se nenhum postStatus foi encontrado (coluna ausente/nome diferente), fallback para total - parou
+                    const atendidos = (dt.attended > 0 || dt.total === 0) ? dt.attended : (dt.total - dt.stop);
                     const txAtendNum = dt.total > 0 ? (atendidos / dt.total) * 100 : 0;
                     const txAtend = txAtendNum.toFixed(0) + '%';
 
