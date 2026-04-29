@@ -1404,7 +1404,7 @@
                                 ? (lead.hasAonCol && (v => v !== '' && v.toLowerCase() !== 'nan' && !v.startsWith('#'))((lead.aonRaw ?? '').toString().trim()))
                                 : !!_afterStart;
 
-                            if (ft === 'all') return !!_afterStart || _isEC || _isConexpo || isExpoLead || _isOlx;
+                            if (ft === 'all') return _isAonPeriod || _isEC || _isConexpo || isExpoLead || _isOlx;
                             if (ft === 'conexpo') return _isConexpo;
                             if (ft === 'expertconnect') return _isEC && !_isConexpo;
                             if (ft === 'expoagro') return isExpoLead;
