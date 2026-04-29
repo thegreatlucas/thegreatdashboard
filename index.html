@@ -304,7 +304,6 @@
                 <button id="btn-filter-expoagro" class="filter-btn" onclick="toggleFilter('expoagro')">Expoagro</button>
                 <button id="btn-filter-expertconnect" class="filter-btn" onclick="toggleFilter('expertconnect')">ExpertConnect</button>
                 <button id="btn-filter-conexpo" class="filter-btn" onclick="toggleFilter('conexpo')">Conexpo</button>
-                <button id="btn-filter-olx" class="filter-btn" onclick="toggleFilter('olx')">OLX</button>
             </div>
             <button class="btn-clear" id="btn-clear-filters" onclick="clearAllFilters()" style="border-radius:99px; padding:8px 14px; font-size:11px; font-weight:700; letter-spacing:0.5px;">✕ Limpar Filtros</button>
 
@@ -623,7 +622,7 @@
             const keys = Object.keys(row);
             const emailKey = keys.find(k => {
                 const n = normalizeString(k);
-                return n.includes('mail') || n.includes('correo');
+                return n === 'email' || n.includes('correo') || n.includes('e-mail') || n === 'correo electronico';
             });
             return emailKey ? normalizeString(row[emailKey]) : '';
         }
@@ -760,7 +759,8 @@
 
         function isConexpo(dateStr) {
             if(!dateStr) return false;
-            const cleanStr = dateStr.replace(/\s+/g, '');
+            const cleanStr = dateStr.replace(/\s+/g, ''); // Remove espaços
+            // Captura '19/03' ou 'Date(2026,2,19)' com tolerância máxima
             return cleanStr.includes('19/03') || cleanStr.includes('Date(2026,2,19)');
         }
 
@@ -768,10 +768,6 @@
         // Critério: "Tem maquinaria?" (fleetRaw) E "Setor/Negócio" (applicationRaw) ambos vazios.
         // Esses dois campos juntos nunca ficam vazios num lead Meta legítimo.
         // Requisito adicional: data >= dez/2025 (ou sem data).
-        function isOlxLead(lead) {
-            return !!(lead.rawAll && lead.rawAll.includes('olx'));
-        }
-
         function isExpertConnect(lead) {
             const isEmpty = (v) => !v || v.trim() === '' || v.trim().toLowerCase() === 'nan';
             
@@ -1018,8 +1014,7 @@
                     email: format(safeVal(row, emailIdx)),
                     phone: format(safeVal(row, phoneIdx)),
                     machineRaw: format(safeVal(row, machineIdx)),
-                    lossRaw: format(safeVal(row, lossIdx)),
-                    rawAll: (row.c || []).map(cell => normalizeString(cell ? (cell.f || cell.v || '') : '')).join(' ')
+                    lossRaw: format(safeVal(row, lossIdx))
                 });
             });
 
@@ -1165,8 +1160,7 @@
                     conditionRaw: conditionKey ? normalizeString(row[conditionKey]) : '',
                     applicationRaw: applicationKey ? normalizeString(row[applicationKey]) : '',
                     timeframeRaw: timeframeKey ? normalizeString(row[timeframeKey]) : '',
-                    paymentRaw: paymentKey ? normalizeString(row[paymentKey]) : '',
-                    rawAll: Object.values(row).map(v => normalizeString(v)).join(' ')
+                    paymentRaw: paymentKey ? normalizeString(row[paymentKey]) : ''
                 });
             });
 
@@ -1321,18 +1315,18 @@
                     if (!dData.error) {
                         // Lógica de leads para Expoagro (apenas acumula em m.total/m.qual/etc, sem mexer em cMetrics.dealers)
                         let filtered = dData.leads.filter(lead => {
-                             if (CURRENT_FILTERS.has('conexpo') && !CURRENT_FILTERS.has('expoagro') && !CURRENT_FILTERS.has('aon') && !CURRENT_FILTERS.has('all')) return false;
+                             if (filterType === 'conexpo') return false; 
                              return !matchedExpoEmails.has(lead.email); 
                         });
                         // Expoagro é sempre AR
                         if (!CURRENT_COUNTRY_FILTER || CURRENT_COUNTRY_FILTER === 'AR') {
                             filtered.forEach(ld => {
                                 m.total++;
+                                if (ld.status === 'qualificado') m.qual++;
                                 const isNeg = ld.postStatus.includes('negocia') || ld.postStatus.includes('se envia propuesta') || ld.postStatus.includes('venta sujeta a obra') || ld.status.includes('cotizando obra');
-                                if (ld.status === 'qualificado' || ld.status === 'calificado' || isNeg) m.qual++;
                                 if (isNeg) m.neg++;
-                                if (ld.postStatus === 'sem intenção de compra' || ld.postStatus.includes('sin intencion')) m.noInt++;
-                                if (ld.postStatus.includes('parou') || ld.postStatus.includes('paro') || ld.postStatus.includes('parado')) m.stopped++;
+                                if (ld.postStatus === 'sem intenção de compra') m.noInt++;
+                                if (ld.postStatus.includes('parou')) m.stopped++;
                             });
                         }
                     }
@@ -1362,11 +1356,7 @@
                         
                         // LÓGICA DE CRUZAMENTO EXPOAGRO:
                         // Dealers AR têm o status atualizado. A frota virtual 'Expoagro' tem o status original (obsoleto).
-                        const _onlyExpoagro = CURRENT_FILTERS.has('expoagro') && CURRENT_FILTERS.size === 1;
-                        const _hasAonish = [...CURRENT_FILTERS].some(ft => ft === 'all' || ft === 'aon' || ft === 'aon25');
-                        const _hasExpoagro = CURRENT_FILTERS.has('expoagro');
-
-                        if (_onlyExpoagro) {
+                        if (filterType === 'expoagro') {
                             if (dealerName === 'Expoagro') {
                                 return !matchedExpoEmails.has(lead.email); // Retorna os leads que a Argentina não cobriu (Órfãos)
                             }
@@ -1377,12 +1367,12 @@
                             return false;
                         }
 
-                        if (_hasAonish || _hasExpoagro) {
+                        if (filterType === 'all' || filterType === 'aon' || filterType === 'aon25') {
                             if (dealerName === 'Expoagro') {
                                 return !matchedExpoEmails.has(lead.email); // Evita duplicar no volume Geral e campanhas globais
                             }
                             if (country === 'AR' && isExpoLead) {
-                                matchedExpoEmails.add(lead.email);
+                                matchedExpoEmails.add(lead.email); 
                             }
                         }
 
@@ -1391,23 +1381,16 @@
                             const _ld        = parseDateAny(lead.dateRaw);
                             const _isConexpo = isConexpo(lead.dateRaw);
                             const _isEC      = isExpertConnect(lead);
-                            const _isOlx     = isOlxLead(lead);
                             const _dec2025plus = _ld && (_ld.getFullYear() > 2025 || (_ld.getFullYear() === 2025 && _ld.getMonth() >= 11));
 
                             // Data mínima de início AON 26 por país
                             const AON_START = { BR: new Date(2025, 10, 20), AR: new Date(2025, 10, 19), MX: new Date(2025, 10, 21) };
                             const _afterStart = _ld && AON_START[country] && _ld >= AON_START[country];
 
-                            // BR: coluna AON preenchida. AR/MX: data >= início do AON por país.
-                            const _isAonPeriod = country === 'BR'
-                                ? (lead.hasAonCol && (v => v !== '' && v.toLowerCase() !== 'nan' && !v.startsWith('#'))((lead.aonRaw ?? '').toString().trim()))
-                                : !!_afterStart;
-
-                            if (ft === 'all') return _isAonPeriod || _isEC || _isConexpo || isExpoLead || _isOlx;
+                            if (ft === 'all') return isAonLead(lead, country) || _isEC || _isConexpo || isExpoLead;
                             if (ft === 'conexpo') return _isConexpo;
                             if (ft === 'expertconnect') return _isEC && !_isConexpo;
                             if (ft === 'expoagro') return isExpoLead;
-                            if (ft === 'olx') return _isOlx;
 
                             if (ft === 'aon25') {
                                 if (_isEC || _isConexpo) return false;
@@ -1420,7 +1403,8 @@
 
                             if (ft === 'aon') {
                                 if (_isEC || _isConexpo) return false;
-                                return _isAonPeriod;
+                                // AON = lead está na planilha geral do país (cruzamento por e-mail)
+                                return isAonLead(lead, country);
                             }
 
                             return false;
@@ -1439,15 +1423,16 @@
                     filtered.forEach(ld => {
                         dt.total++;
                         
-                        const isNeg = ld.postStatus.includes('negocia') ||
-                                      ld.postStatus.includes('se envia propuesta') ||
-                                      ld.postStatus.includes('venta sujeta a obra') ||
+                        if (ld.status === 'qualificado') dt.qual++;
+                        
+                        const isNeg = ld.postStatus.includes('negocia') || 
+                                      ld.postStatus.includes('se envia propuesta') || 
+                                      ld.postStatus.includes('venta sujeta a obra') || 
                                       ld.status.includes('cotizando obra');
-
-                        if (ld.status === 'qualificado' || ld.status === 'calificado' || isNeg) dt.qual++;
+                                      
                         if (isNeg) dt.neg++;
-                        if (ld.postStatus === 'sem intenção de compra' || ld.postStatus.includes('sin intencion')) dt.noInt++;
-                        if (ld.postStatus.includes('parou') || ld.postStatus.includes('paro') || ld.postStatus.includes('parado')) dt.stop++;
+                        if (ld.postStatus === 'sem intenção de compra') dt.noInt++;
+                        if (ld.postStatus.includes('parou')) dt.stop++;
 
                         // == NOVO: ANALYTICS AGGREGATION ==
                         // Apenas acumula analytics se o dealer for do país selecionado (ou se nenhum país estiver selecionado)
