@@ -1399,7 +1399,12 @@
                             const AON_START = { BR: new Date(2025, 10, 20), AR: new Date(2025, 10, 19), MX: new Date(2025, 10, 21) };
                             const _afterStart = _ld && AON_START[country] && _ld >= AON_START[country];
 
-                            if (ft === 'all') return !!_afterStart || _isEC || _isConexpo || isExpoLead || _isOlx;
+                            // BR: coluna AON preenchida. AR/MX: data >= início do AON por país.
+                            const _isAonPeriod = country === 'BR'
+                                ? (lead.hasAonCol && (v => v !== '' && v.toLowerCase() !== 'nan' && !v.startsWith('#'))((lead.aonRaw ?? '').toString().trim()))
+                                : !!_afterStart;
+
+                            if (ft === 'all') return _isAonPeriod || _isEC || _isConexpo || isExpoLead || _isOlx;
                             if (ft === 'conexpo') return _isConexpo;
                             if (ft === 'expertconnect') return _isEC && !_isConexpo;
                             if (ft === 'expoagro') return isExpoLead;
@@ -1416,7 +1421,7 @@
 
                             if (ft === 'aon') {
                                 if (_isEC || _isConexpo) return false;
-                                return !!_afterStart;
+                                return _isAonPeriod;
                             }
 
                             return false;
