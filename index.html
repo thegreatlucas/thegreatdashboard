@@ -1291,8 +1291,8 @@
                 document.getElementById('country-filter-indicator').style.display = 'none';
             }
 
-            let m = { total: 0, qual: 0, neg: 0, noInt: 0, stopped: 0 };
-            let cMetrics = { BR: { total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 }, AR: { total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 }, MX: { total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0 } };
+            let m = { total: 0, qual: 0, neg: 0, noInt: 0, stopped: 0, attended: 0 };
+            let cMetrics = { BR: { total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0, attended: 0 }, AR: { total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0, attended: 0 }, MX: { total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0, attended: 0 } };
             let matchedExpoEmails = new Set();
             
             // Analytics Reservoirs
@@ -1435,7 +1435,7 @@
                     });
 
                     // Count metrics baseadas rigidamente nas regras do Prompt Skill "jd-leads-analysis"
-                    let dt = { total: 0, qual: 0, neg: 0, noInt: 0, stop: 0 };
+                    let dt = { total: 0, qual: 0, neg: 0, noInt: 0, stop: 0, attended: 0 };
                     filtered.forEach(ld => {
                         dt.total++;
                         
@@ -1449,6 +1449,7 @@
                         if (isNeg) dt.neg++;
                         if (ld.postStatus === 'sem intencao de compra' || ld.postStatus.includes('sin intencion')) dt.noInt++;
                         if (ld.postStatus.includes('parou') || ld.postStatus.includes('parado') || ld.postStatus === 'paro') dt.stop++;
+                        if (ld.postStatus && ld.postStatus !== '' && ld.postStatus !== 'nan') dt.attended++;
 
                         // == NOVO: ANALYTICS AGGREGATION ==
                         // Apenas acumula analytics se o dealer for do país selecionado (ou se nenhum país estiver selecionado)
@@ -1512,10 +1513,9 @@
 
                     // Aggregate — cMetrics e m refletem o filtro de campanha ativo
                     cMetrics[country].total += dt.total; cMetrics[country].dealers += 1;
-                    cMetrics[country].stopped += dt.stop; cMetrics[country].qual += dt.qual; cMetrics[country].neg += dt.neg;
-                    // m só agrega países que batem com filtro de país (ou todos se sem filtro)
+                    cMetrics[country].stopped += dt.stop; cMetrics[country].qual += dt.qual; cMetrics[country].neg += dt.neg; cMetrics[country].attended += dt.attended;
                     if (!CURRENT_COUNTRY_FILTER || CURRENT_COUNTRY_FILTER === country) {
-                        m.total += dt.total; m.qual += dt.qual; m.neg += dt.neg; m.noInt += dt.noInt; m.stopped += dt.stop;
+                        m.total += dt.total; m.qual += dt.qual; m.neg += dt.neg; m.noInt += dt.noInt; m.stopped += dt.stop; m.attended += dt.attended;
                     }
 
                     // Ocultador solicitado pelo usuário:
@@ -1535,7 +1535,7 @@
                     const txQualNum = dt.total > 0 ? (dt.qual / dt.total) * 100 : 0;
                     const txQual = txQualNum.toFixed(0) + '%';
                     
-                    const atendidos = dt.total - dt.stop;
+                    const atendidos = dt.attended;
                     const txAtendNum = dt.total > 0 ? (atendidos / dt.total) * 100 : 0;
                     const txAtend = txAtendNum.toFixed(0) + '%';
 
@@ -1666,7 +1666,7 @@
             document.getElementById('m-noint').textContent = m.noInt;
             document.getElementById('m-stop').textContent = m.stopped;
 
-            const globalAtendidos = m.total - m.stopped;
+            const globalAtendidos = m.attended;
             document.getElementById('m-txatend').textContent = m.total > 0 ? ((globalAtendidos / m.total) * 100).toFixed(0) + '%' : '0%';
 
             ['BR', 'AR', 'MX'].forEach(c => {
@@ -1676,7 +1676,7 @@
                 document.getElementById(`c-${c}-qual`).textContent = cm.qual;
                 document.getElementById(`c-${c}-neg`).textContent = cm.neg;
                 document.getElementById(`c-${c}-neg-pct`).textContent = cm.qual > 0 ? ((cm.neg / cm.qual) * 100).toFixed(0) + '% dos QUALIF.' : '-';
-                document.getElementById(`c-${c}-txatend`).textContent = cm.total > 0 ? (((cm.total - cm.stopped) / cm.total) * 100).toFixed(0) + '%' : '0%';
+                document.getElementById(`c-${c}-txatend`).textContent = cm.total > 0 ? ((cm.attended / cm.total) * 100).toFixed(0) + '%' : '0%';
                 document.getElementById(`c-${c}-txqual`).textContent = cm.total > 0 ? ((cm.qual / cm.total) * 100).toFixed(0) + '%' : '0%';
             });
 
@@ -1757,7 +1757,7 @@
         
         function renderAnalytics(gTimeline, gProducts, gLoss, m) {
             // 1. Render Funnel
-            const globalAtendidos = m.total - m.stopped;
+            const globalAtendidos = m.attended || 0;
             const pctAtd = m.total > 0 ? (globalAtendidos / m.total) * 100 : 0;
             const pctQual = globalAtendidos > 0 ? (m.qual / globalAtendidos) * 100 : 0;
             const pctNeg = m.qual > 0 ? (m.neg / m.qual) * 100 : 0;
