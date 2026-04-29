@@ -1455,7 +1455,9 @@
                         if (isNeg) dt.neg++;
                         if (ld.postStatus === 'sem intencao de compra' || ld.postStatus.includes('sin intencion')) dt.noInt++;
                         if (ld.postStatus.includes('parou') || ld.postStatus.includes('parado') || ld.postStatus === 'paro') dt.stop++;
-                        if (ld.postStatus && ld.postStatus !== '' && ld.postStatus !== 'nan') dt.attended++;
+                        // Atendido = status preenchido e não é apenas "aguardando" (pendente sem ação)
+                        const _pendente = !ld.status || ld.status === '' || ld.status === 'nan' || ld.status === 'aguardando' || ld.status === 'esperando' || ld.status === 'pendiente';
+                        if (!_pendente) dt.attended++;
 
                         // == NOVO: ANALYTICS AGGREGATION ==
                         // Apenas acumula analytics se o dealer for do país selecionado (ou se nenhum país estiver selecionado)
@@ -1541,8 +1543,7 @@
                     const txQualNum = dt.total > 0 ? (dt.qual / dt.total) * 100 : 0;
                     const txQual = txQualNum.toFixed(0) + '%';
                     
-                    // Se nenhum postStatus foi encontrado (coluna ausente/nome diferente), fallback para total - parou
-                    const atendidos = (dt.attended > 0 || dt.total === 0) ? dt.attended : (dt.total - dt.stop);
+                    const atendidos = dt.attended;
                     const txAtendNum = dt.total > 0 ? (atendidos / dt.total) * 100 : 0;
                     const txAtend = txAtendNum.toFixed(0) + '%';
 
