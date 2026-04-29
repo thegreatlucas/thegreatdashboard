@@ -760,9 +760,9 @@
 
         function isConexpo(dateStr) {
             if(!dateStr) return false;
-            const cleanStr = dateStr.replace(/\s+/g, ''); // Remove espaços
-            // Captura '19/03' ou 'Date(2026,2,19)' com tolerância máxima
-            return cleanStr.includes('19/03') || cleanStr.includes('Date(2026,2,19)');
+            const cleanStr = dateStr.replace(/\s+/g, '');
+            // Conexpo foi em 19/03/2026 — valida o ano para não colidir com 19/03 de outros anos
+            return cleanStr.includes('19/03/2026') || cleanStr.includes('19/3/2026') || cleanStr.includes('Date(2026,2,19)');
         }
 
         // Detecta lead ExpertConnect: não vem do formulário Meta.
