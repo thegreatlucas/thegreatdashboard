@@ -1332,7 +1332,7 @@
                                 if (ld.status === 'qualificado') m.qual++;
                                 const isNeg = ld.postStatus.includes('negocia') || ld.postStatus.includes('se envia propuesta') || ld.postStatus.includes('venta sujeta a obra') || ld.status.includes('cotizando obra');
                                 if (isNeg) m.neg++;
-                                if (ld.postStatus === 'sem intenção de compra') m.noInt++;
+                                if (ld.postStatus === 'sem intencao de compra' || ld.postStatus.includes('sin intencion')) m.noInt++;
                                 if (ld.postStatus.includes('parou')) m.stopped++;
                             });
                         }
@@ -1447,7 +1447,7 @@
                                       ld.status.includes('cotizando obra');
                                       
                         if (isNeg) dt.neg++;
-                        if (ld.postStatus === 'sem intenção de compra') dt.noInt++;
+                        if (ld.postStatus === 'sem intencao de compra' || ld.postStatus.includes('sin intencion')) dt.noInt++;
                         if (ld.postStatus.includes('parou')) dt.stop++;
 
                         // == NOVO: ANALYTICS AGGREGATION ==
@@ -1491,7 +1491,7 @@
                             }
 
                             // 3. Loss Reasons (Apenas se não converteu)
-                            if (ld.postStatus === 'sem intenção de compra' || ld.postStatus.includes('parou')) {
+                            if (ld.postStatus === 'sem intencao de compra' || ld.postStatus.includes('sin intencion') || ld.postStatus.includes('parou')) {
                                 if (ld.lossRaw !== undefined && ld.lossRaw !== '' && ld.lossRaw !== 'nan') {
                                     let rStr = ld.lossRaw.toUpperCase();
                                     // Clean up common generics to group better
