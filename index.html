@@ -1329,8 +1329,8 @@
                         if (!CURRENT_COUNTRY_FILTER || CURRENT_COUNTRY_FILTER === 'AR') {
                             filtered.forEach(ld => {
                                 m.total++;
-                                if (ld.status === 'qualificado' || ld.status === 'calificado') m.qual++;
                                 const isNeg = ld.postStatus.includes('negocia') || ld.postStatus.includes('se envia propuesta') || ld.postStatus.includes('venta sujeta a obra') || ld.status.includes('cotizando obra');
+                                if (ld.status === 'qualificado' || ld.status === 'calificado' || isNeg) m.qual++;
                                 if (isNeg) m.neg++;
                                 if (ld.postStatus === 'sem intenção de compra' || ld.postStatus.includes('sin intencion')) m.noInt++;
                                 if (ld.postStatus.includes('parou') || ld.postStatus.includes('paro') || ld.postStatus.includes('parado')) m.stopped++;
@@ -1440,13 +1440,12 @@
                     filtered.forEach(ld => {
                         dt.total++;
                         
-                        if (ld.status === 'qualificado' || ld.status === 'calificado') dt.qual++;
-
                         const isNeg = ld.postStatus.includes('negocia') ||
                                       ld.postStatus.includes('se envia propuesta') ||
                                       ld.postStatus.includes('venta sujeta a obra') ||
                                       ld.status.includes('cotizando obra');
 
+                        if (ld.status === 'qualificado' || ld.status === 'calificado' || isNeg) dt.qual++;
                         if (isNeg) dt.neg++;
                         if (ld.postStatus === 'sem intenção de compra' || ld.postStatus.includes('sin intencion')) dt.noInt++;
                         if (ld.postStatus.includes('parou') || ld.postStatus.includes('paro') || ld.postStatus.includes('parado')) dt.stop++;
