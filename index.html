@@ -1333,7 +1333,7 @@
                                 const isNeg = ld.postStatus.includes('negocia') || ld.postStatus.includes('se envia propuesta') || ld.postStatus.includes('venta sujeta a obra') || ld.status.includes('cotizando obra');
                                 if (isNeg) m.neg++;
                                 if (ld.postStatus === 'sem intencao de compra' || ld.postStatus.includes('sin intencion')) m.noInt++;
-                                if (ld.postStatus.includes('parou')) m.stopped++;
+                                if (ld.postStatus.includes('parou') || ld.postStatus.includes('parado') || ld.postStatus === 'paro') m.stopped++;
                             });
                         }
                     }
@@ -1448,7 +1448,7 @@
                                       
                         if (isNeg) dt.neg++;
                         if (ld.postStatus === 'sem intencao de compra' || ld.postStatus.includes('sin intencion')) dt.noInt++;
-                        if (ld.postStatus.includes('parou')) dt.stop++;
+                        if (ld.postStatus.includes('parou') || ld.postStatus.includes('parado') || ld.postStatus === 'paro') dt.stop++;
 
                         // == NOVO: ANALYTICS AGGREGATION ==
                         // Apenas acumula analytics se o dealer for do país selecionado (ou se nenhum país estiver selecionado)
@@ -1510,9 +1510,10 @@
                         }
                     });
 
-                    // Aggregate — m reflete o país filtrado (ou todos se sem filtro)
+                    // Aggregate — cMetrics e m refletem o filtro de campanha ativo
                     cMetrics[country].total += dt.total; cMetrics[country].dealers += 1;
                     cMetrics[country].stopped += dt.stop; cMetrics[country].qual += dt.qual; cMetrics[country].neg += dt.neg;
+                    // m só agrega países que batem com filtro de país (ou todos se sem filtro)
                     if (!CURRENT_COUNTRY_FILTER || CURRENT_COUNTRY_FILTER === country) {
                         m.total += dt.total; m.qual += dt.qual; m.neg += dt.neg; m.noInt += dt.noInt; m.stopped += dt.stop;
                     }
