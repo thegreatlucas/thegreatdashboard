@@ -254,6 +254,43 @@
         .neg-score-dot.filled-warm { background: #ff9500; }
         .neg-score-dot.filled-cold { background: #64d2ff; }
 
+        /* --- DIAS EM ABERTO --- */
+        .days-badge { font-size: 11px; font-weight: 700; white-space: nowrap; }
+        .days-fresh { color: var(--success); }
+        .days-warn  { color: var(--accent); }
+        .days-stale { color: var(--error); animation: pulse 2s infinite; }
+
+        /* --- BOTÃO EXPANDIR --- */
+        .neg-expand-btn { display: block; width: 100%; margin-top: 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text-muted); padding: 11px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
+        .neg-expand-btn:hover { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.2); }
+
+        /* --- MODAL FULLSCREEN DE DETALHE DA NEGOCIAÇÃO --- */
+        .neg-detail-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: 9500; display: flex; justify-content: center; align-items: flex-start; overflow-y: auto; visibility: hidden; opacity: 0; transition: all 0.3s ease; padding: 40px 20px; box-sizing: border-box; }
+        .neg-detail-backdrop.active { visibility: visible; opacity: 1; }
+        .neg-detail-card { background: rgba(28,28,30,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; width: 100%; max-width: 680px; padding: 40px; position: relative; margin: auto; box-shadow: 0 40px 80px -20px rgba(0,0,0,0.8); transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+        .neg-detail-backdrop.active .neg-detail-card { transform: translateY(0); }
+        .neg-detail-close { position: absolute; right: 20px; top: 20px; background: rgba(255,255,255,0.05); border: none; width: 36px; height: 36px; border-radius: 50%; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.2s; }
+        .neg-detail-close:hover { background: rgba(255,82,82,0.2); color: #ff5252; }
+        .neg-detail-header { margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .neg-detail-dealer-label { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; display: block; }
+        .neg-detail-machine { font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: 800; color: #fff; margin: 0 0 12px 0; }
+        .neg-detail-meta { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .neg-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+        .neg-detail-field { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 14px 16px; }
+        .neg-detail-field-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: block; }
+        .neg-detail-field-value { font-size: 14px; color: #fff; font-weight: 500; line-height: 1.4; }
+        .neg-detail-field-value.empty { color: var(--text-muted); font-style: italic; font-size: 13px; }
+        .neg-detail-comment-box { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-left: 3px solid var(--accent); border-radius: 12px; padding: 18px 20px; }
+        .neg-detail-comment-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block; }
+        .neg-detail-comment-text { font-size: 15px; color: var(--text-main); line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+        .neg-detail-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.07); }
+        .neg-detail-nav-btn { background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text-muted); padding: 8px 16px; border-radius: 99px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+        .neg-detail-nav-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+        .neg-detail-nav-btn:disabled { opacity: 0.3; cursor: default; }
+        .neg-detail-counter { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+        .ver-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
+        .ver-btn:hover { background: rgba(255,222,0,0.1); color: var(--accent); border-color: rgba(255,222,0,0.2); }
+
         /* --- RESPONSIVE --- */
         @media(max-width: 1400px) {
             .metrics-main { grid-template-columns: repeat(3, 1fr); }
@@ -589,6 +626,49 @@
             <!-- Tab: Negociações Abertas -->
             <div class="modal-tab-content" id="modal-content-negs">
                 <div id="modal-neg-list"><div class="neg-empty">Nenhuma negociação em aberto.</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Fullscreen de Detalhe da Negociação -->
+    <div id="neg-detail-modal" class="neg-detail-backdrop" onclick="if(event.target===this) closeNegDetail()">
+        <div class="neg-detail-card">
+            <button class="neg-detail-close" onclick="closeNegDetail()">✕</button>
+            <div class="neg-detail-header">
+                <span id="nd-dealer" class="neg-detail-dealer-label">Dealer</span>
+                <h2 id="nd-machine" class="neg-detail-machine">—</h2>
+                <div class="neg-detail-meta">
+                    <span id="nd-heat" class="heat-badge heat-none">—</span>
+                    <span id="nd-days-wrap">—</span>
+                    <span id="nd-date" style="font-size:11px; color:var(--text-muted);">—</span>
+                </div>
+            </div>
+            <div class="neg-detail-grid">
+                <div class="neg-detail-field">
+                    <span class="neg-detail-field-label">Lead</span>
+                    <span id="nd-ident" class="neg-detail-field-value">—</span>
+                </div>
+                <div class="neg-detail-field">
+                    <span class="neg-detail-field-label">Prazo de Compra</span>
+                    <span id="nd-timeframe" class="neg-detail-field-value">—</span>
+                </div>
+                <div class="neg-detail-field">
+                    <span class="neg-detail-field-label">Forma de Pagamento</span>
+                    <span id="nd-payment" class="neg-detail-field-value">—</span>
+                </div>
+                <div class="neg-detail-field">
+                    <span class="neg-detail-field-label">Frota Atual</span>
+                    <span id="nd-fleet" class="neg-detail-field-value">—</span>
+                </div>
+            </div>
+            <div class="neg-detail-comment-box">
+                <span class="neg-detail-comment-label">Observação / Comentário</span>
+                <p id="nd-comment" class="neg-detail-comment-text">—</p>
+            </div>
+            <div class="neg-detail-nav">
+                <button class="neg-detail-nav-btn" id="nd-prev" onclick="navigateNegDetail(-1)">← Anterior</button>
+                <span class="neg-detail-counter" id="nd-counter">1 / 1</span>
+                <button class="neg-detail-nav-btn" id="nd-next" onclick="navigateNegDetail(1)">Próxima →</button>
             </div>
         </div>
     </div>
@@ -1984,72 +2064,188 @@
             return             { label: 'Frio',    cls: 'heat-cold', icon: '❄️' };
         }
 
+        // Scored negs cache (para navegação no modal de detalhe)
+        let _SCORED_NEGS = [];
+        let _NEG_DETAIL_IDX = 0;
+
+        function daysAgo(dateStr) {
+            const d = parseDateAny(dateStr);
+            if (!d) return null;
+            return Math.floor((Date.now() - d.getTime()) / 86400000);
+        }
+
+        function formatDate(dateStr) {
+            const d = parseDateAny(dateStr);
+            if (!d) return null;
+            return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function normalizeMachine(raw) {
+            if (!raw || raw === 'nan') return '—';
+            let m = raw.toUpperCase();
+            if (m.includes('RETROESCAV') || m.includes('RETROEXCAV')) return 'RETROESCAVADEIRA';
+            if (m.includes('MINI ESC')   || m.includes('MINIESC') || m.includes('MINI EXC')) return 'MINIESCAVADEIRA';
+            if (m.includes('MINI CAR')   || m.includes('MINICAR')) return 'MINICARREGADEIRA';
+            if (m.includes('ESCAVA')     || m.includes('EXCAVA'))  return 'ESCAVADEIRA';
+            if (m.includes('PA CARREG')  || m.includes('CARGADOR')|| m.includes('CARGA')) return 'PÁ-CARREGADEIRA';
+            if (m.includes('MOTONI')     || m.includes('NIVELA'))  return 'MOTONIVELADORA';
+            if (m.includes('TRATOR')     || m.includes('TRACTOR')) return 'TRATOR DE ESTEIRA';
+            if (m.includes('ROLO')       || m.includes('COMPACTA'))return 'ROLO COMPACTADOR';
+            if (m.includes('NAO TENHO')  || m.includes('INDEFINIDO') || m.length < 3) return '—';
+            return m;
+        }
+
+        function leadIdent(lead) {
+            if (lead.nameRaw && lead.nameRaw.trim()) return lead.nameRaw.trim();
+            if (lead.email && lead.email !== 'nan') return lead.email;
+            if (lead.phone && lead.phone !== 'nan') return lead.phone;
+            return '—';
+        }
+
+        function makeDotBar(score) {
+            return Array.from({length:10}, (_,i) => {
+                let cls = 'neg-score-dot';
+                if (i < score) cls += score >= 7 ? ' filled-hot' : score >= 4 ? ' filled-warm' : ' filled-cold';
+                return `<span class="${cls}"></span>`;
+            }).join('');
+        }
+
+        function daysBadgeHtml(days) {
+            if (days === null) return '<span class="days-badge" style="color:var(--text-muted)">Sem data</span>';
+            if (days <= 7)  return `<span class="days-badge days-fresh">${days}d em aberto</span>`;
+            if (days <= 30) return `<span class="days-badge days-warn">${days}d em aberto</span>`;
+            return             `<span class="days-badge days-stale">${days}d em aberto ⚠️</span>`;
+        }
+
         function renderNegRadar() {
             const el = document.getElementById('neg-radar-list');
             if (!el) return;
 
             if (GLOBAL_OPEN_NEGS.length === 0) {
                 el.innerHTML = '<div class="neg-empty">Nenhuma negociação em aberto encontrada com os filtros atuais.</div>';
+                _SCORED_NEGS = [];
                 return;
             }
 
-            const scored = GLOBAL_OPEN_NEGS.map(n => {
+            _SCORED_NEGS = GLOBAL_OPEN_NEGS.map(n => {
                 const hasData = !!(n.lead.lossRaw || n.lead.timeframeRaw || n.lead.paymentRaw);
-                return { ...n, score: calcNegHeat(n.lead), hasData };
-            }).sort((a, b) => b.score - a.score);
+                const days    = daysAgo(n.lead.dateRaw);
+                return { ...n, score: calcNegHeat(n.lead), hasData, days };
+            }).sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                // Tiebreaker: mais recente primeiro
+                const da = a.days ?? 9999, db = b.days ?? 9999;
+                return da - db;
+            });
 
-            const hot  = scored.filter(n => n.score >= 7).length;
-            const warm = scored.filter(n => n.score >= 4 && n.score < 7).length;
-            const cold = scored.filter(n => n.score < 4).length;
+            const hot  = _SCORED_NEGS.filter(n => n.score >= 7).length;
+            const warm = _SCORED_NEGS.filter(n => n.score >= 4 && n.score < 7).length;
+            const cold = _SCORED_NEGS.filter(n => n.score < 4).length;
+            const total = _SCORED_NEGS.length;
+            const PAGE = 5;
+
+            const buildRows = (list, offset) => list.map((n, i) => {
+                const globalIdx = offset + i;
+                const heat    = heatLabel(n.score, n.hasData);
+                const machine = normalizeMachine(n.lead.machineRaw);
+                const ident   = leadIdent(n.lead);
+                const comment = n.lead.lossRaw && n.lead.lossRaw !== 'nan' ? n.lead.lossRaw : '—';
+                const dateStr = formatDate(n.lead.dateRaw) || '—';
+                const escapedDealer = n.dealerName.replace(/'/g, "\\'");
+                return `<tr>
+                    <td><button class="dealer-link" onclick="showDealerModal('${escapedDealer}')">${n.dealerName}</button></td>
+                    <td style="color:var(--text-muted);font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${ident}">${ident}</td>
+                    <td style="font-size:11px;font-weight:700;color:#fff;">${machine}</td>
+                    <td><span class="heat-badge ${heat.cls}">${heat.icon} ${heat.label}</span></td>
+                    <td><span class="neg-score-bar">${makeDotBar(n.score)}</span></td>
+                    <td style="font-size:11px;color:var(--text-muted);white-space:nowrap;">${dateStr}</td>
+                    <td>${daysBadgeHtml(n.days)}</td>
+                    <td><span class="neg-comment" title="${comment}">${comment}</span></td>
+                    <td><button class="ver-btn" onclick="openNegDetail(${globalIdx})">Ver detalhes</button></td>
+                </tr>`;
+            }).join('');
 
             const summary = `
                 <div class="neg-radar-summary">
                     <span class="neg-summary-chip heat-hot"  style="border-radius:99px;border:1px solid rgba(255,69,58,0.3);">🔥 ${hot} Quentes</span>
                     <span class="neg-summary-chip heat-warm" style="border-radius:99px;border:1px solid rgba(255,149,0,0.3);">⚡ ${warm} Mornas</span>
                     <span class="neg-summary-chip heat-cold" style="border-radius:99px;border:1px solid rgba(100,210,255,0.25);">❄️ ${cold} Frias</span>
-                    <span style="margin-left:auto; font-size:11px; color:var(--text-muted); align-self:center;">${scored.length} negociações em aberto</span>
+                    <span style="margin-left:auto; font-size:11px; color:var(--text-muted); align-self:center;">${total} negociações em aberto</span>
                 </div>`;
 
-            const rows = scored.map(n => {
-                const heat  = heatLabel(n.score, n.hasData);
-                const ident = (n.lead.nameRaw && n.lead.nameRaw.trim()) ? n.lead.nameRaw
-                             : n.lead.email ? n.lead.email
-                             : n.lead.phone ? n.lead.phone : '—';
-                let machine = n.lead.machineRaw ? n.lead.machineRaw.toUpperCase() : '—';
-                if (machine.includes('RETROESCAV') || machine.includes('RETROEXCAV')) machine = 'RETROESCAVADEIRA';
-                else if (machine.includes('MINI ESC') || machine.includes('MINIESC')) machine = 'MINIESCAVADEIRA';
-                else if (machine.includes('ESCAVA')   || machine.includes('EXCAVA'))  machine = 'ESCAVADEIRA';
-                else if (machine.includes('PA CARREG')|| machine.includes('CARGADOR'))machine = 'PÁ-CARREGADEIRA';
-                else if (machine.includes('MOTONI')   || machine.includes('NIVELA'))  machine = 'MOTONIVELADORA';
-                const comment = n.lead.lossRaw && n.lead.lossRaw !== 'nan' ? n.lead.lossRaw : '—';
-                const dots = Array.from({length:10}, (_,i) => {
-                    let cls = 'neg-score-dot';
-                    if (i < n.score) cls += n.score >= 7 ? ' filled-hot' : n.score >= 4 ? ' filled-warm' : ' filled-cold';
-                    return `<span class="${cls}"></span>`;
-                }).join('');
-                const escapedDealer = n.dealerName.replace(/'/g, "\\'");
-                return `<tr>
-                    <td><button class="dealer-link" onclick="showDealerModal('${escapedDealer}')">${n.dealerName}</button></td>
-                    <td style="color:var(--text-muted);font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ident}</td>
-                    <td style="font-size:11px;font-weight:700;color:#fff;">${machine}</td>
-                    <td><span class="heat-badge ${heat.cls}">${heat.icon} ${heat.label}</span></td>
-                    <td><span class="neg-score-bar">${dots}</span></td>
-                    <td><span class="neg-comment" title="${comment}">${comment}</span></td>
-                </tr>`;
-            }).join('');
+            const thead = `<thead><tr>
+                <th>Distribuidor</th><th>Lead</th><th>Máquina</th>
+                <th>Temperatura</th><th>Score</th><th>Data do Lead</th>
+                <th>Em Aberto</th><th>Observação</th><th></th>
+            </tr></thead>`;
+
+            const firstRows = buildRows(_SCORED_NEGS.slice(0, PAGE), 0);
+            const restRows  = total > PAGE ? buildRows(_SCORED_NEGS.slice(PAGE), PAGE) : '';
+
+            const expandBtn = total > PAGE
+                ? `<button class="neg-expand-btn" id="neg-expand-btn" onclick="toggleNegExpand()">Ver todas as ${total} negociações</button>`
+                : '';
 
             el.innerHTML = summary + `
                 <table class="neg-radar-table">
-                    <thead><tr>
-                        <th>Distribuidor</th>
-                        <th>Lead</th>
-                        <th>Máquina</th>
-                        <th>Temperatura</th>
-                        <th>Score</th>
-                        <th>Observação</th>
-                    </tr></thead>
-                    <tbody>${rows}</tbody>
-                </table>`;
+                    ${thead}
+                    <tbody id="neg-rows-top">${firstRows}</tbody>
+                    <tbody id="neg-rows-rest" style="display:none">${restRows}</tbody>
+                </table>
+                ${expandBtn}`;
+        }
+
+        function toggleNegExpand() {
+            const rest = document.getElementById('neg-rows-rest');
+            const btn  = document.getElementById('neg-expand-btn');
+            if (!rest) return;
+            const isHidden = rest.style.display === 'none';
+            rest.style.display = isHidden ? '' : 'none';
+            btn.textContent = isHidden
+                ? 'Recolher'
+                : `Ver todas as ${_SCORED_NEGS.length} negociações`;
+        }
+
+        function openNegDetail(idx) {
+            if (!_SCORED_NEGS.length) return;
+            _NEG_DETAIL_IDX = idx;
+            populateNegDetail();
+            document.getElementById('neg-detail-modal').classList.add('active');
+        }
+
+        function closeNegDetail() {
+            document.getElementById('neg-detail-modal').classList.remove('active');
+        }
+
+        function navigateNegDetail(dir) {
+            _NEG_DETAIL_IDX = Math.max(0, Math.min(_SCORED_NEGS.length - 1, _NEG_DETAIL_IDX + dir));
+            populateNegDetail();
+        }
+
+        function populateNegDetail() {
+            const n   = _SCORED_NEGS[_NEG_DETAIL_IDX];
+            const heat = heatLabel(n.score, n.hasData);
+            const machine = normalizeMachine(n.lead.machineRaw);
+            const ident   = leadIdent(n.lead);
+            const comment = (n.lead.lossRaw && n.lead.lossRaw !== 'nan') ? n.lead.lossRaw : 'Nenhuma observação registrada.';
+            const dateStr = formatDate(n.lead.dateRaw) || '—';
+
+            const fv = (v, fallback='Não informado') => (v && v !== 'nan' && v.trim()) ? (v.charAt(0).toUpperCase() + v.slice(1)) : `<span class="empty">${fallback}</span>`;
+
+            document.getElementById('nd-dealer').textContent  = n.dealerName;
+            document.getElementById('nd-machine').textContent = machine;
+            document.getElementById('nd-heat').className      = `heat-badge ${heat.cls}`;
+            document.getElementById('nd-heat').innerHTML      = `${heat.icon} ${heat.label} (${n.score}/10)`;
+            document.getElementById('nd-days-wrap').innerHTML = daysBadgeHtml(n.days);
+            document.getElementById('nd-date').textContent    = `Lead de ${dateStr}`;
+            document.getElementById('nd-ident').innerHTML     = fv(ident);
+            document.getElementById('nd-timeframe').innerHTML = fv(n.lead.timeframeRaw);
+            document.getElementById('nd-payment').innerHTML   = fv(n.lead.paymentRaw);
+            document.getElementById('nd-fleet').innerHTML     = fv(n.lead.fleetRaw);
+            document.getElementById('nd-comment').textContent = comment;
+            document.getElementById('nd-counter').textContent = `${_NEG_DETAIL_IDX + 1} / ${_SCORED_NEGS.length}`;
+            document.getElementById('nd-prev').disabled = _NEG_DETAIL_IDX === 0;
+            document.getElementById('nd-next').disabled = _NEG_DETAIL_IDX === _SCORED_NEGS.length - 1;
         }
 
         function switchModalTab(tab) {
