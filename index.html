@@ -217,6 +217,43 @@
         .profile-value { font-size: 15px; color: #fff; font-weight: 500; display: flex; align-items: center; line-height: 1.3; }
         .profile-pct { font-size: 12px; font-weight: bold; color: var(--accent); margin-left: 8px; background: rgba(255,222,0,0.1); padding: 2px 6px; border-radius: 4px; }
 
+        /* --- MODAL TABS --- */
+        .modal-tabs { display: flex; gap: 4px; margin-bottom: 20px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 10px; }
+        .modal-tab { flex: 1; padding: 8px; background: none; border: none; color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; border-radius: 7px; transition: all 0.2s; font-family: 'Inter', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; }
+        .modal-tab.active { background: rgba(255,255,255,0.1); color: #fff; }
+        .modal-tab-content { display: none; }
+        .modal-tab-content.active { display: block; }
+        .modal-neg-list { display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
+        .modal-neg-item { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+        .modal-neg-item-top { display: flex; justify-content: space-between; align-items: center; }
+        .modal-neg-machine { font-size: 13px; font-weight: 700; color: #fff; text-transform: uppercase; }
+        .modal-neg-ident { font-size: 11px; color: var(--text-muted); }
+        .modal-neg-comment { font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.4; }
+
+        /* --- NEGOTIATION RADAR SECTION --- */
+        .neg-radar-wrap { margin-bottom: 40px; }
+        .neg-radar-table { width: 100%; border-collapse: collapse; }
+        .neg-radar-table th { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        .neg-radar-table td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+        .neg-radar-table tbody tr:last-child td { border-bottom: none; }
+        .neg-radar-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+        .heat-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+        .heat-hot  { background: rgba(255, 69, 58, 0.15); color: #ff453a; border: 1px solid rgba(255,69,58,0.3); }
+        .heat-warm { background: rgba(255, 149, 0, 0.15); color: #ff9500; border: 1px solid rgba(255,149,0,0.3); }
+        .heat-cold { background: rgba(100, 210, 255, 0.10); color: #64d2ff; border: 1px solid rgba(100,210,255,0.25); }
+        .heat-none { background: rgba(255,255,255,0.04); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.08); }
+        .dealer-link { cursor: pointer; color: var(--accent); font-weight: 700; background: none; border: none; padding: 0; font-family: inherit; font-size: inherit; }
+        .dealer-link:hover { text-decoration: underline; }
+        .neg-comment { font-size: 12px; color: var(--text-muted); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+        .neg-empty { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 13px; }
+        .neg-radar-summary { display: flex; gap: 20px; margin-bottom: 18px; flex-wrap: wrap; }
+        .neg-summary-chip { display: flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+        .neg-score-bar { display: inline-flex; gap: 2px; align-items: center; }
+        .neg-score-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.12); }
+        .neg-score-dot.filled-hot  { background: #ff453a; }
+        .neg-score-dot.filled-warm { background: #ff9500; }
+        .neg-score-dot.filled-cold { background: #64d2ff; }
+
         /* --- RESPONSIVE --- */
         @media(max-width: 1400px) {
             .metrics-main { grid-template-columns: repeat(3, 1fr); }
@@ -469,6 +506,14 @@
             </div>
         </div>
 
+        <!-- Radar de Negociações Abertas -->
+        <div class="neg-radar-wrap">
+            <h2 class="section-title">Negociações Abertas <span style="font-family:'Bebas Neue',sans-serif; font-size:16px;">[ RADAR ]</span></h2>
+            <div class="card" style="padding: 25px; overflow-x: auto;">
+                <div id="neg-radar-list"><div class="neg-empty">Carregando...</div></div>
+            </div>
+        </div>
+
         <div class="metrics-dealers-header" style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:25px;">
             <h2 class="section-title" style="margin-bottom:0;">Breakdown por Dealer</h2>
             <div id="country-filter-indicator" style="font-family:'Montserrat', sans-serif; font-size:12px; color:var(--accent); font-weight:800; text-transform:uppercase; letter-spacing:1px; display:none;">
@@ -483,54 +528,67 @@
 
     <!-- Modal do Perfil do Dealer -->
     <div id="dealer-profile-modal" class="modal-backdrop" onclick="if(event.target===this) document.getElementById('dealer-profile-modal').classList.remove('active')">
-        <div class="modal-card">
+        <div class="modal-card" style="max-width: 520px;">
             <button class="modal-close" onclick="document.getElementById('dealer-profile-modal').classList.remove('active')">✕</button>
             <div class="modal-header">
                 <h3 id="modal-dealer-name" class="modal-title">Dealer</h3>
                 <span id="modal-dealer-leads" class="modal-subtitle">X Leads Analisados</span>
             </div>
-            
-            <div class="profile-row">
-                <div class="profile-icon">🚜</div>
-                <div class="profile-info">
-                    <span class="profile-label">Máquina Mais Buscada</span>
-                    <span class="profile-value" id="modal-val-machine">-</span>
+
+            <div class="modal-tabs">
+                <button class="modal-tab active" id="modal-tab-perfil" onclick="switchModalTab('perfil')">Perfil do Dealer</button>
+                <button class="modal-tab" id="modal-tab-negs" onclick="switchModalTab('negs')">Negociações Abertas</button>
+            </div>
+
+            <!-- Tab: Perfil -->
+            <div class="modal-tab-content active" id="modal-content-perfil">
+                <div class="profile-row">
+                    <div class="profile-icon">🚜</div>
+                    <div class="profile-info">
+                        <span class="profile-label">Máquina Mais Buscada</span>
+                        <span class="profile-value" id="modal-val-machine">-</span>
+                    </div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-icon">🏗️</div>
+                    <div class="profile-info">
+                        <span class="profile-label">Aplicação Principal</span>
+                        <span class="profile-value" id="modal-val-app">-</span>
+                    </div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-icon">📦</div>
+                    <div class="profile-info">
+                        <span class="profile-label">Condição da Máquina</span>
+                        <span class="profile-value" id="modal-val-cond">-</span>
+                    </div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-icon">💳</div>
+                    <div class="profile-info">
+                        <span class="profile-label">Forma de Pagamento</span>
+                        <span class="profile-value" id="modal-val-pay">-</span>
+                    </div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-icon">⏳</div>
+                    <div class="profile-info">
+                        <span class="profile-label">Prazo para Compra</span>
+                        <span class="profile-value" id="modal-val-time">-</span>
+                    </div>
+                </div>
+                <div class="profile-row" style="margin-bottom:0">
+                    <div class="profile-icon">🏢</div>
+                    <div class="profile-info">
+                        <span class="profile-label">Status da Frota Atual</span>
+                        <span class="profile-value" id="modal-val-fleet">-</span>
+                    </div>
                 </div>
             </div>
-            <div class="profile-row">
-                <div class="profile-icon">🏗️</div>
-                <div class="profile-info">
-                    <span class="profile-label">Aplicação Principal</span>
-                    <span class="profile-value" id="modal-val-app">-</span>
-                </div>
-            </div>
-            <div class="profile-row">
-                <div class="profile-icon">📦</div>
-                <div class="profile-info">
-                    <span class="profile-label">Condição da Máquina</span>
-                    <span class="profile-value" id="modal-val-cond">-</span>
-                </div>
-            </div>
-            <div class="profile-row">
-                <div class="profile-icon">💳</div>
-                <div class="profile-info">
-                    <span class="profile-label">Forma de Pagamento</span>
-                    <span class="profile-value" id="modal-val-pay">-</span>
-                </div>
-            </div>
-            <div class="profile-row">
-                <div class="profile-icon">⏳</div>
-                <div class="profile-info">
-                    <span class="profile-label">Prazo para Compra</span>
-                    <span class="profile-value" id="modal-val-time">-</span>
-                </div>
-            </div>
-            <div class="profile-row">
-                <div class="profile-icon">🏢</div>
-                <div class="profile-info">
-                    <span class="profile-label">Status da Frota Atual</span>
-                    <span class="profile-value" id="modal-val-fleet">-</span>
-                </div>
+
+            <!-- Tab: Negociações Abertas -->
+            <div class="modal-tab-content" id="modal-content-negs">
+                <div id="modal-neg-list"><div class="neg-empty">Nenhuma negociação em aberto.</div></div>
             </div>
         </div>
     </div>
@@ -670,6 +728,7 @@
             }));
         }
         let GLOBAL_FILTERED_LEADS = {};
+        let GLOBAL_OPEN_NEGS = [];
 
         function normalizeString(str) {
             if (!str) return "";
@@ -1097,6 +1156,14 @@
                 const aonRaw = aonKey ? (row[aonKey] ?? '').toString().trim() : '';
                 const hasAonCol = !!aonKey;
 
+                // Nome
+                const nameKey = keys.find(k => {
+                    const n = normalizeString(k);
+                    return n === 'nome' || n === 'nombre' || n === 'name' ||
+                           n.startsWith('nome ') || n.includes('razao social') || n.includes('razon social');
+                });
+                const nameRaw = nameKey ? (row[nameKey] || '') : '';
+
                 // Email
                 const emailKey = keys.find(k => {
                     const n = normalizeString(k);
@@ -1164,6 +1231,7 @@
                     aonRaw: aonRaw,
                     hasAonCol: hasAonCol,
                     dateRaw: dateRaw,
+                    nameRaw: nameRaw,
                     email: email,
                     phone: phone,
                     machineRaw: machineRaw,
@@ -1306,6 +1374,7 @@
             let gProducts = {};
             let gLoss = {};
             GLOBAL_FILTERED_LEADS = {};
+            GLOBAL_OPEN_NEGS = [];
 
             const dealerGrid = document.getElementById('dealer-grid');
             dealerGrid.innerHTML = '';
@@ -1452,7 +1521,7 @@
                                       ld.postStatus.includes('venta sujeta a obra') || 
                                       ld.status.includes('cotizando obra');
                                       
-                        if (isNeg) dt.neg++;
+                        if (isNeg) { dt.neg++; GLOBAL_OPEN_NEGS.push({ dealerName, lead: ld }); }
                         if (ld.postStatus === 'sem intencao de compra' || ld.postStatus.includes('sin intencion')) dt.noInt++;
                         if (ld.postStatus.includes('parou') || ld.postStatus.includes('parado') || ld.postStatus === 'paro') dt.stop++;
                         // Atendido = status preenchido e não é apenas "aguardando" (pendente sem ação)
@@ -1693,6 +1762,8 @@
                 const targetMetrics = CURRENT_COUNTRY_FILTER ? cMetrics[CURRENT_COUNTRY_FILTER] : m;
                 renderAnalytics(gTimeline, gProducts, gLoss, targetMetrics);
             }
+
+            renderNegRadar();
         }
 
         let _renderTimer = null;
@@ -1850,6 +1921,144 @@
             }
         }
 
+        // =============================================
+        // ALGORITMO DE CALOR DE NEGOCIAÇÃO
+        // =============================================
+        function calcNegHeat(lead) {
+            const comment  = normalizeString(lead.lossRaw    || '');
+            const timeframe = normalizeString(lead.timeframeRaw || '');
+            const payment   = normalizeString(lead.paymentRaw  || '');
+            let score = 0;
+
+            // Sinais quentes no comentário (+3)
+            ['urgente', 'urgencia', 'imediato', 'imediata', 'essa semana', 'esta semana',
+             'lo antes posible', 'preciso logo', 'preciso ja', 'rapidamente'].forEach(w => {
+                if (comment.includes(w)) score += 3;
+            });
+            // Sinais mornos no comentário (+2)
+            ['interessado', 'interesado', 'proposta', 'propuesta', 'avancando', 'avanzando',
+             'quero fechar', 'quiero cerrar', 'positivo', 'confirmado', 'acordo', 'acuerdo',
+             'pronto pra', 'listo para', 'bom contato', 'buen contacto'].forEach(w => {
+                if (comment.includes(w)) score += 2;
+            });
+            // Sinais leves (+1)
+            ['gostou', 'le gusto', 'visita agendada', 'reuniao', 'reunion', 'demo', 'test drive',
+             'quer visitar', 'quiere visitar'].forEach(w => {
+                if (comment.includes(w)) score += 1;
+            });
+            // Sinais frios (-1)
+            ['talvez', 'quizas', 'ver se', 'evaluar', 'pensar', 'em analise', 'analisando',
+             'aguardando cliente'].forEach(w => {
+                if (comment.includes(w)) score -= 1;
+            });
+            // Sinais mortos (-3)
+            ['desistiu', 'cancelou', 'sem interesse', 'sin interes', 'nao tem interesse',
+             'no tiene interes', 'parou', 'parado'].forEach(w => {
+                if (comment.includes(w)) score -= 3;
+            });
+            // Prazo curto (+2)
+            ['imediato', 'imediata', 'este mes', 'esse mes', '30 dias', '1 mes', '1 mes',
+             'curto prazo'].forEach(w => {
+                if (timeframe.includes(w)) score += 2;
+            });
+            // Prazo médio (+1)
+            ['2 meses', '3 meses', '45 dias', '60 dias'].forEach(w => {
+                if (timeframe.includes(w)) score += 1;
+            });
+            // Prazo longo ou indefinido (-1)
+            ['longo prazo', 'sem prazo', 'nao sabe', 'indefinido'].forEach(w => {
+                if (timeframe.includes(w)) score -= 1;
+            });
+            // Pagamento definido = mais comprometido (+1)
+            if (payment && payment !== 'nan' && payment.length > 2) score += 1;
+            // Máquina específica = mais sério (+1)
+            if (lead.machineRaw && lead.machineRaw !== 'nan' && lead.machineRaw.length > 2) score += 1;
+
+            return Math.max(0, Math.min(10, score));
+        }
+
+        function heatLabel(score, hasData) {
+            if (!hasData) return { label: 'Sem Dados', cls: 'heat-none', icon: '—' };
+            if (score >= 7) return { label: 'Quente',  cls: 'heat-hot',  icon: '🔥' };
+            if (score >= 4) return { label: 'Morno',   cls: 'heat-warm', icon: '⚡' };
+            return             { label: 'Frio',    cls: 'heat-cold', icon: '❄️' };
+        }
+
+        function renderNegRadar() {
+            const el = document.getElementById('neg-radar-list');
+            if (!el) return;
+
+            if (GLOBAL_OPEN_NEGS.length === 0) {
+                el.innerHTML = '<div class="neg-empty">Nenhuma negociação em aberto encontrada com os filtros atuais.</div>';
+                return;
+            }
+
+            const scored = GLOBAL_OPEN_NEGS.map(n => {
+                const hasData = !!(n.lead.lossRaw || n.lead.timeframeRaw || n.lead.paymentRaw);
+                return { ...n, score: calcNegHeat(n.lead), hasData };
+            }).sort((a, b) => b.score - a.score);
+
+            const hot  = scored.filter(n => n.score >= 7).length;
+            const warm = scored.filter(n => n.score >= 4 && n.score < 7).length;
+            const cold = scored.filter(n => n.score < 4).length;
+
+            const summary = `
+                <div class="neg-radar-summary">
+                    <span class="neg-summary-chip heat-hot"  style="border-radius:99px;border:1px solid rgba(255,69,58,0.3);">🔥 ${hot} Quentes</span>
+                    <span class="neg-summary-chip heat-warm" style="border-radius:99px;border:1px solid rgba(255,149,0,0.3);">⚡ ${warm} Mornas</span>
+                    <span class="neg-summary-chip heat-cold" style="border-radius:99px;border:1px solid rgba(100,210,255,0.25);">❄️ ${cold} Frias</span>
+                    <span style="margin-left:auto; font-size:11px; color:var(--text-muted); align-self:center;">${scored.length} negociações em aberto</span>
+                </div>`;
+
+            const rows = scored.map(n => {
+                const heat  = heatLabel(n.score, n.hasData);
+                const ident = (n.lead.nameRaw && n.lead.nameRaw.trim()) ? n.lead.nameRaw
+                             : n.lead.email ? n.lead.email
+                             : n.lead.phone ? n.lead.phone : '—';
+                let machine = n.lead.machineRaw ? n.lead.machineRaw.toUpperCase() : '—';
+                if (machine.includes('RETROESCAV') || machine.includes('RETROEXCAV')) machine = 'RETROESCAVADEIRA';
+                else if (machine.includes('MINI ESC') || machine.includes('MINIESC')) machine = 'MINIESCAVADEIRA';
+                else if (machine.includes('ESCAVA')   || machine.includes('EXCAVA'))  machine = 'ESCAVADEIRA';
+                else if (machine.includes('PA CARREG')|| machine.includes('CARGADOR'))machine = 'PÁ-CARREGADEIRA';
+                else if (machine.includes('MOTONI')   || machine.includes('NIVELA'))  machine = 'MOTONIVELADORA';
+                const comment = n.lead.lossRaw && n.lead.lossRaw !== 'nan' ? n.lead.lossRaw : '—';
+                const dots = Array.from({length:10}, (_,i) => {
+                    let cls = 'neg-score-dot';
+                    if (i < n.score) cls += n.score >= 7 ? ' filled-hot' : n.score >= 4 ? ' filled-warm' : ' filled-cold';
+                    return `<span class="${cls}"></span>`;
+                }).join('');
+                const escapedDealer = n.dealerName.replace(/'/g, "\\'");
+                return `<tr>
+                    <td><button class="dealer-link" onclick="showDealerModal('${escapedDealer}')">${n.dealerName}</button></td>
+                    <td style="color:var(--text-muted);font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ident}</td>
+                    <td style="font-size:11px;font-weight:700;color:#fff;">${machine}</td>
+                    <td><span class="heat-badge ${heat.cls}">${heat.icon} ${heat.label}</span></td>
+                    <td><span class="neg-score-bar">${dots}</span></td>
+                    <td><span class="neg-comment" title="${comment}">${comment}</span></td>
+                </tr>`;
+            }).join('');
+
+            el.innerHTML = summary + `
+                <table class="neg-radar-table">
+                    <thead><tr>
+                        <th>Distribuidor</th>
+                        <th>Lead</th>
+                        <th>Máquina</th>
+                        <th>Temperatura</th>
+                        <th>Score</th>
+                        <th>Observação</th>
+                    </tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>`;
+        }
+
+        function switchModalTab(tab) {
+            document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.modal-tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('modal-tab-' + tab).classList.add('active');
+            document.getElementById('modal-content-' + tab).classList.add('active');
+        }
+
         // Sistema Baseado de Sessão (Auth Layer)
         function showDealerModal(dealerName) {
             const leads = GLOBAL_FILTERED_LEADS[dealerName] || [];
@@ -1929,6 +2138,51 @@
             applyVal('modal-val-pay', topPay);
             applyVal('modal-val-fleet', topFleet);
 
+            // Aba de Negociações Abertas
+            const dealerNegs = GLOBAL_OPEN_NEGS.filter(n => n.dealerName === dealerName);
+            const negTabBtn = document.getElementById('modal-tab-negs');
+            negTabBtn.textContent = `Negociações Abertas (${dealerNegs.length})`;
+            const negListEl = document.getElementById('modal-neg-list');
+            if (dealerNegs.length === 0) {
+                negListEl.innerHTML = '<div class="neg-empty" style="padding:20px 0">Nenhuma negociação em aberto.</div>';
+            } else {
+                const scored = dealerNegs.map(n => {
+                    const hasData = !!(n.lead.lossRaw || n.lead.timeframeRaw || n.lead.paymentRaw);
+                    return { lead: n.lead, score: calcNegHeat(n.lead), hasData };
+                }).sort((a, b) => b.score - a.score);
+
+                negListEl.innerHTML = '<div class="modal-neg-list">' + scored.map(n => {
+                    const heat  = heatLabel(n.score, n.hasData);
+                    const ident = (n.lead.nameRaw && n.lead.nameRaw.trim()) ? n.lead.nameRaw
+                                 : n.lead.email ? n.lead.email
+                                 : n.lead.phone ? n.lead.phone : '—';
+                    let machine = n.lead.machineRaw ? n.lead.machineRaw.toUpperCase() : '—';
+                    if (machine.includes('RETROESCAV') || machine.includes('RETROEXCAV')) machine = 'RETROESCAVADEIRA';
+                    else if (machine.includes('ESCAVA') || machine.includes('EXCAVA'))    machine = 'ESCAVADEIRA';
+                    else if (machine.includes('PA CARREG')|| machine.includes('CARGADOR'))machine = 'PÁ-CARREGADEIRA';
+                    else if (machine.includes('MOTONI')  || machine.includes('NIVELA'))   machine = 'MOTONIVELADORA';
+                    const comment = n.lead.lossRaw && n.lead.lossRaw !== 'nan' ? n.lead.lossRaw : '';
+                    const dots = Array.from({length:10}, (_,i) => {
+                        let cls = 'neg-score-dot';
+                        if (i < n.score) cls += n.score >= 7 ? ' filled-hot' : n.score >= 4 ? ' filled-warm' : ' filled-cold';
+                        return `<span class="${cls}"></span>`;
+                    }).join('');
+                    return `<div class="modal-neg-item">
+                        <div class="modal-neg-item-top">
+                            <div>
+                                <div class="modal-neg-machine">${machine}</div>
+                                <div class="modal-neg-ident">${ident}</div>
+                            </div>
+                            <span class="heat-badge ${heat.cls}">${heat.icon} ${heat.label}</span>
+                        </div>
+                        <div class="neg-score-bar" style="margin:2px 0 4px">${dots}</div>
+                        ${comment ? `<div class="modal-neg-comment">${comment}</div>` : ''}
+                    </div>`;
+                }).join('') + '</div>';
+            }
+
+            // Reset para aba perfil ao abrir
+            switchModalTab('perfil');
             document.getElementById('dealer-profile-modal').classList.add('active');
         }
     </script>
