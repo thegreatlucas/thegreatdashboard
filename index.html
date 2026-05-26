@@ -8,6 +8,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <!-- Chart.js para Momentum Graph -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ExcelJS para exportação XLSX -->
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <!-- Montserrat for headings, Inter for body -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&family=Inter:wght@400;600&family=Bebas+Neue&display=swap" rel="stylesheet">
     <style>
@@ -290,6 +292,11 @@
         .neg-detail-counter { font-size: 12px; color: var(--text-muted); font-weight: 600; }
         .ver-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
         .ver-btn:hover { background: rgba(255,222,0,0.1); color: var(--accent); border-color: rgba(255,222,0,0.2); }
+        .export-xlsx-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: #000; border: none; padding: 9px 18px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: 700; font-family: 'Inter', sans-serif; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+        .export-xlsx-btn:hover { background: var(--accent-hover); transform: scale(1.02); box-shadow: 0 4px 16px rgba(255,209,0,0.3); }
+        .export-xlsx-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+        .export-xlsx-btn svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
+        .neg-radar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 
         /* --- RESPONSIVE --- */
         @media(max-width: 1400px) {
@@ -545,7 +552,13 @@
 
         <!-- Radar de Negociações Abertas -->
         <div class="neg-radar-wrap">
-            <h2 class="section-title">Negociações Abertas <span style="font-family:'Bebas Neue',sans-serif; font-size:16px;">[ RADAR ]</span></h2>
+            <div class="neg-radar-header">
+                <h2 class="section-title" style="margin:0;">Negociações Abertas <span style="font-family:'Bebas Neue',sans-serif; font-size:16px;">[ RADAR ]</span></h2>
+                <button class="export-xlsx-btn" id="btn-export-xlsx" onclick="exportNegXLSX()">
+                    <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zm-8 2V5h2v6h1.17L12 13.17 9.83 11H11zm-6 7h14v2H5z"/></svg>
+                    Exportar XLSX
+                </button>
+            </div>
             <div class="card" style="padding: 25px; overflow-x: auto;">
                 <div id="neg-radar-list"><div class="neg-empty">Carregando...</div></div>
             </div>
@@ -2062,6 +2075,217 @@
             if (score >= 7) return { label: 'Quente',  cls: 'heat-hot',  icon: '🔥' };
             if (score >= 4) return { label: 'Morno',   cls: 'heat-warm', icon: '⚡' };
             return             { label: 'Frio',    cls: 'heat-cold', icon: '❄️' };
+        }
+
+        // =============================================
+        // EXPORTAÇÃO XLSX — LAYOUT JOHN DEERE
+        // =============================================
+        function xlsxColLetter(n) {
+            let s = '';
+            while (n > 0) { const r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = Math.floor((n - 1) / 26); }
+            return s;
+        }
+
+        async function exportNegXLSX() {
+            if (!_SCORED_NEGS || _SCORED_NEGS.length === 0) {
+                alert('Nenhuma negociação em aberto para exportar.');
+                return;
+            }
+
+            const btn = document.getElementById('btn-export-xlsx');
+            btn.disabled = true;
+            btn.textContent = 'Gerando...';
+
+            try {
+                const wb = new ExcelJS.Workbook();
+                wb.creator = 'Dashboard AON 26';
+                wb.created = new Date();
+
+                // ---- Paleta JD Construção ----
+                const C = {
+                    JD_YELLOW : 'FFFFD100',
+                    JD_BLACK  : 'FF000000',
+                    DARK1     : 'FF1C1C1E',
+                    DARK2     : 'FF2A2A2C',
+                    DARK3     : 'FF141416',
+                    WHITE     : 'FFF5F5F7',
+                    MUTED     : 'FF86868B',
+                    BORDER    : 'FF3A3A3C',
+                    HOT       : 'FFFF453A',
+                    WARM      : 'FFFF9500',
+                    COLD      : 'FF64D2FF',
+                    GREEN     : 'FF32D74B',
+                    ACCENT_BG : 'FF2E2800',
+                };
+
+                const ws = wb.addWorksheet('Negociações em Aberto', {
+                    properties: { tabColor: { argb: C.JD_YELLOW } },
+                    pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1 }
+                });
+
+                const COLS = [
+                    { header: 'Distribuidor',        width: 20 },
+                    { header: 'Lead / Contato',      width: 30 },
+                    { header: 'Máquina',             width: 22 },
+                    { header: 'Temperatura',         width: 14 },
+                    { header: 'Score',               width: 8  },
+                    { header: 'Data do Lead',        width: 14 },
+                    { header: 'Dias em Aberto',      width: 16 },
+                    { header: 'Prazo de Compra',     width: 22 },
+                    { header: 'Forma de Pagamento',  width: 22 },
+                    { header: 'Frota Atual',         width: 22 },
+                    { header: 'Observação / Comentário', width: 55 },
+                ];
+                const nCols = COLS.length;
+                const lastLetter = xlsxColLetter(nCols);
+
+                // Larguras
+                COLS.forEach((c, i) => { ws.getColumn(i + 1).width = c.width; });
+
+                // ---- Linha 1: Título ----
+                ws.mergeCells(`A1:${lastLetter}1`);
+                const titleCell = ws.getCell('A1');
+                titleCell.value = 'NEGOCIAÇÕES EM ABERTO — AON 26  |  JOHN DEERE CONSTRUÇÃO';
+                titleCell.style = {
+                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.JD_YELLOW } },
+                    font: { bold: true, size: 15, color: { argb: C.JD_BLACK }, name: 'Calibri' },
+                    alignment: { horizontal: 'center', vertical: 'middle' },
+                };
+                ws.getRow(1).height = 38;
+
+                // ---- Linha 2: Subtítulo ----
+                ws.mergeCells(`A2:${lastLetter}2`);
+                const sub = ws.getCell('A2');
+                const now = new Date();
+                const stamp = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+                const hot  = _SCORED_NEGS.filter(n => n.score >= 7).length;
+                const warm = _SCORED_NEGS.filter(n => n.score >= 4 && n.score < 7).length;
+                const cold = _SCORED_NEGS.filter(n => n.score < 4).length;
+                sub.value = `Gerado em ${stamp}  ·  ${_SCORED_NEGS.length} negociações  ·  🔥 ${hot} Quentes  ⚡ ${warm} Mornas  ❄️ ${cold} Frias  ·  Filtro: ${(CURRENT_FILTER||'TODOS').toUpperCase()}`;
+                sub.style = {
+                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.DARK3 } },
+                    font: { size: 10, color: { argb: C.MUTED }, name: 'Calibri', italic: true },
+                    alignment: { horizontal: 'center', vertical: 'middle' },
+                };
+                ws.getRow(2).height = 22;
+
+                // ---- Linha 3: Separador amarelo fino ----
+                ws.mergeCells(`A3:${lastLetter}3`);
+                ws.getCell('A3').style = { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.JD_YELLOW } } };
+                ws.getRow(3).height = 3;
+
+                // ---- Linha 4: Cabeçalhos das colunas ----
+                ws.getRow(4).height = 28;
+                COLS.forEach((c, i) => {
+                    const cell = ws.getCell(4, i + 1);
+                    cell.value = c.header.toUpperCase();
+                    cell.style = {
+                        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.JD_BLACK } },
+                        font: { bold: true, size: 9, color: { argb: C.JD_YELLOW }, name: 'Calibri' },
+                        alignment: { horizontal: 'center', vertical: 'middle' },
+                        border: { bottom: { style: 'medium', color: { argb: C.JD_YELLOW } } },
+                    };
+                });
+
+                // ---- Linhas de dados ----
+                _SCORED_NEGS.forEach((n, idx) => {
+                    const heat    = heatLabel(n.score, n.hasData);
+                    const machine = normalizeMachine(n.lead.machineRaw);
+                    const ident   = leadIdent(n.lead);
+                    const dateStr = formatDate(n.lead.dateRaw) || '—';
+                    const daysStr = n.days !== null ? `${n.days} dias` : 'Sem data';
+                    const clean   = v => (v && v !== 'nan' && v.trim()) ? v.trim() : '—';
+
+                    const rowData = [
+                        n.dealerName,
+                        ident,
+                        machine,
+                        heat.label,
+                        n.score,
+                        dateStr,
+                        daysStr,
+                        clean(n.lead.timeframeRaw),
+                        clean(n.lead.paymentRaw),
+                        clean(n.lead.fleetRaw),
+                        clean(n.lead.lossRaw),
+                    ];
+
+                    const excelRow = idx + 5;
+                    const rowBg = idx % 2 === 0 ? C.DARK1 : C.DARK2;
+                    ws.getRow(excelRow).height = 20;
+
+                    rowData.forEach((val, col) => {
+                        const cell = ws.getCell(excelRow, col + 1);
+                        cell.value = val;
+
+                        let fontColor = C.WHITE;
+                        let bold      = false;
+                        let cellBg    = rowBg;
+                        let hAlign    = 'left';
+
+                        // Distribuidor: bold amarelo
+                        if (col === 0) { bold = true; fontColor = C.JD_YELLOW; }
+                        // Temperatura
+                        if (col === 3) {
+                            bold = true;
+                            fontColor = n.score >= 7 ? C.HOT : n.score >= 4 ? C.WARM : C.COLD;
+                        }
+                        // Score
+                        if (col === 4) {
+                            bold = true; hAlign = 'center';
+                            fontColor = n.score >= 7 ? C.HOT : n.score >= 4 ? C.WARM : C.COLD;
+                            cellBg = n.score >= 7 ? 'FF2A0A09' : n.score >= 4 ? 'FF2A1A00' : 'FF001020';
+                        }
+                        // Dias em aberto
+                        if (col === 6 && n.days !== null) {
+                            fontColor = n.days > 30 ? C.HOT : n.days > 7 ? C.WARM : C.GREEN;
+                            bold = n.days > 30;
+                        }
+
+                        cell.style = {
+                            fill:      { type: 'pattern', pattern: 'solid', fgColor: { argb: cellBg } },
+                            font:      { size: 10, color: { argb: fontColor }, name: 'Calibri', bold },
+                            alignment: { vertical: 'middle', horizontal: hAlign, wrapText: col === 10 },
+                            border:    { bottom: { style: 'thin', color: { argb: C.BORDER } } },
+                        };
+                    });
+                });
+
+                // Congelar 4 linhas de cabeçalho
+                ws.views = [{ state: 'frozen', ySplit: 4 }];
+
+                // ---- Linha final: rodapé ----
+                const footerRow = _SCORED_NEGS.length + 5;
+                ws.mergeCells(`A${footerRow}:${lastLetter}${footerRow}`);
+                const footer = ws.getCell(`A${footerRow}`);
+                footer.value = 'Dashboard AON 26 — John Deere Construção  |  Gerado automaticamente';
+                footer.style = {
+                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.JD_YELLOW } },
+                    font: { size: 9, color: { argb: C.JD_BLACK }, name: 'Calibri', bold: true },
+                    alignment: { horizontal: 'center', vertical: 'middle' },
+                };
+                ws.getRow(footerRow).height = 18;
+
+                // Gera e faz download
+                const buffer = await wb.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const url  = URL.createObjectURL(blob);
+                const a    = document.createElement('a');
+                const d    = now;
+                a.download = `negociacoes_aon26_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.xlsx`;
+                a.href = url;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+            } catch(err) {
+                console.error('Erro ao gerar XLSX:', err);
+                alert('Erro ao gerar o arquivo. Verifique o console.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zm-8 2V5h2v6h1.17L12 13.17 9.83 11H11zm-6 7h14v2H5z"/></svg> Exportar XLSX`;
+            }
         }
 
         // Scored negs cache (para navegação no modal de detalhe)
