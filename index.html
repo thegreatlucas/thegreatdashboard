@@ -2015,59 +2015,56 @@
         }
 
         // =============================================
-        // ALGORITMO DE CALOR DE NEGOCIAÇÃO
+        // =============================================
+        // ALGORITMO DE CALOR DE NEGOCIAÇÃO v2
+        // Comentário = decisor principal da base (0-6)
+        // Dias em aberto = modificador forte (+4 / +1 / -3)
+        // Benchmark construção: 30d = fresco, 90d = estagnado
         // =============================================
         function calcNegHeat(lead) {
-            const comment  = normalizeString(lead.lossRaw    || '');
+            const comment   = normalizeString(lead.lossRaw     || '');
             const timeframe = normalizeString(lead.timeframeRaw || '');
-            const payment   = normalizeString(lead.paymentRaw  || '');
-            let score = 0;
+            const days      = daysAgo(lead.dateRaw);
 
-            // Sinais quentes no comentário (+3)
-            ['urgente', 'urgencia', 'imediato', 'imediata', 'essa semana', 'esta semana',
-             'lo antes posible', 'preciso logo', 'preciso ja', 'rapidamente'].forEach(w => {
-                if (comment.includes(w)) score += 3;
-            });
-            // Sinais mornos no comentário (+2)
-            ['interessado', 'interesado', 'proposta', 'propuesta', 'avancando', 'avanzando',
-             'quero fechar', 'quiero cerrar', 'positivo', 'confirmado', 'acordo', 'acuerdo',
-             'pronto pra', 'listo para', 'bom contato', 'buen contacto'].forEach(w => {
-                if (comment.includes(w)) score += 2;
-            });
-            // Sinais leves (+1)
-            ['gostou', 'le gusto', 'visita agendada', 'reuniao', 'reunion', 'demo', 'test drive',
-             'quer visitar', 'quiere visitar'].forEach(w => {
-                if (comment.includes(w)) score += 1;
-            });
-            // Sinais frios (-1)
-            ['talvez', 'quizas', 'ver se', 'evaluar', 'pensar', 'em analise', 'analisando',
-             'aguardando cliente'].forEach(w => {
-                if (comment.includes(w)) score -= 1;
-            });
-            // Sinais mortos (-3)
-            ['desistiu', 'cancelou', 'sem interesse', 'sin interes', 'nao tem interesse',
-             'no tiene interes', 'parou', 'parado'].forEach(w => {
-                if (comment.includes(w)) score -= 3;
-            });
-            // Prazo curto (+2)
-            ['imediato', 'imediata', 'este mes', 'esse mes', '30 dias', '1 mes', '1 mes',
-             'curto prazo'].forEach(w => {
-                if (timeframe.includes(w)) score += 2;
-            });
-            // Prazo médio (+1)
-            ['2 meses', '3 meses', '45 dias', '60 dias'].forEach(w => {
-                if (timeframe.includes(w)) score += 1;
-            });
-            // Prazo longo ou indefinido (-1)
-            ['longo prazo', 'sem prazo', 'nao sabe', 'indefinido'].forEach(w => {
-                if (timeframe.includes(w)) score -= 1;
-            });
-            // Pagamento definido = mais comprometido (+1)
-            if (payment && payment !== 'nan' && payment.length > 2) score += 1;
-            // Máquina específica = mais sério (+1)
-            if (lead.machineRaw && lead.machineRaw !== 'nan' && lead.machineRaw.length > 2) score += 1;
+            // --- 1. BASE: qualidade do comentário ---
+            const HOT_WORDS  = ['urgente', 'urgencia', 'imediato', 'imediata', 'essa semana',
+                                 'esta semana', 'lo antes posible', 'preciso logo', 'vai fechar',
+                                 'vamos fechar', 'fecha', 'quer fechar', 'quiero cerrar'];
+            const WARM_WORDS = ['interessado', 'interesado', 'proposta', 'propuesta', 'avancando',
+                                 'avanzando', 'acordo', 'acuerdo', 'positivo', 'confirmado',
+                                 'pronto pra', 'listo para', 'bom contato', 'buen contacto',
+                                 'reuniao agendada', 'visita agendada'];
+            const MILD_WORDS = ['gostou', 'le gusto', 'reuniao', 'reunion', 'demo', 'visita',
+                                 'ligamos', 'retorno'];
+            const DEAD_WORDS = ['desistiu', 'cancelou', 'sem interesse', 'sin interes',
+                                 'nao quer', 'no quiere', 'perdemos', 'perdido', 'parou', 'parado'];
+            const NEG_WORDS  = ['talvez', 'quizas', 'ver se', 'avaliar', 'pensar',
+                                 'aguardando decisao', 'nao sabe'];
 
-            return Math.max(0, Math.min(10, score));
+            const hasDead = DEAD_WORDS.some(w => comment.includes(w));
+            if (hasDead) return 0; // negociação morta: sempre 0, independente de tudo
+
+            let base = 0;
+            if      (HOT_WORDS.some(w  => comment.includes(w))) base = 6;
+            else if (WARM_WORDS.some(w => comment.includes(w))) base = 4;
+            else if (MILD_WORDS.some(w => comment.includes(w))) base = 2;
+            else if (NEG_WORDS.some(w  => comment.includes(w))) base = 1;
+            else if (comment.length > 5)                        base = 2; // comentário existe mas sem palavra-chave
+            else                                                 base = 0; // sem comentário
+
+            // --- 2. MODIFICADOR: dias em aberto (benchmark máquinas de construção) ---
+            // Ciclo típico: 60-120 dias. Fresco = ≤30d. Estagnado = >90d.
+            let daysMod = 0;
+            if      (days === null) daysMod =  0;
+            else if (days <= 30)   daysMod = +4; // fresco: boost forte
+            else if (days <= 90)   daysMod = +1; // dentro do ciclo normal
+            else                   daysMod = -3; // estagnado: penaliza
+
+            // --- 3. BÔNUS: prazo declarado curto ---
+            const SHORT_TF = ['imediato', 'imediata', 'esse mes', 'este mes', '30 dias', 'curto prazo'];
+            const timeBonus = SHORT_TF.some(w => timeframe.includes(w)) ? 1 : 0;
+
+            return Math.max(0, Math.min(10, base + daysMod + timeBonus));
         }
 
         function heatLabel(score, hasData) {
