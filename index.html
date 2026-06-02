@@ -1324,6 +1324,10 @@
                     return n.includes('pagamento') || n.includes('pago');
                 });
 
+                // Pula linhas sem nenhum dado real de lead
+                // (ex: Google Sheets Table pré-preenche coluna Distribuidor em linhas vazias)
+                if (!dateRaw && !email && !phone && !nameRaw && !statusRaw && !postRaw) return;
+
                 leadsObjArr.push({
                     status: statusRaw,
                     postStatus: postRaw,
