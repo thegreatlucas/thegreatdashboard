@@ -1072,7 +1072,7 @@
                 }
             }
             
-            const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+            const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: 'greedy' });
             return parseLeadsFromCSV(parsed.data, config, dealerName);
         }
 
@@ -1218,6 +1218,10 @@
 
             rows.forEach(row => {
                 if (!row) return;
+                // Pula linhas fantasma: Google Sheets Tables exportam rows com células
+                // só de espaço/formatação que parecem vazias mas não são
+                const hasContent = Object.values(row).some(v => v && String(v).trim().length > 0);
+                if (!hasContent) return;
 
                 // Encontrar colunas de forma case-insensitive
                 const keys = Object.keys(row);
