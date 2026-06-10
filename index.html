@@ -929,16 +929,20 @@
 
         function isExpertConnect(lead) {
             const isEmpty = (v) => !v || v.trim() === '' || v.trim().toLowerCase() === 'nan';
-            
+
+            // Linha fantasma: sem nome e sem telefone não é lead real
+            const temIdentidade = (!isEmpty(lead.nameRaw)) || (!isEmpty(lead.phone));
+            if (!temIdentidade) return false;
+
             const semSetor = isEmpty(lead.applicationRaw);
             const semFrota = isEmpty(lead.fleetRaw);
-            
+
             // Se tem qualquer um dos dois preenchido → veio do Meta, não é EC
             if (!semSetor || !semFrota) return false;
-            
+
             // Ambos vazios: verifica data >= dez/2025
             const leadDate = parseDateAny(lead.dateRaw);
-            if (!leadDate) return false; // sem data não é possível confirmar origem EC
+            if (!leadDate) return true; // sem data mas com identidade + campos EC = EC
 
             const dec2025 = new Date(2025, 11, 1); // 01/12/2025
             return leadDate >= dec2025;
