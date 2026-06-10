@@ -938,8 +938,8 @@
             
             // Ambos vazios: verifica data >= dez/2025
             const leadDate = parseDateAny(lead.dateRaw);
-            if (!leadDate) return true; // sem data + sem setor + sem frota = EC
-            
+            if (!leadDate) return false; // sem data não é possível confirmar origem EC
+
             const dec2025 = new Date(2025, 11, 1); // 01/12/2025
             return leadDate >= dec2025;
         }
