@@ -470,6 +470,10 @@
                         <span id="c-BR-txqual" class="country-stat-value" style="color: var(--success);">-</span>
                     </div>
                     <div class="country-stat-block">
+                        <span class="country-metric-label">Sem Atendimento</span>
+                        <span id="c-BR-semAtend" class="country-stat-value">-</span>
+                    </div>
+                    <div class="country-stat-block">
                         <span class="country-metric-label">Desqualificados</span>
                         <span id="c-BR-desq" class="country-stat-value" style="color: #ff9500;">-</span>
                     </div>
@@ -503,6 +507,10 @@
                         <span id="c-AR-txqual" class="country-stat-value" style="color: var(--success);">-</span>
                     </div>
                     <div class="country-stat-block">
+                        <span class="country-metric-label">Sem Atendimento</span>
+                        <span id="c-AR-semAtend" class="country-stat-value">-</span>
+                    </div>
+                    <div class="country-stat-block">
                         <span class="country-metric-label">Desqualificados</span>
                         <span id="c-AR-desq" class="country-stat-value" style="color: #ff9500;">-</span>
                     </div>
@@ -534,6 +542,10 @@
                     <div class="country-stat-block">
                         <span class="country-metric-label">Tx Qualificação</span>
                         <span id="c-MX-txqual" class="country-stat-value" style="color: var(--success);">-</span>
+                    </div>
+                    <div class="country-stat-block">
+                        <span class="country-metric-label">Sem Atendimento</span>
+                        <span id="c-MX-semAtend" class="country-stat-value">-</span>
                     </div>
                     <div class="country-stat-block">
                         <span class="country-metric-label">Desqualificados</span>
@@ -1792,6 +1804,10 @@
                                 <span class="val" style="color: var(--error)">${dt.stop}</span>
                             </div>
                             <div>
+                                <span class="label">Sem Atendimento</span>
+                                <span class="val">${dt.total - dt.attended}</span>
+                            </div>
+                            <div>
                                 <span class="label">Desqualificados</span>
                                 <span class="val" style="color: #ff9500;">${dt.desq}</span>
                             </div>
@@ -1887,6 +1903,7 @@
                 document.getElementById(`c-${c}-neg-pct`).textContent = cm.qual > 0 ? ((cm.neg / cm.qual) * 100).toFixed(0) + '% dos QUALIF.' : '-';
                 document.getElementById(`c-${c}-txatend`).textContent = cm.total > 0 ? ((cm.attended / cm.total) * 100).toFixed(0) + '%' : '0%';
                 document.getElementById(`c-${c}-txqual`).textContent = cm.total > 0 ? ((cm.qual / cm.total) * 100).toFixed(0) + '%' : '0%';
+                document.getElementById(`c-${c}-semAtend`).textContent = cm.total - cm.attended;
                 document.getElementById(`c-${c}-desq`).textContent = cm.desq;
             });
 
