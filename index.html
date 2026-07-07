@@ -333,6 +333,70 @@
         .export-xlsx-btn svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
         .neg-radar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 
+        /* --- ABAS DE VISUALIZAÇÃO --- */
+        .view-tabs {
+            display: flex; gap: 6px; margin-bottom: 35px;
+            background: rgba(0,0,0,0.35); padding: 6px; border-radius: 16px;
+            border: 1px solid var(--border); width: fit-content;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        }
+        .view-tab {
+            background: transparent; border: none; color: var(--text-muted);
+            padding: 12px 28px; border-radius: 11px; cursor: pointer;
+            font-size: 13px; font-weight: 700; font-family: 'Uni Sans', 'Inter', sans-serif;
+            text-transform: uppercase; letter-spacing: 1px;
+            transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .view-tab:hover { color: #fff; }
+        .view-tab.active { background: var(--accent); color: #000; box-shadow: 0 4px 20px rgba(255,209,0,0.25); }
+        .view-panel { display: none; }
+        .view-panel.active { display: block; animation: panelIn 0.45s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        @keyframes panelIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+        /* --- PARALLAX ORBS (fundo decorativo) --- */
+        .parallax-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+        .orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.5; will-change: transform; }
+        .orb-1 { width: 480px; height: 480px; top: -140px; right: -100px; background: radial-gradient(circle, rgba(255,209,0,0.10) 0%, transparent 70%); }
+        .orb-2 { width: 600px; height: 600px; top: 45%; left: -220px; background: radial-gradient(circle, rgba(77,166,255,0.06) 0%, transparent 70%); }
+        .orb-3 { width: 420px; height: 420px; top: 95%; right: 12%; background: radial-gradient(circle, rgba(50,215,75,0.05) 0%, transparent 70%); }
+        .dashboard-header, .container { position: relative; z-index: 1; }
+
+        /* --- SCROLL REVEAL --- */
+        .reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.7s cubic-bezier(0.25,0.8,0.25,1), transform 0.7s cubic-bezier(0.25,0.8,0.25,1); }
+        .reveal.in { opacity: 1; transform: none; }
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { opacity: 1; transform: none; transition: none; }
+            .view-panel.active { animation: none; }
+            .orb { display: none; }
+            * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+
+        /* --- ANÁLISES AVANÇADAS --- */
+        .adv-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
+        .adv-grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 40px; }
+        .adv-grid-trio { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 40px; }
+        .adv-table { width: 100%; border-collapse: collapse; }
+        .adv-table th { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        .adv-table td { padding: 10px 12px; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+        .adv-table tbody tr:last-child td { border-bottom: none; }
+        .adv-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+        .adv-rank-bar-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 10px; }
+        .adv-rank-label { width: 150px; font-size: 11px; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .adv-rank-bar-wrap { flex: 1; height: 10px; background: rgba(255,255,255,0.05); border-radius: 99px; overflow: hidden; }
+        .adv-rank-bar { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.8s cubic-bezier(0.25,0.8,0.25,1); }
+        .adv-rank-value { min-width: 70px; text-align: right; font-family: 'Uni Sans', 'Bebas Neue', sans-serif; font-weight: 800; font-size: 16px; color: #fff; flex-shrink: 0; white-space: nowrap; }
+        .adv-rank-sub { font-size: 10px; color: var(--text-muted); font-weight: 500; margin-left: 4px; }
+        .matrix-table { width: 100%; border-collapse: collapse; }
+        .matrix-table th { font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 6px; text-align: center; }
+        .matrix-table th:first-child { text-align: left; }
+        .matrix-table td { padding: 10px 6px; text-align: center; border-radius: 8px; font-size: 12px; }
+        .matrix-cell { border-radius: 8px; padding: 8px 4px; font-weight: 700; color: #fff; }
+        .matrix-cell small { display: block; font-size: 9px; color: rgba(255,255,255,0.55); font-weight: 500; margin-top: 2px; }
+        .matrix-row-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; text-align: left; white-space: nowrap; }
+        .adv-note { font-size: 10px; color: var(--text-muted); margin-top: 12px; line-height: 1.5; }
+        @media(max-width: 1200px) { .adv-grid-trio { grid-template-columns: 1fr; } }
+        @media(max-width: 1000px) { .adv-grid-2, .adv-grid-3 { grid-template-columns: 1fr; } .view-tab { padding: 10px 16px; font-size: 11px; } }
+
         /* --- RESPONSIVE --- */
         @media(max-width: 1400px) {
             .metrics-main { grid-template-columns: repeat(4, 1fr); }
@@ -385,6 +449,13 @@
     </style>
 </head>
 <body>
+
+    <!-- Camada de parallax decorativa (atrás de todo o conteúdo) -->
+    <div class="parallax-layer" aria-hidden="true">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
 
     <!-- Access Control Security Layer (Front-End) -->
     <div id="auth-screen">
@@ -443,7 +514,16 @@
     </div>
 
     <div class="container">
-        
+
+        <!-- Navegação entre visões -->
+        <div class="view-tabs" role="tablist">
+            <button class="view-tab active" id="view-tab-overview" role="tab" onclick="switchView('overview')">Visão Geral</button>
+            <button class="view-tab" id="view-tab-advanced" role="tab" onclick="switchView('advanced')">Análises Avançadas</button>
+        </div>
+
+        <!-- ============ ABA: VISÃO GERAL ============ -->
+        <div id="view-overview" class="view-panel active">
+
         <div class="metrics-main">
             <div class="card kpi-main">
                 <h3>Total Filtrado</h3>
@@ -480,7 +560,7 @@
             </div>
         </div>
 
-        <div class="country-cards">
+        <div class="country-cards reveal">
             <div class="card country-card" id="card-BR" onclick="toggleCountryFilter('BR')">
                 <div class="country-header">
                     <h3><img src="https://flagcdn.com/br.svg" alt="BR"> Brasil</h3>
@@ -595,7 +675,7 @@
         </div>
 
         <h2 class="section-title">Analytics Intelligence Hub</h2>
-        <div class="analytics-grid">
+        <div class="analytics-grid reveal">
             <div class="card analytics-card">
                 <h3>Tendência de Captação Diária <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ MOMENTO ]</span></h3>
                 <div class="chart-container" style="position: relative; height:200px; width:100%">
@@ -607,7 +687,7 @@
                 <div id="funnel-container" class="funnel-container"></div>
             </div>
         </div>
-        <div class="analytics-grid-bottom">
+        <div class="analytics-grid-bottom reveal">
             <div class="card analytics-card">
                 <h3>Top Equipamentos Diários</h3>
                 <ul id="product-list" class="analytics-list"></ul>
@@ -619,7 +699,7 @@
         </div>
 
         <!-- Radar de Negociações Abertas -->
-        <div class="neg-radar-wrap">
+        <div class="neg-radar-wrap reveal">
             <div class="neg-radar-header">
                 <h2 class="section-title" style="margin:0;">Negociações Abertas <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ RADAR ]</span></h2>
                 <button class="export-xlsx-btn" id="btn-export-xlsx" onclick="exportNegXLSX()">
@@ -633,7 +713,7 @@
         </div>
 
         <!-- Análise de Observações dos Leads em Negociação -->
-        <div class="obs-wrap">
+        <div class="obs-wrap reveal">
             <h2 class="section-title">Análise de Observações <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ EM NEGOCIAÇÃO ]</span></h2>
             <div class="obs-grid">
                 <div class="card analytics-card">
@@ -652,7 +732,7 @@
         </div>
 
         <!-- Vendas Efetuadas -->
-        <div class="sales-wrap">
+        <div class="sales-wrap reveal">
             <h2 class="section-title">Vendas Efetuadas <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ FECHAMENTOS ]</span></h2>
             <div class="card" style="padding: 25px; overflow-x: auto;">
                 <div id="sales-list"><div class="neg-empty">Carregando...</div></div>
@@ -665,9 +745,94 @@
                 Filtrado por: <span id="active-country-name">-</span>
             </div>
         </div>
-        <div id="dealer-grid" class="metrics-dealers">
+        <div id="dealer-grid" class="metrics-dealers reveal">
             <!-- Dealer cards will be generated here -->
         </div>
+
+        </div><!-- /view-overview -->
+
+        <!-- ============ ABA: ANÁLISES AVANÇADAS ============ -->
+        <div id="view-advanced" class="view-panel">
+
+            <h2 class="section-title reveal">Performance de Mídia <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ PLANILHA GERAL META ]</span></h2>
+            <div class="adv-grid-3 reveal">
+                <div class="card analytics-card" style="overflow-x:auto;">
+                    <h3>Top Anúncios por Volume <span>Qualidade medida pelo status no dealer (cruzamento por e-mail)</span></h3>
+                    <div id="adv-ads"><div class="neg-empty">Carregando...</div></div>
+                </div>
+                <div class="card analytics-card">
+                    <h3>Plataforma &amp; Origem</h3>
+                    <div id="adv-platform"><div class="neg-empty">Carregando...</div></div>
+                </div>
+            </div>
+
+            <h2 class="section-title reveal">Geografia <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ REGIÕES ]</span></h2>
+            <div class="adv-grid-2 reveal">
+                <div class="card analytics-card">
+                    <h3>Top Estados / Regiões <span>Volume + taxa de qualificação</span></h3>
+                    <div id="adv-states"><div class="neg-empty">Carregando...</div></div>
+                </div>
+                <div class="card analytics-card">
+                    <h3>Top Cidades</h3>
+                    <div id="adv-cities"><div class="neg-empty">Carregando...</div></div>
+                </div>
+            </div>
+
+            <h2 class="section-title reveal">Velocidade de Atendimento <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ SLA ]</span></h2>
+            <div class="adv-grid-2 reveal">
+                <div class="card analytics-card">
+                    <h3>Tempo Lead → Início da Negociação <span>Média de dias por dealer</span></h3>
+                    <div id="adv-sla-dealers"><div class="neg-empty">Carregando...</div></div>
+                </div>
+                <div class="card analytics-card">
+                    <h3>Distribuição do Tempo de Resposta</h3>
+                    <div id="adv-sla-dist"><div class="neg-empty">Carregando...</div></div>
+                </div>
+            </div>
+
+            <h2 class="section-title reveal">Perfil × Conversão <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ SEGMENTOS ]</span></h2>
+            <div class="adv-grid-2 reveal">
+                <div class="card analytics-card" style="overflow-x:auto;">
+                    <h3>Prazo de Compra × Forma de Pagamento <span>% que avançou (negociação ou venda)</span></h3>
+                    <div id="adv-matrix"><div class="neg-empty">Carregando...</div></div>
+                </div>
+                <div class="card analytics-card">
+                    <h3>Frota Atual (Oportunidade Conquest)</h3>
+                    <div id="adv-conquest"><div class="neg-empty">Carregando...</div></div>
+                </div>
+            </div>
+
+            <h2 class="section-title reveal">Perdas Detalhadas <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ DIAGNÓSTICO ]</span></h2>
+            <div class="adv-grid-trio reveal">
+                <div class="card analytics-card">
+                    <h3>Porque Não Prosseguiu <span>Coluna dedicada</span></h3>
+                    <div id="adv-loss-reasons"><div class="neg-empty">Carregando...</div></div>
+                </div>
+                <div class="card analytics-card">
+                    <h3>Perdas por Máquina</h3>
+                    <div id="adv-loss-machine"><div class="neg-empty">Carregando...</div></div>
+                </div>
+                <div class="card analytics-card">
+                    <h3>Concorrentes Citados</h3>
+                    <div id="adv-competitors"><div class="neg-empty">Carregando...</div></div>
+                </div>
+            </div>
+
+            <h2 class="section-title reveal">Higiene de Dados <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ QUALIDADE DAS PLANILHAS ]</span></h2>
+            <div class="card analytics-card reveal" style="margin-bottom:40px; min-height:unset;">
+                <h3>Completude por Dealer <span>Status + data + observações + data de negociação</span></h3>
+                <div id="adv-hygiene"><div class="neg-empty">Carregando...</div></div>
+            </div>
+
+            <h2 class="section-title reveal">Tendência Semanal <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ COORTES ]</span></h2>
+            <div class="card analytics-card reveal" style="margin-bottom:40px;">
+                <h3>Leads e Qualificados por Semana</h3>
+                <div style="position:relative; height:260px; width:100%;">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
+
+        </div><!-- /view-advanced -->
 
     </div>
 
@@ -904,7 +1069,17 @@
                         const phone = normalizeString(r['phone_number'] || '');
                         if (email && email !== 'nan') {
                             GENERAL_AON_EMAILS[c].add(email);
-                            GENERAL_AON_DATA[c].push({ email, phone, country: c, dateRaw: normalizeString(r['Data do Lead'] || r['created_time'] || '') });
+                            GENERAL_AON_DATA[c].push({
+                                email, phone, country: c,
+                                dateRaw: normalizeString(r['Data do Lead'] || r['created_time'] || ''),
+                                // Campos de mídia/geo para a aba de Análises Avançadas
+                                campaign: (r['campaign_name'] || '').toString().trim(),
+                                ad: (r['ad_name'] || '').toString().trim(),
+                                platform: normalizeString(r['platform'] || ''),
+                                organic: normalizeString(r['is_organic'] || '') === 'true',
+                                state: (r['state'] || '').toString().trim().toUpperCase(),
+                                city: (r['city'] || '').toString().trim()
+                            });
                             if (camp.includes('expo')) {
                                 EXPOAGRO_EMAILS.add(email);
                                 if (phone) EXPOAGRO_PHONES.add(phone);
@@ -1248,6 +1423,25 @@
                     return n.includes('pagamento') || n.includes('pago');
                 });
 
+                // Campos para a aba de Análises Avançadas
+                const regionKey = keys.find(k => {
+                    const n = normalizeString(k);
+                    return n === 'regiao' || n === 'region' || n === 'estado' || n === 'state' || n === 'provincia' || n === 'uf';
+                });
+                const cityKey = keys.find(k => {
+                    const n = normalizeString(k);
+                    return n === 'cidade' || n === 'ciudad' || n === 'city' || n.includes('municip');
+                });
+                const negStartKey = keys.find(k => {
+                    const n = normalizeString(k);
+                    return n.includes('inicio') && n.includes('negocia');
+                });
+                const noBuyKey = keys.find(k => {
+                    const n = normalizeString(k);
+                    return n.includes('prosseguiu') || n.includes('prosigui') ||
+                           ((n.includes('porque') || n.includes('por que')) && n.includes('compra'));
+                });
+
                 leadsObjArr.push({
                     status: statusRaw,
                     postStatus: postRaw,
@@ -1264,6 +1458,10 @@
                     applicationRaw: applicationKey ? normalizeString(row[applicationKey]) : '',
                     timeframeRaw: timeframeKey ? normalizeString(row[timeframeKey]) : '',
                     paymentRaw: paymentKey ? normalizeString(row[paymentKey]) : '',
+                    regionRaw: regionKey ? (row[regionKey] || '').toString().trim().toUpperCase() : '',
+                    cityRaw: cityKey ? (row[cityKey] || '').toString().trim() : '',
+                    negStartRaw: negStartKey ? normalizeString(row[negStartKey]) : '',
+                    noBuyRaw: noBuyKey ? normalizeString(row[noBuyKey]) : '',
                     rawAll: Object.values(row).map(v => normalizeString(v)).join(' ')
                 });
             });
@@ -1323,6 +1521,23 @@
             else if (pStr.includes('OUTROS') || pStr.includes('OTROS')) pStr = 'OUTROS';
 
             return (pStr.length > 2 && pStr !== 'NAN' && !pStr.includes('UNDEFINED')) ? pStr : '';
+        }
+
+        // Agrupamento semântico de motivos de perda (PT + ES).
+        // Keywords SEM acento: lossRaw/noBuyRaw passam por normalizeString (remove acentos),
+        // então padrões acentuados como 'PREÇO'/'CRÉDITO' nunca casavam (bug antigo corrigido).
+        function groupLossReason(raw) {
+            if (raw === undefined || raw === '' || raw === 'nan') return '';
+            const rStr = raw.toUpperCase();
+            if (rStr.includes('PRECO') || rStr.includes('PRECIO') || rStr.includes('CARO') || rStr.includes('VALOR')) return 'PREÇO / VALOR EXTREMO';
+            if (rStr.includes('CONCORREN') || rStr.includes('COMPETEN') || rStr.includes('CATERPILLAR') || rStr.includes('KOMATSU') || rStr.includes('JCB') || rStr.includes('VOLVO') || rStr.includes('SANY') || rStr.includes('XCMG')) return 'PERDA PARA CONCORRÊNCIA';
+            if (rStr.includes('CURIO') || rStr.includes('SO QUERIA SABER') || rStr.includes('APENAS')) return 'LEAD CURIOSO / ESPECULADOR';
+            if (rStr.includes('ESTUDAN') || rStr.includes('ESCOLA') || rStr.includes('TCC')) return 'ESTUDANTE / TRABALHO ACADÊMICO';
+            if (rStr.includes('CREDITO') || rStr.includes('FINANCIA') || rStr.includes('REPROV') || rStr.includes('BANCO')) return 'REPROVAÇÃO DE CRÉDITO';
+            if (rStr.includes('PECA') || rStr.includes('REPUESTO') || rStr.includes('MECANIC') || rStr.includes('OFICINA')) return 'BUSCANDO PEÇAS / SERVIÇO';
+            if (rStr.includes('USAD') || rStr.includes('SEMINOV')) return 'BUSCANDO USADOS';
+            if (rStr.length > 25) return 'OUTROS MOTIVOS MISTOS';
+            return rStr;
         }
 
         function setDateFilter() {
@@ -1598,22 +1813,10 @@
                             const machineCat = machineCategory(ld.machineRaw);
                             if (machineCat) gProducts[machineCat] = (gProducts[machineCat] || 0) + 1;
 
-                            // 3. Loss Reasons (Apenas se não converteu)
+                            // 3. Loss Reasons (apenas se não converteu) — agrupamento unificado
                             if (ld.postStatus === 'sem intencao de compra' || ld.postStatus.includes('sin intencion') || ld.postStatus.includes('parou')) {
-                                if (ld.lossRaw !== undefined && ld.lossRaw !== '' && ld.lossRaw !== 'nan') {
-                                    let rStr = ld.lossRaw.toUpperCase();
-                                    // Clean up common generics to group better
-                                    if(rStr.includes('PREÇO') || rStr.includes('CARO') || rStr.includes('VALOR')) rStr = 'PREÇO / VALOR EXTREMO';
-                                    else if(rStr.includes('CONCORREN') || rStr.includes('CATERPILLAR') || rStr.includes('KOMATSU')) rStr = 'PERDA PARA CONCORRÊNCIA';
-                                    else if(rStr.includes('CURIO') || rStr.includes('SÓ QUERIA SABER') || rStr.includes('APENAS')) rStr = 'LEAD CURIOSO / ESPECULADOR';
-                                    else if(rStr.includes('ESTUDAN') || rStr.includes('ESCOLA') || rStr.includes('TCC')) rStr = 'ESTUDANTE / TRABALHO ACADÊMICO';
-                                    else if(rStr.includes('CRÉDITO') || rStr.includes('FINANCIA') || rStr.includes('REPROV') || rStr.includes('BANCO')) rStr = 'REPROVAÇÃO DE CRÉDITO';
-                                    else if(rStr.includes('PEÇA') || rStr.includes('MECÂNIC') || rStr.includes('OFICINA')) rStr = 'BUSCANDO PEÇAS / SERVIÇO';
-                                    else if(rStr.includes('USAD') || rStr.includes('SEMINOV')) rStr = 'BUSCANDO USADOS';
-                                    else if(rStr.length > 25) rStr = 'OUTROS MOTIVOS MISTOS'; 
-                                    
-                                    gLoss[rStr] = (gLoss[rStr] || 0) + 1;
-                                }
+                                const grouped = groupLossReason(ld.lossRaw);
+                                if (grouped) gLoss[grouped] = (gLoss[grouped] || 0) + 1;
                             }
                         }
                     });
@@ -1775,19 +1978,19 @@
                 });
             }
 
-            // Update DOM headers
-            document.getElementById('m-total').textContent = m.total;
-            document.getElementById('m-qual').textContent = m.qual;
-            document.getElementById('m-neg').textContent = m.neg;
-            document.getElementById('m-noint').textContent = m.noInt;
-            document.getElementById('m-stop').textContent = m.stopped;
+            // Update DOM headers (contadores animados)
+            setKpi('m-total', m.total);
+            setKpi('m-qual', m.qual);
+            setKpi('m-neg', m.neg);
+            setKpi('m-noint', m.noInt);
+            setKpi('m-stop', m.stopped);
 
             const globalAtendidos = m.attended;
             const globalSemAtend = m.total - globalAtendidos;
             document.getElementById('m-txatend').textContent = m.total > 0 ? ((globalAtendidos / m.total) * 100).toFixed(0) + '%' : '0%';
             document.getElementById('m-semAtend').textContent = globalSemAtend + ' sem atend.';
-            document.getElementById('m-desq').textContent = m.desq;
-            document.getElementById('m-sales').textContent = m.sales;
+            setKpi('m-desq', m.desq);
+            setKpi('m-sales', m.sales);
 
             ['BR', 'AR', 'MX'].forEach(c => {
                 const cm = cMetrics[c];
@@ -1811,6 +2014,7 @@
             renderNegRadar();
             renderObsAnalysis();
             renderSales(cMetrics);
+            renderAdvancedAnalytics();
         }
 
         let _renderTimer = null;
@@ -2590,6 +2794,501 @@
             }
             wrap.style.display = 'block';
         }
+
+        // =============================================
+        // ABA: ANÁLISES AVANÇADAS
+        // Todas as visões respeitam os filtros ativos (campanha, país, período),
+        // pois derivam de GLOBAL_FILTERED_LEADS e da planilha geral filtrada.
+        // =============================================
+        let _weeklyChartInstance = null;
+
+        // Desfecho canônico do lead (ranking para dedupe/qualidade de mídia)
+        const OUTCOME_RANK = { other: 0, desq: 1, qual: 2, neg: 3, sale: 4 };
+        function leadOutcome(ld) {
+            if (isSaleLead(ld)) return 'sale';
+            if (ld.postStatus.includes('negocia') || ld.postStatus.includes('se envia propuesta') ||
+                ld.postStatus.includes('venta sujeta a obra') || ld.status.includes('cotizando obra')) return 'neg';
+            if (ld.status === 'qualificado') return 'qual';
+            if (ld.status.includes('nao qualif') || ld.status.includes('no qualif') ||
+                ld.status.includes('descalif') || ld.status.includes('desqualif') || ld.status.includes('descart')) return 'desq';
+            return 'other';
+        }
+        const _isQualPlus = (o) => o === 'qual' || o === 'neg' || o === 'sale';
+        const _isAdvanced = (o) => o === 'neg' || o === 'sale';
+
+        // Lista de barras rankeadas (reuso visual em várias análises)
+        function rankedBarsHtml(items) {
+            if (!items.length) return '<div class="neg-empty">Sem dados suficientes com os filtros atuais.</div>';
+            const max = Math.max(...items.map(i => i.value), 1);
+            return items.map(i => `
+                <div class="adv-rank-bar-row">
+                    <span class="adv-rank-label" title="${escapeHtml(i.label)}">${escapeHtml(i.label)}</span>
+                    <div class="adv-rank-bar-wrap"><div class="adv-rank-bar" style="width:${(i.value / max) * 100}%;${i.color ? ` background:${i.color};` : ''}"></div></div>
+                    <span class="adv-rank-value">${i.display !== undefined ? i.display : i.value}${i.sub ? `<span class="adv-rank-sub">${escapeHtml(i.sub)}</span>` : ''}</span>
+                </div>`).join('');
+        }
+
+        const titleCase = (s) => s.toLowerCase().replace(/(^|\s)\S/g, m => m.toUpperCase());
+
+        function renderAdvancedAnalytics() {
+            if (!document.getElementById('adv-ads')) return;
+
+            // Base: leads filtrados dos dealers visíveis
+            const rows = [];
+            for (const dn in GLOBAL_FILTERED_LEADS) {
+                const country = DEALERS_CONFIG[dn] ? DEALERS_CONFIG[dn].country : null;
+                GLOBAL_FILTERED_LEADS[dn].forEach(ld => rows.push({ dealerName: dn, country, lead: ld }));
+            }
+
+            renderAdvMedia(rows);
+            renderAdvGeo(rows);
+            renderAdvSLA(rows);
+            renderAdvProfile(rows);
+            renderAdvLosses(rows);
+            renderAdvHygiene();
+            renderAdvWeekly(rows);
+        }
+
+        // ---- 1. Performance de Mídia (planilha geral × status do dealer) ----
+        function renderAdvMedia(rows) {
+            const adsEl  = document.getElementById('adv-ads');
+            const platEl = document.getElementById('adv-platform');
+
+            // Melhor desfecho por e-mail entre os leads filtrados
+            const outcomeByEmail = new Map();
+            rows.forEach(r => {
+                const e = r.lead.email;
+                if (!e || e === 'nan') return;
+                const o = leadOutcome(r.lead);
+                const prev = outcomeByEmail.get(e);
+                if (!prev || OUTCOME_RANK[o] > OUTCOME_RANK[prev]) outcomeByEmail.set(e, o);
+            });
+
+            // Linhas da geral respeitando filtro de país + período
+            const inRange = (g) => {
+                if (!CURRENT_START_DATE && !CURRENT_END_DATE) return true;
+                const d = parseDateAny(g.dateRaw);
+                if (!d) return false;
+                if (CURRENT_START_DATE && d < CURRENT_START_DATE) return false;
+                if (CURRENT_END_DATE && d > CURRENT_END_DATE) return false;
+                return true;
+            };
+            const gRows = [];
+            ['BR', 'AR', 'MX'].forEach(c => {
+                if (CURRENT_COUNTRY_FILTER && c !== CURRENT_COUNTRY_FILTER) return;
+                (GENERAL_AON_DATA[c] || []).forEach(g => { if (inRange(g)) gRows.push(g); });
+            });
+
+            if (gRows.length === 0) {
+                adsEl.innerHTML = '<div class="neg-empty">Planilha geral sem dados para os filtros atuais.</div>';
+                platEl.innerHTML = '<div class="neg-empty">Sem dados.</div>';
+                return;
+            }
+
+            const ads = {};
+            const plat = { ig: 0, fb: 0, outro: 0 };
+            let organicCount = 0;
+            gRows.forEach(g => {
+                const name = g.ad || '(sem anúncio identificado)';
+                if (!ads[name]) ads[name] = { leads: 0, qual: 0, adv: 0, sale: 0 };
+                const a = ads[name];
+                a.leads++;
+                const o = outcomeByEmail.get(g.email);
+                if (o && _isQualPlus(o)) a.qual++;
+                if (o && _isAdvanced(o)) a.adv++;
+                if (o === 'sale') a.sale++;
+
+                if (g.platform === 'ig') plat.ig++;
+                else if (g.platform === 'fb') plat.fb++;
+                else plat.outro++;
+                if (g.organic) organicCount++;
+            });
+
+            const top = Object.entries(ads).sort((a, b) => b[1].leads - a[1].leads).slice(0, 8);
+            adsEl.innerHTML = `<table class="adv-table">
+                <thead><tr><th>Anúncio</th><th>Leads</th><th>Qualif.</th><th>Tx Qual</th><th>Neg + Vendas</th></tr></thead>
+                <tbody>${top.map(([name, a]) => {
+                    const tx = a.leads > 0 ? ((a.qual / a.leads) * 100).toFixed(0) + '%' : '—';
+                    const short = name.length > 58 ? name.slice(0, 55) + '…' : name;
+                    return `<tr>
+                        <td style="max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-main);" title="${escapeHtml(name)}">${escapeHtml(short)}</td>
+                        <td style="font-weight:700;color:#fff;">${a.leads}</td>
+                        <td style="color:var(--success);font-weight:700;">${a.qual}</td>
+                        <td style="color:var(--accent);font-weight:700;">${tx}</td>
+                        <td style="color:#4da6ff;font-weight:700;">${a.adv}${a.sale ? ` <span style="color:var(--success);">(${a.sale} ✔)</span>` : ''}</td>
+                    </tr>`;
+                }).join('')}</tbody>
+            </table>
+            <p class="adv-note">Qualif. / Neg + Vendas contam apenas leads localizados nas planilhas dos dealers (cruzamento por e-mail). Base: ${gRows.length} leads da planilha geral.</p>`;
+
+            const pTotal = gRows.length;
+            const pctOf = (v) => ((v / pTotal) * 100).toFixed(0) + '%';
+            platEl.innerHTML = rankedBarsHtml([
+                { label: 'Instagram',    value: plat.ig,    sub: pctOf(plat.ig),    color: '#e1306c' },
+                { label: 'Facebook',     value: plat.fb,    sub: pctOf(plat.fb),    color: '#1877f2' },
+                { label: 'Outro / N-D',  value: plat.outro, sub: pctOf(plat.outro), color: '#86868b' },
+            ].filter(i => i.value > 0)) +
+            `<p class="adv-note">🌱 <strong style="color:var(--text-main)">${organicCount}</strong> leads orgânicos (${pctOf(organicCount)} da base) — o restante veio de mídia paga.</p>`;
+        }
+
+        // ---- 2. Geografia ----
+        function renderAdvGeo(rows) {
+            const stEl = document.getElementById('adv-states');
+            const ctEl = document.getElementById('adv-cities');
+
+            // Fallback: estado/cidade da planilha geral por e-mail (dealers sem coluna Região)
+            const geoByEmail = new Map();
+            ['BR', 'AR', 'MX'].forEach(c => (GENERAL_AON_DATA[c] || []).forEach(g => {
+                if (g.email && (g.state || g.city)) geoByEmail.set(g.email, { state: g.state, city: g.city });
+            }));
+
+            const states = {}, cities = {};
+            rows.forEach(r => {
+                const fb = geoByEmail.get(r.lead.email) || {};
+                const st = (r.lead.regionRaw || fb.state || '').trim().toUpperCase();
+                const ct = (r.lead.cityRaw || fb.city || '').trim();
+                if (st && st !== 'NAN') {
+                    if (!states[st]) states[st] = { total: 0, qual: 0 };
+                    states[st].total++;
+                    if (_isQualPlus(leadOutcome(r.lead))) states[st].qual++;
+                }
+                if (ct && ct.toLowerCase() !== 'nan') {
+                    const key = titleCase(ct);
+                    cities[key] = (cities[key] || 0) + 1;
+                }
+            });
+
+            const stItems = Object.entries(states)
+                .sort((a, b) => b[1].total - a[1].total).slice(0, 10)
+                .map(([st, v]) => ({
+                    label: st, value: v.total,
+                    sub: ((v.qual / v.total) * 100).toFixed(0) + '% qual',
+                    color: (v.qual / v.total) >= 0.4 ? 'var(--success)' : 'var(--accent)'
+                }));
+            stEl.innerHTML = stItems.length ? rankedBarsHtml(stItems)
+                : '<div class="neg-empty">Nenhum lead com estado/região identificável nos filtros atuais.</div>';
+
+            const ctItems = Object.entries(cities)
+                .sort((a, b) => b[1] - a[1]).slice(0, 10)
+                .map(([ct, v]) => ({ label: ct, value: v, color: '#4da6ff' }));
+            ctEl.innerHTML = ctItems.length ? rankedBarsHtml(ctItems)
+                : '<div class="neg-empty">Nenhum lead com cidade identificável nos filtros atuais.</div>';
+        }
+
+        // ---- 3. SLA: tempo lead → início da negociação ----
+        function renderAdvSLA(rows) {
+            const dlEl = document.getElementById('adv-sla-dealers');
+            const dsEl = document.getElementById('adv-sla-dist');
+
+            const byDealer = {};
+            const buckets = { 'Mesmo dia / 1d': 0, '2 a 3 dias': 0, '4 a 7 dias': 0, '8 a 14 dias': 0, '15+ dias': 0 };
+            let withStart = 0, negTotal = 0;
+
+            rows.forEach(r => {
+                if (_isAdvanced(leadOutcome(r.lead))) negTotal++;
+                const d0 = parseDateAny(r.lead.dateRaw);
+                const d1 = parseDateAny(r.lead.negStartRaw);
+                if (!d0 || !d1) return;
+                const delta = Math.round((d1 - d0) / 86400000);
+                if (delta < 0 || delta > 400) return; // dado inconsistente
+                withStart++;
+                (byDealer[r.dealerName] = byDealer[r.dealerName] || []).push(delta);
+                if (delta <= 1) buckets['Mesmo dia / 1d']++;
+                else if (delta <= 3) buckets['2 a 3 dias']++;
+                else if (delta <= 7) buckets['4 a 7 dias']++;
+                else if (delta <= 14) buckets['8 a 14 dias']++;
+                else buckets['15+ dias']++;
+            });
+
+            const items = Object.entries(byDealer).map(([dn, arr]) => {
+                const avg = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+                return {
+                    label: dn, value: avg, display: avg + 'd', sub: `${arr.length} negs`,
+                    color: avg <= 3 ? 'var(--success)' : avg <= 7 ? 'var(--accent)' : 'var(--error)'
+                };
+            }).sort((a, b) => a.value - b.value);
+
+            dlEl.innerHTML = items.length ? rankedBarsHtml(items) +
+                '<p class="adv-note">Quanto menor, melhor — dias entre a data do lead e a "Data do início da negociação" preenchida pelo dealer.</p>'
+                : '<div class="neg-empty">Nenhuma "Data do início da negociação" preenchida nas planilhas.<br><small style="opacity:0.7">Cobre os dealers para preencher a coluna — esta análise depende dela.</small></div>';
+
+            const bItems = Object.entries(buckets).map(([label, v], i) => ({
+                label, value: v,
+                color: ['var(--success)', '#a3e635', 'var(--accent)', '#ff9500', 'var(--error)'][i]
+            })).filter(i => i.value > 0);
+            dsEl.innerHTML = (bItems.length ? rankedBarsHtml(bItems) : '<div class="neg-empty">Sem dados de SLA.</div>') +
+                (negTotal > 0 ? `<p class="adv-note">📋 ${withStart} lead(s) com data de negociação preenchida · ${negTotal} negociações/vendas no filtro atual.</p>` : '');
+        }
+
+        // ---- 4. Perfil × Conversão ----
+        function renderAdvProfile(rows) {
+            const mxEl = document.getElementById('adv-matrix');
+            const cqEl = document.getElementById('adv-conquest');
+
+            const tfBucket = (t) => {
+                if (!t || t === 'nan') return null;
+                if (t.includes('imediat') || t.includes('30 dias') || t.includes('este mes') || t.includes('esse mes') || t.includes('lo antes')) return 'Imediato / 30d';
+                if (t.includes('3 mes')) return '3 meses';
+                if (t.includes('6 mes') || t.includes('12 mes') || t.includes('ano') || t.includes('proximo ano')) return '6+ meses';
+                return 'Indefinido';
+            };
+            const payBucket = (p) => {
+                if (!p || p === 'nan') return null;
+                if (p.includes('financi')) return 'Financiado';
+                if (p.includes('vista') || p.includes('contado') || p.includes('efectivo')) return 'À vista';
+                if (p.includes('consorc')) return 'Consórcio';
+                if (p.includes('leasing') || p.includes('arrenda')) return 'Leasing';
+                return 'Outro';
+            };
+
+            const TF_ORDER = ['Imediato / 30d', '3 meses', '6+ meses', 'Indefinido'];
+            const PAY_ORDER = ['Financiado', 'À vista', 'Consórcio', 'Leasing', 'Outro'];
+            const matrix = {};
+            rows.forEach(r => {
+                const tf = tfBucket(r.lead.timeframeRaw);
+                const py = payBucket(r.lead.paymentRaw);
+                if (!tf || !py) return;
+                const key = tf + '|' + py;
+                if (!matrix[key]) matrix[key] = { n: 0, adv: 0 };
+                matrix[key].n++;
+                if (_isAdvanced(leadOutcome(r.lead))) matrix[key].adv++;
+            });
+
+            const paysPresent = PAY_ORDER.filter(p => TF_ORDER.some(t => matrix[t + '|' + p]));
+            if (!paysPresent.length) {
+                mxEl.innerHTML = '<div class="neg-empty">Sem dados de prazo/pagamento nos filtros atuais.</div>';
+            } else {
+                mxEl.innerHTML = `<table class="matrix-table">
+                    <thead><tr><th>Prazo ↓ · Pagamento →</th>${paysPresent.map(p => `<th>${p}</th>`).join('')}</tr></thead>
+                    <tbody>${TF_ORDER.map(t => {
+                        const cells = paysPresent.map(p => {
+                            const c = matrix[t + '|' + p];
+                            if (!c) return '<td><span style="color:rgba(255,255,255,0.15)">—</span></td>';
+                            const rate = c.adv / c.n;
+                            const bg = `rgba(50, 215, 75, ${Math.min(0.45, rate * 0.9).toFixed(2)})`;
+                            return `<td><div class="matrix-cell" style="background:${bg};">${c.n}<small>${(rate * 100).toFixed(0)}% avançou</small></div></td>`;
+                        }).join('');
+                        return `<tr><td class="matrix-row-label">${t}</td>${cells}</tr>`;
+                    }).join('')}</tbody>
+                </table>
+                <p class="adv-note">Célula = nº de leads · % que chegou a negociação ou venda. Verde mais forte = segmento que mais converte.</p>`;
+            }
+
+            // Conquest: segmentação por frota atual
+            const segOf = (f) => {
+                if (!f || f === 'nan') return null;
+                if (f.includes('outra marca') || f.includes('otra marca') || f.includes('outras marcas')) return 'Tem outra marca (conquest)';
+                if (f.includes('john deere') || /\bjd\b/.test(f)) return 'Já tem John Deere';
+                if (f.includes('nao tenho') || f.includes('no tengo') || f.includes('ainda nao') || f.includes('aun no') || f.includes('todavia no')) return 'Ainda não tem máquinas';
+                return 'Tem frota (não especificado)';
+            };
+            const segs = {};
+            rows.forEach(r => {
+                const s = segOf(r.lead.fleetRaw);
+                if (!s) return;
+                if (!segs[s]) segs[s] = { n: 0, adv: 0 };
+                segs[s].n++;
+                if (_isAdvanced(leadOutcome(r.lead))) segs[s].adv++;
+            });
+            const sgItems = Object.entries(segs).sort((a, b) => b[1].n - a[1].n).map(([label, v]) => ({
+                label, value: v.n,
+                sub: ((v.adv / v.n) * 100).toFixed(0) + '% avançou',
+                color: label.includes('conquest') ? 'var(--accent)' : label.includes('John Deere') ? 'var(--success)' : '#4da6ff'
+            }));
+            cqEl.innerHTML = sgItems.length ? rankedBarsHtml(sgItems) +
+                '<p class="adv-note">Leads com máquina de outra marca são a oportunidade conquest — compare a taxa de avanço entre os segmentos.</p>'
+                : '<div class="neg-empty">Sem dados de frota nos filtros atuais.</div>';
+        }
+
+        // ---- 5. Perdas detalhadas ----
+        function renderAdvLosses(rows) {
+            const rsEl = document.getElementById('adv-loss-reasons');
+            const mcEl = document.getElementById('adv-loss-machine');
+            const cpEl = document.getElementById('adv-competitors');
+
+            const isLost = (r) => {
+                const p = r.lead.postStatus;
+                return leadOutcome(r.lead) === 'desq' ||
+                       p === 'sem intencao de compra' || p.includes('sin intencion') ||
+                       p.includes('parou') || p.includes('parado');
+            };
+            const lost = rows.filter(isLost);
+
+            const reasons = {}, machines = {}, competitors = {};
+            lost.forEach(r => {
+                const g = groupLossReason(r.lead.noBuyRaw && r.lead.noBuyRaw !== 'nan' ? r.lead.noBuyRaw : '');
+                if (g) reasons[g] = (reasons[g] || 0) + 1;
+                const mc = machineCategory(r.lead.machineRaw);
+                if (mc) machines[mc] = (machines[mc] || 0) + 1;
+            });
+            const COMPETITORS = ['caterpillar', 'komatsu', 'jcb', 'volvo', 'sany', 'xcmg', 'hyundai', 'liugong', 'new holland'];
+            rows.forEach(r => {
+                const txt = (r.lead.noBuyRaw || '') + ' ' + (r.lead.lossRaw || '');
+                COMPETITORS.forEach(c => {
+                    if (txt.includes(c)) competitors[c.toUpperCase()] = (competitors[c.toUpperCase()] || 0) + 1;
+                });
+            });
+
+            const rsItems = Object.entries(reasons).sort((a, b) => b[1] - a[1]).slice(0, 8)
+                .map(([label, v]) => ({ label, value: v, color: 'var(--error)' }));
+            rsEl.innerHTML = rsItems.length ? rankedBarsHtml(rsItems)
+                : '<div class="neg-empty">Coluna "Porque não prosseguiu com a compra" vazia nos leads perdidos.<br><small style="opacity:0.7">Cobre o preenchimento — hoje a perda só aparece nas observações genéricas.</small></div>';
+
+            const mcItems = Object.entries(machines).sort((a, b) => b[1] - a[1]).slice(0, 8)
+                .map(([label, v]) => ({ label, value: v, color: '#ff9500' }));
+            mcEl.innerHTML = mcItems.length ? rankedBarsHtml(mcItems)
+                : '<div class="neg-empty">Sem máquinas identificadas nos leads perdidos.</div>';
+
+            const cpItems = Object.entries(competitors).sort((a, b) => b[1] - a[1])
+                .map(([label, v]) => ({ label, value: v, color: '#ff6482' }));
+            cpEl.innerHTML = cpItems.length ? rankedBarsHtml(cpItems) +
+                '<p class="adv-note">Menções em observações e motivos de perda de todos os leads filtrados.</p>'
+                : '<div class="neg-empty">Nenhum concorrente citado nas observações.</div>';
+        }
+
+        // ---- 6. Higiene de dados por dealer ----
+        function renderAdvHygiene() {
+            const el = document.getElementById('adv-hygiene');
+            const items = [];
+            for (const dn in GLOBAL_FILTERED_LEADS) {
+                const leads = GLOBAL_FILTERED_LEADS[dn];
+                if (!leads.length) continue;
+                let st = 0, dt = 0, negs = 0, obs = 0, ns = 0;
+                leads.forEach(ld => {
+                    if (ld.status && ld.status !== 'nan') st++;
+                    if (parseDateAny(ld.dateRaw)) dt++;
+                    if (_isAdvanced(leadOutcome(ld))) {
+                        negs++;
+                        if (ld.lossRaw && ld.lossRaw !== 'nan' && ld.lossRaw.length > 5) obs++;
+                        if (parseDateAny(ld.negStartRaw)) ns++;
+                    }
+                });
+                const parts = [st / leads.length, dt / leads.length];
+                if (negs > 0) { parts.push(obs / negs); parts.push(ns / negs); }
+                const score = Math.round((parts.reduce((a, b) => a + b, 0) / parts.length) * 100);
+                items.push({
+                    label: dn, value: score, display: score + '%', sub: `${leads.length} leads`,
+                    color: score >= 75 ? 'var(--success)' : score >= 50 ? 'var(--accent)' : 'var(--error)'
+                });
+            }
+            items.sort((a, b) => b.value - a.value);
+            el.innerHTML = items.length ? rankedBarsHtml(items) +
+                '<p class="adv-note">Score = média de: % leads com status preenchido · % com data válida · % de negociações com observação · % de negociações com data de início. Dealer com score baixo compromete todas as análises.</p>'
+                : '<div class="neg-empty">Sem dealers com leads nos filtros atuais.</div>';
+        }
+
+        // ---- 7. Tendência semanal (Chart.js) ----
+        function renderAdvWeekly(rows) {
+            const cv = document.getElementById('weeklyChart');
+            if (!cv || typeof Chart === 'undefined') return;
+
+            const weeks = {};
+            rows.forEach(r => {
+                const d = parseDateAny(r.lead.dateRaw);
+                if (!d) return;
+                const monday = new Date(d);
+                monday.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // segunda-feira da semana
+                const key = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}-${String(monday.getDate()).padStart(2, '0')}`;
+                if (!weeks[key]) weeks[key] = { total: 0, qual: 0 };
+                weeks[key].total++;
+                if (_isQualPlus(leadOutcome(r.lead))) weeks[key].qual++;
+            });
+
+            if (_weeklyChartInstance) { _weeklyChartInstance.destroy(); _weeklyChartInstance = null; }
+            const keys = Object.keys(weeks).sort();
+            if (!keys.length) return;
+
+            _weeklyChartInstance = new Chart(cv.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: keys.map(k => { const p = k.split('-'); return `${p[2]}/${p[1]}`; }),
+                    datasets: [
+                        { label: 'Leads', data: keys.map(k => weeks[k].total), backgroundColor: 'rgba(255,209,0,0.30)', borderColor: '#FFD100', borderWidth: 1, borderRadius: 5 },
+                        { label: 'Qualificados', data: keys.map(k => weeks[k].qual), backgroundColor: 'rgba(50,215,75,0.40)', borderColor: '#32d74b', borderWidth: 1, borderRadius: 5 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#86868b', font: { family: 'Uni Sans', size: 11 } } } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#86868b', font: { family: 'Uni Sans', size: 10 } } },
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#86868b', font: { family: 'Uni Sans', size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        // =============================================
+        // NAVEGAÇÃO ENTRE ABAS
+        // =============================================
+        let CURRENT_VIEW = 'overview';
+        function switchView(v) {
+            if (CURRENT_VIEW === v) return;
+            CURRENT_VIEW = v;
+            document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('view-tab-' + v).classList.add('active');
+            document.getElementById('view-' + v).classList.add('active');
+            // Chart.js dentro de painel display:none nasce com tamanho 0 — força resize ao exibir
+            if (v === 'advanced' && _weeklyChartInstance) setTimeout(() => _weeklyChartInstance.resize(), 80);
+        }
+
+        // =============================================
+        // EFEITOS VISUAIS (parallax, reveal, contadores)
+        // Respeitam prefers-reduced-motion.
+        // =============================================
+        const _REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // Contadores animados dos KPIs
+        const _counterAnims = new Map();
+        function setKpi(id, value) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const from = parseInt(el.dataset.v || '0', 10) || 0;
+            el.dataset.v = value;
+            if (_REDUCED_MOTION || from === value) { el.textContent = value; return; }
+            cancelAnimationFrame(_counterAnims.get(id));
+            const t0 = performance.now(), dur = 600;
+            const step = (t) => {
+                const p = Math.min(1, (t - t0) / dur);
+                const eased = 1 - Math.pow(1 - p, 3);
+                el.textContent = Math.round(from + (value - from) * eased);
+                if (p < 1) _counterAnims.set(id, requestAnimationFrame(step));
+            };
+            _counterAnims.set(id, requestAnimationFrame(step));
+        }
+
+        // Parallax dos orbs de fundo (scroll lento)
+        (function initParallax() {
+            if (_REDUCED_MOTION) return;
+            const orbs = document.querySelectorAll('.orb');
+            if (!orbs.length) return;
+            let ticking = false;
+            window.addEventListener('scroll', () => {
+                if (ticking) return;
+                ticking = true;
+                requestAnimationFrame(() => {
+                    const y = window.scrollY;
+                    orbs.forEach((o, i) => { o.style.transform = `translateY(${(y * (0.06 + i * 0.05)).toFixed(1)}px)`; });
+                    ticking = false;
+                });
+            }, { passive: true });
+        })();
+
+        // Scroll reveal das seções
+        (function initReveal() {
+            const els = document.querySelectorAll('.reveal');
+            if (_REDUCED_MOTION || !('IntersectionObserver' in window)) {
+                els.forEach(e => e.classList.add('in'));
+                return;
+            }
+            const io = new IntersectionObserver(entries => {
+                entries.forEach(en => {
+                    if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+                });
+            }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+            els.forEach(e => io.observe(e));
+        })();
 
         // O modal de detalhe é compartilhado entre Negociações (radar) e Vendas Efetuadas.
         // _DETAIL_TYPE controla de qual lista (_SCORED_NEGS / _SCORED_SALES) a navegação lê.
