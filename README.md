@@ -15,6 +15,8 @@ Google Sheets (por dealer)
         ↓
   renderDealerCards()         — cards por dealer
   renderNegRadar()            — radar de negociações abertas
+  renderObsAnalysis()         — análise de observações (leads em negociação)
+  renderSales()               — vendas efetuadas
   renderAnalytics()           — funil, timeline, produtos, perdas
 ```
 
@@ -47,10 +49,6 @@ Timeout por proxy: **8 segundos** (AbortController). Se todos falharem, cai no c
 - Chave: `cache_{DEALER_NAME}` e `cache_General_{COUNTRY}`
 - Salvo a cada fetch bem-sucedido
 - Lido automaticamente se proxy falhar
-
-### JSONP Fetcher
-
-Fallback alternativo para a API `/gviz/tq` do Google Sheets (sheets mais antigos). Injeta `<script>` dinâmico com callback global, timeout de 15s.
 
 ---
 
@@ -122,6 +120,7 @@ normalizeString(str)
 Dentro da mesma planilha, leads com mesmo email são deduplicados. Fica o de maior prioridade de status:
 
 ```
+venda efetuada (isSaleLead)      → 4
 qualificado / calificado        → 3
 negociac / propuesta / cotizando → 2
 aguardando / contactado          → 1
@@ -270,7 +269,7 @@ Se `timeframeRaw` contém: `imediato`, `imediata`, `esse mes`, `este mes`, `30 d
 
 ## Radar de Negociações
 
-Exibe todas as negociações em aberto (status contendo `negocia`, `se envia propuesta`, `venta sujeta a obra`, `cotizando obra`).
+Exibe todas as negociações em aberto (status contendo `negocia`, `se envia propuesta`, `venta sujeta a obra`, `cotizando obra`). Leads detectados como venda efetuada (`isSaleLead`) são excluídos do radar — venda fechada não é negociação em aberto.
 
 - Ordenação: score DESC, data ASC
 - Default: top 5, expansível para ver todos
@@ -308,6 +307,7 @@ Brutos (100%)
 → Atendidos (X%)
 → Qualificados (Y% dos atendidos)
 → Negociando (Z% dos qualificados)
+→ Vendas (verde, share do total)
 ```
 
 ### Timeline (Chart.js)
@@ -329,6 +329,45 @@ Agrupamento semântico de comentários de perda:
 | BUSCANDO PEÇAS / SERVIÇO | `peca`, `mecanic*`, `oficina` |
 | BUSCANDO USADOS | `usad*`, `seminov` |
 | OUTROS MOTIVOS MISTOS | comentário >25 chars sem keyword |
+
+---
+
+## Vendas Efetuadas (`isSaleLead` / `renderSales`)
+
+Um lead é venda quando `status + postStatus` (normalizados) contêm `vend`, `venta`, `faturad` ou `facturad` **e não** contêm nenhum termo da blacklist:
+
+```
+sujeta (venta sujeta a obra = negociação), perdid, cancel,
+vendedor, revenda, "sem ", "sin ", "nao ", "no "
+```
+
+- KPI "Vendas Efetuadas" no grid principal (verde)
+- Contador "Vendas" no card de cada dealer
+- Etapa "Vendas" no funil de conversão
+- Seção "Vendas Efetuadas": chips (total, por país, top dealer, % conversão sobre negociações+vendas) + tabela (Distribuidor · Cliente · Máquina · Status · Data · Pagamento · Observação · Detalhes)
+- Modal de detalhe compartilhado com o radar (`openSaleDetail`)
+- Na deduplicação por e-mail, o registro de venda tem prioridade máxima
+
+---
+
+## Análise de Observações (`renderObsAnalysis`)
+
+Classifica o campo Observações (`lossRaw`) dos leads **em negociação** em 7 temas, reutilizando as listas de palavras do `calcNegHeat`:
+
+| Tema | Fonte | Cor |
+|---|---|---|
+| Urgência / Fechamento | HOT_WORDS | vermelho |
+| Interesse Claro | WARM_WORDS | laranja |
+| Atividade / Follow-up | MILD_WORDS | amarelo |
+| Indecisão | NEG_WORDS | azul |
+| Risco de Perda | DEAD_WORDS (precedência máxima) | rosa |
+| Outros Comentários | comentário >5 chars sem keyword | cinza |
+| Sem Observação | vazio/nan/≤5 chars | cinza escuro |
+
+Componentes:
+- Barras por tema (clicáveis — abrem drill-down com os comentários do tema)
+- Diagnóstico: % com observação, sinais de compra (quente+morno), negociações >30d abertas, média de palavras por observação
+- Alertas: negociações sem observação e negociações com linguagem de desistência
 
 ---
 
@@ -376,3 +415,8 @@ Padroniza variações PT/ES para nome canônico:
 - **Novo filtro de campanha**: adicionar botão no HTML + case no `passesFilter()` + lógica de detecção própria.
 - **Colunas novas no XLSX**: array `columns` em `exportNegXLSX()` + campo correspondente extraído em `parseLeadsFromCSV()`.
 - **Planilha geral (cross-reference AON)**: `loadGeneralSheets()` — uma por país, popula `GENERAL_AON_EMAILS` e `EXPOAGRO_EMAILS/PHONES`.
+- **Critério de venda**: função `isSaleLead()` — palavras-chave e blacklist.
+- **Temas de observação**: array `OBS_THEMES` + `classifyObsTheme()`.
+- **Fonte**: Uni Sans (via fonts.cdnfonts.com) com fallback Montserrat/Inter/Bebas Neue.
+- **Segurança de render**: todo conteúdo vindo das planilhas deve passar por `escapeHtml()` antes de entrar em `innerHTML`.
+- **Categoria de máquina**: `machineCategory()` é a fonte única para analytics/modal; `normalizeMachine()` é a variante de exibição (retorna `—`).
