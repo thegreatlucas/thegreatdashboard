@@ -13,11 +13,13 @@ Google Sheets (por dealer)
         ↓
   applyFilter()               — filtragem por campanha + data + país
         ↓
-  renderDealerCards()         — cards por dealer
-  renderNegRadar()            — radar de negociações abertas
-  renderObsAnalysis()         — análise de observações (leads em negociação)
-  renderSales()               — vendas efetuadas
-  renderAnalytics()           — funil, timeline, produtos, perdas
+  renderDealerCards()         — cards por dealer            [aba Visão Geral]
+  renderNegRadar()            — radar de negociações abertas [aba Visão Geral]
+  renderObsAnalysis()         — análise de observações       [aba Visão Geral]
+  renderSales()               — vendas efetuadas             [aba Visão Geral]
+  renderAnalytics()           — funil, timeline, produtos    [aba Visão Geral]
+  renderAdvancedAnalytics()   — mídia, geo, SLA, perfil,
+                                perdas, higiene, semanal     [aba Análises Avançadas]
 ```
 
 Tudo roda no browser. O dado persiste em `localStorage` como cache de emergência (se os proxies falharem, lê o cache mais recente).
@@ -332,6 +334,35 @@ Agrupamento semântico de comentários de perda:
 
 ---
 
+## Abas de Visualização
+
+O dashboard tem duas abas (`switchView`): **Visão Geral** (KPIs, países, funil, radar, observações, vendas, dealers) e **Análises Avançadas**. Ambas respeitam os filtros globais de campanha, país e período.
+
+### Aba Análises Avançadas (`renderAdvancedAnalytics`)
+
+| Análise | Fonte | Descrição |
+|---|---|---|
+| **Performance de Mídia** | Planilha geral (`ad_name`, `platform`, `is_organic`) × status do dealer via e-mail | Top anúncios com tx de qualificação e neg+vendas; split Instagram/Facebook/orgânico |
+| **Geografia** | `Região`/`Cidade` do dealer, fallback `state`/`city` da geral | Top estados com % qual; top cidades |
+| **SLA** | Coluna `Data do início da negociação` | Dias lead→negociação por dealer (média) + distribuição em buckets |
+| **Perfil × Conversão** | `timeframeRaw` × `paymentRaw` | Matriz com % que avançou (neg/venda); segmentos de frota (conquest) |
+| **Perdas Detalhadas** | Coluna `Porque não prosseguiu com a compra` | Motivos agrupados, perdas por máquina, concorrentes citados |
+| **Higiene de Dados** | Todas as colunas | Score de completude por dealer (status, data, observações, data de negociação) |
+| **Tendência Semanal** | `dateRaw` | Chart.js: leads e qualificados por semana (segunda-feira como âncora) |
+
+Helpers centrais: `leadOutcome()` (desfecho canônico: sale > neg > qual > desq > other), `rankedBarsHtml()` (barras rankeadas reutilizáveis), `groupLossReason()` (agrupamento semântico de perdas — keywords sem acento, pois os textos passam por `normalizeString`).
+
+---
+
+## Efeitos Visuais
+
+- **Parallax**: 3 orbs desfocados fixos ao fundo (`.parallax-layer`) que se movem em velocidades diferentes no scroll (rAF-throttled).
+- **Scroll reveal**: seções com classe `.reveal` aparecem com fade/slide via IntersectionObserver.
+- **Contadores animados**: KPIs principais fazem tween numérico (`setKpi`, 600ms ease-out).
+- Todos os efeitos são desativados com `prefers-reduced-motion: reduce`.
+
+---
+
 ## Vendas Efetuadas (`isSaleLead` / `renderSales`)
 
 Um lead é venda quando `status + postStatus` (normalizados) contêm `vend`, `venta`, `faturad` ou `facturad` **e não** contêm nenhum termo da blacklist:
@@ -420,3 +451,6 @@ Padroniza variações PT/ES para nome canônico:
 - **Fonte**: Uni Sans (via fonts.cdnfonts.com) com fallback Montserrat/Inter/Bebas Neue.
 - **Segurança de render**: todo conteúdo vindo das planilhas deve passar por `escapeHtml()` antes de entrar em `innerHTML`.
 - **Categoria de máquina**: `machineCategory()` é a fonte única para analytics/modal; `normalizeMachine()` é a variante de exibição (retorna `—`).
+- **Nova análise avançada**: adicionar card no HTML da aba `#view-advanced` + função `renderAdv*()` chamada em `renderAdvancedAnalytics()`.
+- **Colunas novas do dealer**: extrair em `parseLeadsFromCSV` (já extrai `regionRaw`, `cityRaw`, `negStartRaw`, `noBuyRaw`).
+- **Campos novos da geral**: `loadGeneralSheets()` já captura `campaign`, `ad`, `platform`, `organic`, `state`, `city`.
