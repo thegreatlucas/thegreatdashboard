@@ -363,6 +363,16 @@ Helpers centrais: `leadOutcome()` (desfecho canônico: sale > neg > qual > desq 
 
 ---
 
+## Alertas de Novas Vendas
+
+- **Auto-sync**: com o dashboard aberto, as planilhas são re-buscadas a cada 10 min em modo silencioso (sem overlay de loading).
+- **Detecção**: snapshot acumulativo das vendas conhecidas em `localStorage` (`jd_known_sales_v1`), chave = `dealer|email→phone→nome`. Falha temporária de planilha não gera re-alerta (snapshot é união, nunca encolhe). Primeira execução registra o histórico sem alertar.
+- **Toast**: card verde no canto inferior direito para cada venda nova (máx. 4 + resumo), auto-dismiss em 12s.
+- **Notificação do navegador**: opt-in pelo botão 🔔 Alertas no header (pede permissão via Notification API); funciona com a aba em segundo plano.
+- **Preferência** (`jd_sale_alerts`): `on` = toast + notificação · não definido = só toast · `off` = silêncio total.
+
+---
+
 ## Vendas Efetuadas (`isSaleLead` / `renderSales`)
 
 Um lead é venda quando `status + postStatus` (normalizados) contêm `vend`, `venta`, `faturad` ou `facturad` **e não** contêm nenhum termo da blacklist:
