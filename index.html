@@ -333,6 +333,20 @@
         .export-xlsx-btn svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
         .neg-radar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 
+        /* --- TOASTS DE NOVA VENDA --- */
+        .toast-stack { position: fixed; bottom: 24px; right: 24px; z-index: 9600; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .sale-toast { pointer-events: auto; display: flex; align-items: flex-start; gap: 14px; background: rgba(28,28,30,0.97); border: 1px solid rgba(50,215,75,0.35); border-left: 4px solid var(--success); border-radius: 14px; padding: 14px 18px; min-width: 300px; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 25px rgba(50,215,75,0.12); cursor: pointer; animation: toastIn 0.45s cubic-bezier(0.175,0.885,0.32,1.275); }
+        .sale-toast.hide { animation: toastOut 0.3s ease forwards; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: none; } }
+        @keyframes toastOut { to { opacity: 0; transform: translateX(60px); } }
+        .sale-toast-icon { font-size: 26px; line-height: 1; }
+        .sale-toast-title { font-size: 12px; font-weight: 800; color: var(--success); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+        .sale-toast-body { font-size: 12.5px; color: var(--text-main); line-height: 1.45; word-break: break-word; }
+        .sale-toast-body small { color: var(--text-muted); }
+        #btn-alerts { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); padding: 6px 12px; color: #fff; border-radius: 99px; font-size: 11px; font-weight: 600; cursor: pointer; letter-spacing: 0.5px; backdrop-filter: blur(10px); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); white-space: nowrap; }
+        #btn-alerts.on { background: rgba(50,215,75,0.15); border-color: rgba(50,215,75,0.4); color: var(--success); }
+        #btn-alerts:hover { transform: scale(1.03); }
+
         /* --- ABAS DE VISUALIZAÇÃO --- */
         .view-tabs {
             display: flex; gap: 6px; margin-bottom: 35px;
@@ -477,6 +491,7 @@
                 <div class="sync-controls">
                     <span id="status-indicator">Iniciando Dashboard...</span>
                     <button id="btn-refresh" onclick="refreshData()">Atualizar Sincronização</button>
+                    <button id="btn-alerts" onclick="toggleSaleAlerts()" title="Notificações de novas vendas">🔕 Alertas</button>
                 </div>
             </div>
             <img src="https://prod-resources.nppgov.com/app/uploads/2017/06/31190709/Construction-Logos-150dpi.png" alt="John Deere Logo" style="height: 90px; object-fit: contain; align-self: center;">
@@ -946,6 +961,9 @@
         </div>
     </div>
 
+    <!-- Stack de toasts de novas vendas -->
+    <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+
     <div id="loading" class="loading-overlay">
         <div class="spinner"></div>
         <div class="loading-text">Processando Dados...</div>
@@ -980,6 +998,7 @@
                     if (e.key === 'Enter') checkPassword();
                 });
             }
+            updateAlertsBtn();
             if (sessionStorage.getItem('jd_auth') === 'true') {
                 document.getElementById('auth-screen').style.display = 'none';
                 refreshData(); // Carrega automaticamente se a aba estava autorizada
@@ -2044,33 +2063,48 @@
             await Promise.all(dealerNames.map(fetchDealer));
         }
 
-        async function refreshData() {
+        async function refreshData(silent = false) {
             const btn = document.getElementById('btn-refresh');
             const status = document.getElementById('status-indicator');
             const loading = document.getElementById('loading');
 
             btn.disabled = true;
-            loading.classList.add('visible');
-            status.textContent = 'Carregando (Buscando planilhas)...';
-            status.style.color = 'var(--text-muted)';
-            
+            if (!silent) {
+                loading.classList.add('visible');
+                status.textContent = 'Carregando (Buscando planilhas)...';
+                status.style.color = 'var(--text-muted)';
+            }
+
             try {
                 GLOBAL_ALL_DATA = {}; // limpa cache
                 await fetchAllData();
                 applyFilter([...CURRENT_FILTERS][0]);
-                
+                checkNewSales(); // alerta de novas vendas (toast + notificação)
+
                 const now = new Date();
                 status.textContent = `Puxado com Sucesso às ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
                 status.style.color = 'var(--accent)';
             } catch (err) {
                 console.error(err);
-                status.textContent = 'Falha crítica';
-                status.style.color = '#ff5252';
+                if (!silent) {
+                    status.textContent = 'Falha crítica';
+                    status.style.color = '#ff5252';
+                }
             } finally {
                 btn.disabled = false;
                 loading.classList.remove('visible');
             }
         }
+
+        // Sincronização automática: com o dashboard aberto, re-busca as planilhas
+        // a cada 10 minutos em modo silencioso para detectar novas vendas.
+        const AUTO_SYNC_MS = 10 * 60 * 1000;
+        setInterval(() => {
+            if (sessionStorage.getItem('jd_auth') !== 'true') return;
+            const btn = document.getElementById('btn-refresh');
+            if (btn && btn.disabled) return; // sync já em andamento
+            refreshData(true);
+        }, AUTO_SYNC_MS);
 
         // Filtro de País Multidirecional
         function toggleCountryFilter(country) {
@@ -3216,6 +3250,123 @@
                     }
                 }
             });
+        }
+
+        // =============================================
+        // ALERTAS DE NOVAS VENDAS
+        // Snapshot das vendas conhecidas fica em localStorage. A cada
+        // sincronização (manual ou automática) compara com o estado atual e
+        // dispara toast na tela + notificação do navegador para as novas.
+        // O snapshot é acumulativo (união) para não re-alertar vendas antigas
+        // quando uma planilha falha temporariamente e some da carga.
+        // =============================================
+        const SALES_SNAPSHOT_KEY = 'jd_known_sales_v1';
+        const ALERTS_PREF_KEY = 'jd_sale_alerts';
+
+        function saleKey(dealerName, ld) {
+            const ident = (ld.email && ld.email !== 'nan' ? ld.email : '') ||
+                          (ld.phone && ld.phone !== 'nan' ? ld.phone : '') ||
+                          (ld.nameRaw || '').trim().toLowerCase() ||
+                          (ld.machineRaw + '|' + ld.dateRaw);
+            return dealerName + '|' + ident;
+        }
+
+        function collectAllSales() {
+            const sales = [];
+            for (const dn in GLOBAL_ALL_DATA) {
+                const d = GLOBAL_ALL_DATA[dn];
+                if (!d || d.error || !d.leads) continue;
+                d.leads.forEach(ld => { if (isSaleLead(ld)) sales.push({ dealerName: dn, lead: ld }); });
+            }
+            return sales;
+        }
+
+        function checkNewSales() {
+            let known = null;
+            try { known = JSON.parse(localStorage.getItem(SALES_SNAPSHOT_KEY)); } catch (e) {}
+            const sales = collectAllSales();
+            const keys = sales.map(s => saleKey(s.dealerName, s.lead));
+
+            if (!Array.isArray(known)) {
+                // Primeira execução: registra o estado atual sem alertar o histórico
+                try { localStorage.setItem(SALES_SNAPSHOT_KEY, JSON.stringify(keys)); } catch (e) {}
+                return;
+            }
+
+            const knownSet = new Set(known);
+            const fresh = sales.filter((s, i) => !knownSet.has(keys[i]));
+            if (fresh.length) notifyNewSales(fresh);
+
+            const merged = Array.from(new Set([...known, ...keys]));
+            if (merged.length !== known.length) {
+                try { localStorage.setItem(SALES_SNAPSHOT_KEY, JSON.stringify(merged)); } catch (e) {}
+            }
+        }
+
+        function notifyNewSales(fresh) {
+            if (localStorage.getItem(ALERTS_PREF_KEY) === 'off') return;
+
+            const shown = fresh.slice(0, 4);
+            shown.forEach(s => {
+                const machine = normalizeMachine(s.lead.machineRaw);
+                spawnSaleToast(
+                    `${s.dealerName} · ${machine !== '—' ? machine : 'Máquina não informada'}`,
+                    leadIdent(s.lead)
+                );
+            });
+            if (fresh.length > shown.length) {
+                spawnSaleToast(`+ ${fresh.length - shown.length} outras novas vendas`, 'Veja a seção Vendas Efetuadas');
+            }
+
+            // Notificação do sistema (funciona com a aba em segundo plano)
+            if (localStorage.getItem(ALERTS_PREF_KEY) === 'on' && 'Notification' in window && Notification.permission === 'granted') {
+                const title = fresh.length === 1 ? '🎉 Nova venda AON 26!' : `🎉 ${fresh.length} novas vendas AON 26!`;
+                const body = fresh.slice(0, 3).map(s =>
+                    `${s.dealerName}: ${normalizeMachine(s.lead.machineRaw)} — ${leadIdent(s.lead)}`
+                ).join('\n');
+                try { new Notification(title, { body, tag: 'jd-sale-' + Date.now() }); } catch (e) {}
+            }
+        }
+
+        function spawnSaleToast(title, body) {
+            const stack = document.getElementById('toast-stack');
+            if (!stack) return;
+            const t = document.createElement('div');
+            t.className = 'sale-toast';
+            t.innerHTML = `<span class="sale-toast-icon">🎉</span><div><div class="sale-toast-title">Nova Venda!</div><div class="sale-toast-body">${escapeHtml(title)}<br><small>${escapeHtml(body)}</small></div></div>`;
+            t.onclick = () => dismissToast(t);
+            stack.appendChild(t);
+            setTimeout(() => dismissToast(t), 12000);
+        }
+
+        function dismissToast(t) {
+            if (!t.parentNode) return;
+            t.classList.add('hide');
+            setTimeout(() => t.remove(), 300);
+        }
+
+        function toggleSaleAlerts() {
+            const on = localStorage.getItem(ALERTS_PREF_KEY) === 'on';
+            if (on) {
+                localStorage.setItem(ALERTS_PREF_KEY, 'off');
+            } else {
+                localStorage.setItem(ALERTS_PREF_KEY, 'on');
+                if ('Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission();
+                }
+            }
+            updateAlertsBtn();
+        }
+
+        function updateAlertsBtn() {
+            const btn = document.getElementById('btn-alerts');
+            if (!btn) return;
+            const on = localStorage.getItem(ALERTS_PREF_KEY) === 'on';
+            btn.classList.toggle('on', on);
+            btn.textContent = on ? '🔔 Alertas Ativos' : '🔕 Alertas';
+            btn.title = on
+                ? 'Novas vendas: toast na tela + notificação do navegador. Clique para desativar tudo.'
+                : 'Clique para ativar notificações do navegador para novas vendas.';
         }
 
         // =============================================
