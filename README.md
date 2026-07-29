@@ -117,6 +117,23 @@ normalizeString(str)
 }
 ```
 
+### Status PT/ES (planilhas traduzidas)
+
+As planilhas AR/MX foram traduzidas para espanhol. O parser tenta a coluna configurada e cai para os nomes conhecidos (`Estado` ⇄ `Status`, `Post-calificación` ⇄ `Fase pós qualificação`). Os valores aceitos:
+
+| Métrica | PT | ES |
+|---|---|---|
+| Qualificado | `Qualificado` | `Calificado` |
+| Desqualificado | `Desqualificado` | `Descalificado` |
+| Sem atendimento | vazio, `Aguardando*` | vazio, `Pendiente*`, `Esperando*` |
+| Atendido s/ retorno | `Sem Retorno` | `Sin respuesta` |
+| Em negociação | `Em negociação` | `En negociación`, `se envia propuesta` |
+| Parou de responder | `Parou de Responder` | `Dejó de responder` |
+| Sem intenção | `Sem intenção de compra` | `Sin intención de compra` |
+| Venda | `Venda efetuada` etc. | `Venta efectuada` etc. |
+
+Helpers centrais: `isQualifiedStatus()`, `isStoppedPost()`, `isSaleLead()` — novos idiomas/status entram ali.
+
 ### Deduplicação
 
 Dentro da mesma planilha, leads com mesmo email são deduplicados. Fica o de maior prioridade de status:
