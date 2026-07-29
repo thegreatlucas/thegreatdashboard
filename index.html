@@ -1017,13 +1017,13 @@
             "Agro Baggio": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1XFvmXgTDiguk198LK1r7ary0ymglKpQYJuV2_DJi2Og/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
             "Agrosul": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1oLex2XBsJTlk-Pjr_IyFR_TSEp0RX47GzZnlxZPb66k/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
             "MA Máquinas": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1fYj5PE7iRGO2G_EUdA_iLM2nYQ7xMAP14WN9JgMrkng/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
-            "Diesel Lange": { country: "AR", sheetUrl: "https://docs.google.com/spreadsheets/d/1drojCtUQcmzeKJ-JZ1dDHzbq44Ulb-AW62SOAQpeLK8/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Post-calificación" },
-            "Patagonia": { country: "AR", sheetUrl: "https://docs.google.com/spreadsheets/d/1b0Ouv44P3R4PPnXaxIFkr72etUffOwj0ode2n960dzc/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Post-calificación" },
-            "Agronorte": { country: "AR", sheetUrl: "https://docs.google.com/spreadsheets/d/1MzItwVZLtsHa9T4alRai_t2lRWU7UDl3LV2fGFB_mzc/edit?usp=sharing", statusCol: "Status", postStatusCol: "Post-calificación" },
-            "Cia Mercantil": { country: "AR", sheetUrl: "https://docs.google.com/spreadsheets/d/1KVBfgLacAJihDppoPlf4tAQzx174z53KatAsH8TCFSc/edit?usp=sharing", statusCol: "Status", postStatusCol: "Post-calificación" },
-            "Maqro": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/1bFT6drlfD9jvBg7KsXXyJ7dNBb2jOw2_jcQYQMoyq0w/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Post-calificación" },
-            "Dimasur": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/1OY7vHQD1nn7oTsCCvgWqvIofqf02sney3XEX00mhaGA/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Post-calificación" },
-            "Dimanor": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/1Kvp3Ia-jhqQpDt4lNg2lprPr4_WeMaPRYU-_TdbL9uc/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Post-calificación" },
+            "Diesel Lange": { country: "AR", sheetUrl: "https://docs.google.com/spreadsheets/d/1drojCtUQcmzeKJ-JZ1dDHzbq44Ulb-AW62SOAQpeLK8/edit?gid=0#gid=0", statusCol: "Estado", postStatusCol: "Post-calificación" },
+            "Patagonia": { country: "AR", sheetUrl: "https://docs.google.com/spreadsheets/d/1b0Ouv44P3R4PPnXaxIFkr72etUffOwj0ode2n960dzc/edit?gid=0#gid=0", statusCol: "Estado", postStatusCol: "Post-calificación" },
+            "Agronorte": { country: "AR", sheetUrl: "https://docs.google.com/spreadsheets/d/1MzItwVZLtsHa9T4alRai_t2lRWU7UDl3LV2fGFB_mzc/edit?usp=sharing", statusCol: "Estado", postStatusCol: "Post-calificación" },
+            "Cia Mercantil": { country: "AR", sheetUrl: "https://docs.google.com/spreadsheets/d/1KVBfgLacAJihDppoPlf4tAQzx174z53KatAsH8TCFSc/edit?usp=sharing", statusCol: "Estado", postStatusCol: "Post-calificación" },
+            "Maqro": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/1bFT6drlfD9jvBg7KsXXyJ7dNBb2jOw2_jcQYQMoyq0w/edit?gid=0#gid=0", statusCol: "Estado", postStatusCol: "Post-calificación" },
+            "Dimasur": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/1OY7vHQD1nn7oTsCCvgWqvIofqf02sney3XEX00mhaGA/edit?gid=0#gid=0", statusCol: "Estado", postStatusCol: "Post-calificación" },
+            "Dimanor": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/1Kvp3Ia-jhqQpDt4lNg2lprPr4_WeMaPRYU-_TdbL9uc/edit?gid=0#gid=0", statusCol: "Estado", postStatusCol: "Post-calificación" },
             "Expoagro": { country: "AR", sheetUrl: "https://docs.google.com/spreadsheets/d/1D4PxV6UzK4YOPAHBGUGjRb15I9UVf8jUlAg4yjRXppY/edit?gid=356962129", statusCol: "Status", postStatusCol: "Fase pós qualificação" }
         };
 
@@ -1233,6 +1233,15 @@
         // Exclui falsos positivos: "venta sujeta a obra" (ainda é negociação),
         // "venda perdida/cancelada" e negações ("sem/sin/não").
         // =============================================
+        // Status de qualificação PT/ES ("Qualificado" / "Calificado")
+        function isQualifiedStatus(s) {
+            return s === 'qualificado' || s === 'calificado';
+        }
+        // Pós-status de abandono PT/ES ("Parou de Responder" / "Dejó de responder")
+        function isStoppedPost(p) {
+            return p.includes('parou') || p.includes('parado') || p === 'paro' || p.includes('dejo de responder');
+        }
+
         const SALE_BLACKLIST = ['sujeta', 'perdid', 'cancel', 'vendedor', 'revenda', 'sem ', 'sin ', 'nao ', 'no '];
         function isSaleLead(lead) {
             const txt = (lead.status || '') + ' ' + (lead.postStatus || '');
@@ -1343,20 +1352,28 @@
 
                 // Encontrar colunas de forma case-insensitive
                 const keys = Object.keys(row);
-                const findCol = (name) => {
+                const findColKey = (name) => {
                     // Normaliza hífens como espaços para tolerar variações como
                     // "Post-calificación" vs "Post calificación"
                     const norm = normalizeString(name).replace(/-/g, ' ');
                     let key = keys.find(k => normalizeString(k).replace(/-/g, ' ') === norm);
                     if (!key) {
                         const words = norm.split(' ').filter(w => w.length > 3);
-                        key = keys.find(k => words.every(w => normalizeString(k).replace(/-/g, ' ').includes(w)));
+                        if (words.length) key = keys.find(k => words.every(w => normalizeString(k).replace(/-/g, ' ').includes(w)));
                     }
-                    return key ? normalizeString(row[key]) : '';
+                    return key || null;
+                };
+                const findCol = (name) => {
+                    const k = findColKey(name);
+                    return k ? normalizeString(row[k]) : '';
                 };
 
-                const statusRaw = findCol(config.statusCol);
-                const postRaw   = findCol(config.postStatusCol);
+                // Colunas de qualificação: tenta a configurada e cai para os nomes
+                // PT/ES conhecidos (planilhas AR/MX foram traduzidas: "Status" → "Estado")
+                const statusKey = findColKey(config.statusCol) || findColKey('Estado') || findColKey('Status');
+                const statusRaw = statusKey ? normalizeString(row[statusKey]) : '';
+                const postKey   = findColKey(config.postStatusCol) || findColKey('Post-calificación') || findColKey('Fase pós qualificação');
+                const postRaw   = postKey ? normalizeString(row[postKey]) : '';
                 
                 // =====================================================================
                 // FIX AON — v2
@@ -1492,7 +1509,7 @@
                 const v = (ld.status || '').toLowerCase();
                 if (v.includes('qualificado') || v.includes('calificado')) return 3;
                 if (v.includes('negociac') || v.includes('propuesta') || v.includes('cotizando')) return 2;
-                if (v.includes('aguardando') || v.includes('esperando') || v.includes('contactado')) return 1;
+                if (v.includes('aguardando') || v.includes('esperando') || v.includes('contactado') || v.includes('pendiente')) return 1;
                 return 0;
             };
             const seenEmails = new Map();
@@ -1683,13 +1700,13 @@
                         if (!CURRENT_COUNTRY_FILTER || CURRENT_COUNTRY_FILTER === 'AR') {
                             filtered.forEach(ld => {
                                 m.total++;
-                                if (ld.status === 'qualificado') m.qual++;
+                                if (isQualifiedStatus(ld.status)) m.qual++;
                                 const isSale = isSaleLead(ld);
                                 const isNeg = !isSale && (ld.postStatus.includes('negocia') || ld.postStatus.includes('se envia propuesta') || ld.postStatus.includes('venta sujeta a obra') || ld.status.includes('cotizando obra'));
                                 if (isSale) m.sales++;
                                 if (isNeg) m.neg++;
                                 if (ld.postStatus === 'sem intencao de compra' || ld.postStatus.includes('sin intencion')) m.noInt++;
-                                if (ld.postStatus.includes('parou') || ld.postStatus.includes('parado') || ld.postStatus === 'paro') m.stopped++;
+                                if (isStoppedPost(ld.postStatus)) m.stopped++;
                             });
                         }
                     }
@@ -1791,7 +1808,7 @@
                     filtered.forEach(ld => {
                         dt.total++;
 
-                        if (ld.status === 'qualificado') dt.qual++;
+                        if (isQualifiedStatus(ld.status)) dt.qual++;
 
                         // Venda fechada não é mais negociação em aberto
                         const isSale = isSaleLead(ld);
@@ -1805,9 +1822,11 @@
 
                         if (isNeg) { dt.neg++; GLOBAL_OPEN_NEGS.push({ dealerName, lead: ld }); }
                         if (ld.postStatus === 'sem intencao de compra' || ld.postStatus.includes('sin intencion')) dt.noInt++;
-                        if (ld.postStatus.includes('parou') || ld.postStatus.includes('parado') || ld.postStatus === 'paro') dt.stop++;
-                        // Atendido = status preenchido e não é apenas "aguardando" (pendente sem ação)
-                        const _pendente = !ld.status || ld.status === '' || ld.status === 'nan' || ld.status === 'aguardando' || ld.status === 'esperando' || ld.status === 'pendiente';
+                        if (isStoppedPost(ld.postStatus)) dt.stop++;
+                        // Atendido = status preenchido e não é um estado de espera sem ação.
+                        // startsWith cobre "Aguardando Resposta" (PT) e "Pendiente de respuesta" (ES).
+                        const _pendente = !ld.status || ld.status === '' || ld.status === 'nan' ||
+                                          ld.status.startsWith('aguardando') || ld.status.startsWith('esperando') || ld.status.startsWith('pendiente');
                         if (!_pendente) dt.attended++;
 
                         const _isDesq = ld.status.includes('nao qualif') || ld.status.includes('no qualif') ||
@@ -2226,7 +2245,8 @@
         const MILD_WORDS = ['gostou', 'le gusto', 'reuniao', 'reunion', 'demo', 'visita',
                              'ligamos', 'retorno'];
         const DEAD_WORDS = ['desistiu', 'cancelou', 'sem interesse', 'sin interes',
-                             'nao quer', 'no quiere', 'perdemos', 'perdido', 'parou', 'parado'];
+                             'nao quer', 'no quiere', 'perdemos', 'perdido', 'parou', 'parado',
+                             'dejo de responder', 'no responde mas'];
         const NEG_WORDS  = ['talvez', 'quizas', 'ver se', 'avaliar', 'pensar',
                              'aguardando decisao', 'nao sabe'];
 
@@ -2842,7 +2862,7 @@
             if (isSaleLead(ld)) return 'sale';
             if (ld.postStatus.includes('negocia') || ld.postStatus.includes('se envia propuesta') ||
                 ld.postStatus.includes('venta sujeta a obra') || ld.status.includes('cotizando obra')) return 'neg';
-            if (ld.status === 'qualificado') return 'qual';
+            if (isQualifiedStatus(ld.status)) return 'qual';
             if (ld.status.includes('nao qualif') || ld.status.includes('no qualif') ||
                 ld.status.includes('descalif') || ld.status.includes('desqualif') || ld.status.includes('descart')) return 'desq';
             return 'other';
@@ -3144,7 +3164,7 @@
                 const p = r.lead.postStatus;
                 return leadOutcome(r.lead) === 'desq' ||
                        p === 'sem intencao de compra' || p.includes('sin intencion') ||
-                       p.includes('parou') || p.includes('parado');
+                       isStoppedPost(p);
             };
             const lost = rows.filter(isLost);
 
