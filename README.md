@@ -125,7 +125,8 @@ As planilhas AR/MX foram traduzidas para espanhol. O parser tenta a coluna confi
 |---|---|---|
 | Qualificado | `Qualificado` | `Calificado` |
 | Desqualificado | `Desqualificado` | `Descalificado` |
-| Sem atendimento | vazio, `Aguardando*` | vazio, `Pendiente*`, `Esperando*` |
+| Sem atendimento | vazio, `Aguardando` (solto) | vazio, `Pendiente` / `Esperando` (soltos) |
+| Atendido aguardando lead | `Aguardando Resposta` | `Pendiente de respuesta` |
 | Atendido s/ retorno | `Sem Retorno` | `Sin respuesta` |
 | Em negociação | `Em negociação` | `En negociación`, `se envia propuesta` |
 | Parou de responder | `Parou de Responder` | `Dejó de responder` |
