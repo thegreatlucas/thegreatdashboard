@@ -1823,10 +1823,12 @@
                         if (isNeg) { dt.neg++; GLOBAL_OPEN_NEGS.push({ dealerName, lead: ld }); }
                         if (ld.postStatus === 'sem intencao de compra' || ld.postStatus.includes('sin intencion')) dt.noInt++;
                         if (isStoppedPost(ld.postStatus)) dt.stop++;
-                        // Atendido = status preenchido e não é um estado de espera sem ação.
-                        // startsWith cobre "Aguardando Resposta" (PT) e "Pendiente de respuesta" (ES).
+                        // Atendido = status preenchido. "Pendiente de respuesta" / "Aguardando
+                        // Resposta" CONTAM como atendido: o dealer já contatou e aguarda retorno
+                        // do lead. Apenas o marcador solto ("pendiente"/"aguardando", sem
+                        // complemento) indica lead ainda não trabalhado.
                         const _pendente = !ld.status || ld.status === '' || ld.status === 'nan' ||
-                                          ld.status.startsWith('aguardando') || ld.status.startsWith('esperando') || ld.status.startsWith('pendiente');
+                                          ld.status === 'aguardando' || ld.status === 'esperando' || ld.status === 'pendiente';
                         if (!_pendente) dt.attended++;
 
                         const _isDesq = ld.status.includes('nao qualif') || ld.status.includes('no qualif') ||
