@@ -127,8 +127,10 @@ group('ExpertConnect', () => {
           isExpertConnect(lead({ nameRaw: 'João', applicationRaw: 'construcao', dateRaw: '10/01/2026' })), false);
     check('Sem nome e sem telefone é linha fantasma, não EC',
           isExpertConnect(lead({ nameRaw: '', phone: '', dateRaw: '10/01/2026' })), false);
-    check('Planilha sem as colunas do formulário Meta nunca é EC',
+    check('Planilha sem NENHUMA coluna do formulário Meta nunca é EC',
           isExpertConnect(lead({ nameRaw: 'Ana', dateRaw: '10/08/2026', hasMetaFormCols: false })), false);
+    check('Planilha com só uma das colunas ainda avalia (caso AR/MX, que não têm frota)',
+          isExpertConnect(lead({ nameRaw: 'Ana', dateRaw: '10/08/2026', hasMetaFormCols: true })), true);
     check('Data anterior a dez/2025 não é EC',
           isExpertConnect(lead({ nameRaw: 'João', dateRaw: '10/06/2025' })), false);
 });
