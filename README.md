@@ -77,7 +77,9 @@ Cada dealer é uma entrada no objeto `DEALERS_CONFIG`:
 - **country**: Controla qual planilha geral AON é usada para cross-reference de emails
 - **statusCol / postStatusCol**: Matching é case-insensitive e tolera variações de hífen/espaço
 
-Dealers ativos: 11 BR, 4 AR, 3 MX + 1 entrada virtual (Expoagro AR) + 3 planilhas por país (CO, PE, CL).
+Dealers ativos: 11 BR, 4 AR, 3 MX + 3 planilhas por país (CO, PE, CL).
+
+> **Histórico:** existiu uma entrada virtual `"Expoagro"` cujo `sheetUrl` apontava para `gid=356962129` — a **aba do Brasil da planilha geral**, não para dados da Expoagro. Ela reinjetava as ~550 linhas brasileiras no total global, rotuladas como Argentina, fora de qualquer filtro de campanha ou data e sem aparecer nos cards de país. Foi removida. A campanha Expoagro continua funcionando pelo filtro normal, que usa `EXPOAGRO_EMAILS` (montada da aba AR).
 
 ### Planilhas por país (`multiDealer`)
 
@@ -161,7 +163,7 @@ Helpers centrais: `isQualifiedStatus()`, `isStoppedPost()`, `isSaleLead()` — n
 Acontece em duas camadas, ambas mantendo o registro de **status mais avançado** (venda > negociação > qualificado > contatado):
 
 1. **Dentro da planilha** — por e-mail **e** por telefone. O telefone é comparado só por dígitos, pelos últimos 9 (`phoneKey`), absorvendo DDI, espaços e o nono dígito.
-2. **Entre distribuidores** (`computeGlobalOwnership`) — cada identidade recebe um dono único, então o mesmo lead trabalhado por dois dealers deixa de contar duas vezes no total do país e do LATAM. Empate de status vai para o lead mais recente. O total de duplicados fundidos aparece abaixo do KPI "Total Filtrado". Expoagro fica de fora: tem regra própria de cruzamento com os dealers AR.
+2. **Entre distribuidores** (`computeGlobalOwnership`) — cada identidade recebe um dono único, então o mesmo lead trabalhado por dois dealers deixa de contar duas vezes no total do país e do LATAM. Empate de status vai para o lead mais recente. O total de duplicados fundidos aparece abaixo do KPI "Total Filtrado".
 
 #### Camada antiga (referência)
 
@@ -249,7 +251,7 @@ Evento Conexpo-CONSTRÓI: 19/03/2026.
 
 Leads cujo email ou telefone está na lista `EXPOAGRO_EMAILS` / `EXPOAGRO_PHONES`, populada a partir da planilha geral AR com `campaign_name` contendo `expo`.
 
-Deduplicação: se o mesmo lead aparecer em dealer AR e em Expoagro, o dealer AR tem prioridade.
+A lista sai da planilha geral (60 e-mails com `campaign_name` contendo "expo", todos na aba AR) e é cruzada com os leads dos distribuidores. Não depende de nenhuma planilha própria.
 
 ### 2025 (`2025`)
 

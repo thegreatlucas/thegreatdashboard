@@ -981,8 +981,7 @@
             // Planilhas por país (multiDealer): um card por distribuidor da coluna "Dealer"
             "Colômbia": { country: "CO", multiDealer: true, sheetUrl: "https://docs.google.com/spreadsheets/d/14F9PpAQnXaL1juWZU-J2ERPoXnv4iNDNxOVwXG3Umw8/edit?gid=0#gid=0", statusCol: "Estado", postStatusCol: "Post-calificación" },
             "Peru":     { country: "PE", multiDealer: true, sheetUrl: "https://docs.google.com/spreadsheets/d/1jsmS3FnWJTCtIogrWNe8ytDlXpUqlLmRLlWLZH7LVPM/edit?gid=0#gid=0", statusCol: "Estado", postStatusCol: "Post-calificación" },
-            "Chile":    { country: "CL", multiDealer: true, sheetUrl: "https://docs.google.com/spreadsheets/d/1iWgY-_u5lbqw48K-V_4v93vHmu0v57vhdAquF98-3oM/edit?gid=0#gid=0", statusCol: "Estado", postStatusCol: "Post-calificación" },
-            "Expoagro": { country: "AR", sheetUrl: "https://docs.google.com/spreadsheets/d/1D4PxV6UzK4YOPAHBGUGjRb15I9UVf8jUlAg4yjRXppY/edit?gid=356962129", statusCol: "Status", postStatusCol: "Fase pós qualificação" }
+            "Chile":    { country: "CL", multiDealer: true, sheetUrl: "https://docs.google.com/spreadsheets/d/1iWgY-_u5lbqw48K-V_4v93vHmu0v57vhdAquF98-3oM/edit?gid=0#gid=0", statusCol: "Estado", postStatusCol: "Post-calificación" }
         };
 
         // =============================================
@@ -1801,7 +1800,6 @@
         // do país e do LATAM. Aqui cada identidade (e-mail ou telefone) recebe um
         // dono único: o registro de status mais avançado; empate fica com quem tem
         // a data mais recente e, persistindo, com o primeiro encontrado (estável).
-        // Expoagro fica de fora — tem regra própria de cruzamento com os dealers AR.
         // =============================================
         let GLOBAL_LEAD_OWNER = new Map();
         let GLOBAL_DUP_COUNT = 0;
@@ -1812,7 +1810,6 @@
             const best = new Map(); // identidade -> { dealerName, prio, time, lead }
 
             for (const dealerName in GLOBAL_ALL_DATA) {
-                if (dealerName === 'Expoagro') continue;
                 const d = GLOBAL_ALL_DATA[dealerName];
                 if (!d || d.error || !d.leads) continue;
 
@@ -1843,7 +1840,6 @@
 
         // Um lead só conta no dealer que "ganhou" a identidade dele.
         function isOwnedHere(dealerName, lead) {
-            if (dealerName === 'Expoagro') return true;
             const ids = leadIdentities(lead);
             if (!ids.length) return true; // sem identidade: não há como saber, mantém
             const owner = ids.map(id => GLOBAL_LEAD_OWNER.get(id)).find(Boolean);
@@ -1877,7 +1873,6 @@
             let m = { total: 0, qual: 0, neg: 0, noInt: 0, stopped: 0, attended: 0, desq: 0, sales: 0 };
             const emptyCountry = () => ({ total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0, attended: 0, desq: 0, sales: 0 });
             let cMetrics = Object.fromEntries(COUNTRY_CODES.map(c => [c, emptyCountry()]));
-            let matchedExpoEmails = new Set();
 
             // Analytics Reservoirs
             let gTimeline = {};
@@ -1893,34 +1888,6 @@
 
             for (const dealerName in DEALERS_CONFIG) {
                 const country = DEALERS_CONFIG[dealerName].country;
-
-                // Regra: Expoagro é frota virtual apenas para cálculo global. Não renderizar card nem contar como dealer.
-                if (dealerName === 'Expoagro') {
-                    // Mas acumulamos os leads dela no total global se o filtro permitir (já feito na lógica original de leads)
-                    // porém não queremos que incremente cMetrics[ARG].dealers nem gere card.
-                    const dData = GLOBAL_ALL_DATA[dealerName] || { leads: [] };
-                    if (!dData.error) {
-                        // Lógica de leads para Expoagro (apenas acumula em m.total/m.qual/etc, sem mexer em cMetrics.dealers)
-                        let filtered = dData.leads.filter(lead => {
-                             if (CURRENT_FILTERS.has('conexpo') && !CURRENT_FILTERS.has('expoagro') && !CURRENT_FILTERS.has('aon') && !CURRENT_FILTERS.has('all')) return false;
-                             return !matchedExpoEmails.has(lead.email); 
-                        });
-                        // Expoagro é sempre AR
-                        if (!CURRENT_COUNTRY_FILTER || CURRENT_COUNTRY_FILTER === 'AR') {
-                            filtered.forEach(ld => {
-                                m.total++;
-                                if (isQualifiedStatus(ld.status)) m.qual++;
-                                const isSale = isSaleLead(ld);
-                                const isNeg = !isSale && (ld.postStatus.includes('negocia') || ld.postStatus.includes('se envia propuesta') || ld.postStatus.includes('venta sujeta a obra') || ld.status.includes('cotizando obra'));
-                                if (isSale) m.sales++;
-                                if (isNeg) m.neg++;
-                                if (ld.postStatus === 'sem intencao de compra' || ld.postStatus.includes('sin intencion')) m.noInt++;
-                                if (isStoppedPost(ld.postStatus)) m.stopped++;
-                            });
-                        }
-                    }
-                    continue; 
-                }
 
                 // Planilha por país já dividida em dealers próprios: a entrada "pai" não
                 // renderiza card nem conta como ponto de venda (evita duplicar/gerar erro falso).
@@ -1955,32 +1922,6 @@
                         // O Python exclui duplicadas SOMENTE por e-mail ("Cruzar por e-mail com os arquivos AR").
                         const isExpoLead = lead.email && EXPOAGRO_EMAILS.has(lead.email);
                         
-                        // LÓGICA DE CRUZAMENTO EXPOAGRO:
-                        // Dealers AR têm o status atualizado. A frota virtual 'Expoagro' tem o status original (obsoleto).
-                        const _onlyExpoagro = CURRENT_FILTERS.has('expoagro') && CURRENT_FILTERS.size === 1;
-                        const _hasAonish = [...CURRENT_FILTERS].some(ft => ft === 'all' || ft === 'aon' || ft === 'aon25');
-                        const _hasExpoagro = CURRENT_FILTERS.has('expoagro');
-
-                        if (_onlyExpoagro) {
-                            if (dealerName === 'Expoagro') {
-                                return !matchedExpoEmails.has(lead.email); // Retorna os leads que a Argentina não cobriu (Órfãos)
-                            }
-                            if (country === 'AR' && isExpoLead) {
-                                matchedExpoEmails.add(lead.email); // AR tem prioridade - Adere o Status Atualizado!
-                                return true;
-                            }
-                            return false;
-                        }
-
-                        if (_hasAonish || _hasExpoagro) {
-                            if (dealerName === 'Expoagro') {
-                                return !matchedExpoEmails.has(lead.email); // Evita duplicar no volume Geral e campanhas globais
-                            }
-                            if (country === 'AR' && isExpoLead) {
-                                matchedExpoEmails.add(lead.email);
-                            }
-                        }
-
                         // Helper: testa se um lead passa por UM tipo de filtro específico
                         const passesFilter = (ft) => {
                             const _ld        = parseDateAny(lead.dateRaw);
@@ -2002,6 +1943,9 @@
                                                      _isDex || _isMega || (_noGeneral && _afterStart);
                             if (ft === 'conexpo') return _isConexpo;
                             if (ft === 'expertconnect') return _isEC && !_isConexpo;
+                            // Expoagro: e-mail/telefone na lista da campanha, montada a partir
+                            // da planilha geral (campaign_name contendo "expo"). Independe de
+                            // qualquer planilha de dealer.
                             if (ft === 'expoagro') return isExpoLead;
                             if (ft === 'olx') return _isOlx;
                             if (ft === 'dex') return _isDex;
@@ -2431,7 +2375,7 @@
         }
 
         async function fetchAllData() {
-            const dealerNames = Object.keys(DEALERS_CONFIG).filter(n => n !== "Expoagro");
+            const dealerNames = Object.keys(DEALERS_CONFIG);
 
             // Carrega planilha geral PRIMEIRO (fonte de verdade AON)
             await loadGeneralSheets();
