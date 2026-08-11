@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Testes — Dashboard AON 26</title>
+<style>
+    :root { --bg:#0b0c0a; --card:#161814; --line:#2a2d26; --ink:#eceade; --muted:#8b8e83;
+            --ok:#32d74b; --fail:#ff453a; --accent:#ffd100; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); padding:32px 20px 80px;
+           font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif; }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    h1 { font-size:24px; letter-spacing:-.02em; margin:0; }
+    .sub { color:var(--muted); font-size:14px; margin:8px 0 0; max-width:70ch; line-height:1.6; }
+    .bar { height:4px; width:64px; background:var(--accent); border-radius:2px; margin-bottom:18px; }
+    #summary { margin:26px 0; padding:18px 22px; border-radius:12px; border:1px solid var(--line);
+               background:var(--card); font-size:18px; font-weight:700; }
+    #summary.pass { border-color:rgba(50,215,75,.4); color:var(--ok); }
+    #summary.fail { border-color:rgba(255,69,58,.4); color:var(--fail); }
+    .group { margin-top:22px; }
+    .group h2 { font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted);
+                margin:0 0 10px; font-weight:700; }
+    .case { display:flex; gap:12px; align-items:flex-start; padding:9px 14px; border:1px solid var(--line);
+            border-radius:9px; background:var(--card); margin-bottom:6px; font-size:13.5px; line-height:1.5; }
+    .case .mark { font-weight:800; flex-shrink:0; font-family:ui-monospace, Menlo, Consolas, monospace; }
+    .case.ok .mark { color:var(--ok); }
+    .case.fail { border-color:rgba(255,69,58,.45); }
+    .case.fail .mark { color:var(--fail); }
+    .detail { color:var(--fail); font-family:ui-monospace, Menlo, Consolas, monospace;
+              font-size:12px; margin-top:4px; }
+    code { font-family:ui-monospace, Menlo, Consolas, monospace; background:#000; padding:1px 5px;
+           border-radius:4px; font-size:.9em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div class="bar"></div>
+    <h1>Testes das regras de classificação</h1>
+    <p class="sub">
+        Roda as funções de <code>index.html</code> contra casos conhecidos. Abra este arquivo
+        no navegador (duplo clique) depois de qualquer alteração nas regras de status, venda,
+        campanha ou deduplicação. Não precisa de instalação nem conexão.
+    </p>
+    <div id="summary">Carregando index.html…</div>
+    <div id="results"></div>
+</div>
+
+<script>
+// Carrega o script de index.html neste contexto para testar as funções reais,
+// sem duplicar lógica (um teste que copia a regra não testa nada).
+// A inicialização do dashboard é inofensiva aqui: o listener de DOMContentLoaded
+// não dispara (o documento já carregou) e o parallax/reveal não acham elementos.
+async function loadDashboardScript() {
+    const html = await (await fetch('index.html')).text();
+    const code = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+    (0, eval)(code);
+}
+
+const groups = [];
+let pass = 0, fail = 0;
+
+function group(name, fn) { groups.push({ name, fn, cases: [] }); }
+let current = null;
+function check(desc, actual, expected) {
+    const okv = JSON.stringify(actual) === JSON.stringify(expected);
+    okv ? pass++ : fail++;
+    current.cases.push({ desc, ok: okv, actual, expected });
+}
+
+// Lead mínimo com os campos que as regras consultam
+function lead(over) {
+    return Object.assign({
+        status: '', postStatus: '', aonRaw: '', hasAonCol: false, dateRaw: '', nameRaw: 'Teste',
+        email: '', phone: '', machineRaw: '', lossRaw: '', fleetRaw: '', conditionRaw: '',
+        applicationRaw: '', timeframeRaw: '', paymentRaw: '', rawAll: '', regionRaw: '',
+        cityRaw: '', negStartRaw: '', noBuyRaw: '', dealerRaw: '', hasMetaFormCols: true
+    }, over);
+}
+
+// ---------------------------------------------------------------- STATUS PT/ES
+group('Status — português e espanhol', () => {
+    check('Qualificado (PT)', isQualifiedStatus('qualificado'), true);
+    check('Calificado (ES)', isQualifiedStatus('calificado'), true);
+    check('Descalificado não é qualificado', isQualifiedStatus('descalificado'), false);
+    check('Sem retorno não é qualificado', isQualifiedStatus('sem retorno'), false);
+
+    check('Parou de Responder (PT)', isStoppedPost('parou de responder'), true);
+    check('Dejó de responder (ES)', isStoppedPost('dejo de responder'), true);
+    check('Em negociação não é parado', isStoppedPost('em negociacao'), false);
+});
+
+// ---------------------------------------------------------------- VENDAS
+group('Detecção de venda', () => {
+    check('Venda efetuada (PT)', isSaleLead(lead({ postStatus: 'venda efetuada' })), true);
+    check('Venta efectuada (ES)', isSaleLead(lead({ postStatus: 'venta efectuada' })), true);
+    check('Vendido', isSaleLead(lead({ status: 'vendido' })), true);
+    check('Faturado', isSaleLead(lead({ postStatus: 'faturado' })), true);
+    check('"Venta sujeta a obra" ainda é negociação, não venda',
+          isSaleLead(lead({ postStatus: 'venta sujeta a obra' })), false);
+    check('Venda perdida não conta', isSaleLead(lead({ postStatus: 'venda perdida' })), false);
+    check('Venda cancelada não conta', isSaleLead(lead({ postStatus: 'venda cancelada' })), false);
+    check('"Sem venda" não conta', isSaleLead(lead({ postStatus: 'sem venda' })), false);
+    check('Lead comum não é venda', isSaleLead(lead({ status: 'qualificado' })), false);
+});
+
+// ---------------------------------------------------------------- CAMPANHAS
+group('Campanhas DEX e Megaventa', () => {
+    check('Máquina DEX', isDexLead(lead({ machineRaw: 'dex' })), true);
+    check('DEX no meio do texto', isDexLead(lead({ machineRaw: 'linha dex 2026' })), true);
+    check('"codex" não é DEX', isDexLead(lead({ machineRaw: 'codex' })), false);
+    check('"indexadora" não é DEX', isDexLead(lead({ machineRaw: 'indexadora' })), false);
+    check('Escavadeira não é DEX', isDexLead(lead({ machineRaw: 'escavadeira' })), false);
+
+    check('MEGAVENTA na observação', isMegaventaLead(lead({ lossRaw: 'vino por la megaventa' })), true);
+    check('"mega venta" separado', isMegaventaLead(lead({ lossRaw: 'contacto en mega venta' })), true);
+    check('Observação sem menção', isMegaventaLead(lead({ lossRaw: 'cliente interessado' })), false);
+});
+
+// ---------------------------------------------------------------- EXPERTCONNECT
+group('ExpertConnect', () => {
+    check('Setor e frota vazios + data 2026 = EC',
+          isExpertConnect(lead({ nameRaw: 'João', dateRaw: '10/01/2026' })), true);
+    check('Com setor preenchido não é EC',
+          isExpertConnect(lead({ nameRaw: 'João', applicationRaw: 'construcao', dateRaw: '10/01/2026' })), false);
+    check('Sem nome e sem telefone é linha fantasma, não EC',
+          isExpertConnect(lead({ nameRaw: '', phone: '', dateRaw: '10/01/2026' })), false);
+    check('Planilha sem as colunas do formulário Meta nunca é EC',
+          isExpertConnect(lead({ nameRaw: 'Ana', dateRaw: '10/08/2026', hasMetaFormCols: false })), false);
+    check('Data anterior a dez/2025 não é EC',
+          isExpertConnect(lead({ nameRaw: 'João', dateRaw: '10/06/2025' })), false);
+});
+
+// ---------------------------------------------------------------- DATAS
+group('Interpretação de datas', () => {
+    const iso = d => d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : null;
+    check('dd/mm/yyyy', iso(parseDateAny('19/03/2026')), '2026-03-19');
+    check('yyyy-mm-dd', iso(parseDateAny('2026-03-19')), '2026-03-19');
+    check('Date(ano, mês 0-indexado, dia) do Google', iso(parseDateAny('Date(2026,2,19)')), '2026-03-19');
+    check('Texto inválido vira null', parseDateAny('sem data'), null);
+    check('Vazio vira null', parseDateAny(''), null);
+});
+
+// ---------------------------------------------------------------- TELEFONE
+group('Telefone como identidade', () => {
+    check('Formatações diferentes do mesmo número batem',
+          phoneKey('+55 11 98765-4321') === phoneKey('5511987654321'), true);
+    check('Números diferentes não batem',
+          phoneKey('11987654321') === phoneKey('11912345678'), false);
+    check('Curto demais é descartado', phoneKey('1234'), null);
+    check('Vazio é descartado', phoneKey(''), null);
+});
+
+// ---------------------------------------------------------------- MÁQUINAS
+group('Categorização de máquinas', () => {
+    check('Retroexcavadora (ES) unifica com retroescavadeira',
+          machineCategory('retroexcavadora'), 'RETROESCAVADEIRA');
+    check('Excavadora (ES) unifica com escavadeira',
+          machineCategory('excavadora'), 'ESCAVADEIRA');
+    check('Cargadora (ES) vira pá-carregadeira',
+          machineCategory('cargadora'), 'PÁ-CARREGADEIRA');
+    check('DEX é linha própria', machineCategory('DEX'), 'DEX');
+    check('"Ainda não tenho" é lixo e sai da contagem',
+          machineCategory('ainda nao tenho maquinas'), '');
+});
+
+// ---------------------------------------------------------------- MOTIVOS DE PERDA
+group('Agrupamento de motivos de perda', () => {
+    check('Preço (sem acento, como chega normalizado)',
+          groupLossReason('achou o preco muito caro'), 'PREÇO / VALOR EXTREMO');
+    check('Concorrência por marca citada',
+          groupLossReason('foi de caterpillar'), 'PERDA PARA CONCORRÊNCIA');
+    check('Crédito reprovado',
+          groupLossReason('credito reprovado no banco'), 'REPROVAÇÃO DE CRÉDITO');
+    check('Vazio não gera categoria', groupLossReason(''), '');
+    check('"nan" não gera categoria', groupLossReason('nan'), '');
+});
+
+// ---------------------------------------------------------------- SCORE DE CALOR
+group('Score de calor', () => {
+    const hoje = new Date();
+    const recente = `${String(hoje.getDate()).padStart(2, '0')}/${String(hoje.getMonth() + 1).padStart(2, '0')}/${hoje.getFullYear()}`;
+    check('Urgência + lead recente = quente',
+          calcNegHeat(lead({ lossRaw: 'cliente urgente, quer fechar', dateRaw: recente })) >= 7, true);
+    check('Palavra de descarte zera o score, mesmo com lead recente',
+          calcNegHeat(lead({ lossRaw: 'cliente desistiu da compra', dateRaw: recente })), 0);
+    check('Sem observação e sem data = 0',
+          calcNegHeat(lead({})), 0);
+    check('Score nunca passa de 10',
+          calcNegHeat(lead({ lossRaw: 'urgente vai fechar essa semana', dateRaw: recente, timeframeRaw: 'imediato' })) <= 10, true);
+});
+
+// ---------------------------------------------------------------- DESFECHO
+group('Desfecho canônico do lead', () => {
+    check('Venda vence negociação',
+          leadOutcome(lead({ status: 'qualificado', postStatus: 'venda efetuada' })), 'sale');
+    check('Negociação', leadOutcome(lead({ postStatus: 'em negociacao' })), 'neg');
+    check('Qualificado', leadOutcome(lead({ status: 'qualificado' })), 'qual');
+    check('Desqualificado (ES)', leadOutcome(lead({ status: 'descalificado' })), 'desq');
+    check('Sem status', leadOutcome(lead({})), 'other');
+});
+
+// ---------------------------------------------------------------- SEGURANÇA
+group('Escape de conteúdo das planilhas', () => {
+    check('Tag é escapada', escapeHtml('<b>x</b>'), '&lt;b&gt;x&lt;/b&gt;');
+    check('Aspas são escapadas (quebravam atributos title)',
+          escapeHtml('diz "oi"').includes('"'), false);
+});
+
+// ---------------------------------------------------------------- EXECUÇÃO
+(async () => {
+    try {
+        await loadDashboardScript();
+    } catch (e) {
+        document.getElementById('summary').className = 'fail';
+        document.getElementById('summary').textContent =
+            'Não foi possível carregar index.html: ' + e.message +
+            ' — abra esta página por um servidor local (o navegador bloqueia fetch em file://).';
+        return;
+    }
+
+    groups.forEach(g => { current = g; try { g.fn(); } catch (e) {
+        fail++; g.cases.push({ desc: 'erro ao executar o grupo', ok: false, actual: e.message, expected: 'sem erro' });
+    } });
+
+    const res = document.getElementById('results');
+    res.innerHTML = groups.map(g => `
+        <div class="group">
+            <h2>${g.name}</h2>
+            ${g.cases.map(c => `
+                <div class="case ${c.ok ? 'ok' : 'fail'}">
+                    <span class="mark">${c.ok ? 'PASSOU' : 'FALHOU'}</span>
+                    <div>
+                        ${c.desc}
+                        ${c.ok ? '' : `<div class="detail">obtido: ${JSON.stringify(c.actual)} · esperado: ${JSON.stringify(c.expected)}</div>`}
+                    </div>
+                </div>`).join('')}
+        </div>`).join('');
+
+    const s = document.getElementById('summary');
+    s.className = fail === 0 ? 'pass' : 'fail';
+    s.textContent = fail === 0
+        ? `Todos os ${pass} casos passaram.`
+        : `${fail} caso(s) falharam · ${pass} passaram.`;
+})();
+</script>
+</body>
+</html>

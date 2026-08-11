@@ -333,6 +333,37 @@
         .export-xlsx-btn svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
         .neg-radar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 
+        /* --- DIAGNÓSTICO DO PARSER --- */
+        .diag-table { width: 100%; border-collapse: separate; border-spacing: 3px; min-width: 780px; }
+        .diag-table th { font-size: 9.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 4px; text-align: center; white-space: nowrap; }
+        .diag-table th:first-child { text-align: left; padding-left: 8px; }
+        .diag-dealer { font-size: 11.5px; font-weight: 600; color: var(--text-main); white-space: nowrap; padding-left: 8px; }
+        .diag-cell { border-radius: 7px; padding: 7px 4px; text-align: center; font-size: 11px; font-weight: 700; font-family: 'Uni Sans','Inter',sans-serif; cursor: help; }
+        .diag-ok    { background: rgba(50,215,75,0.13);  color: var(--success); border: 1px solid rgba(50,215,75,0.22); }
+        .diag-low   { background: rgba(255,149,0,0.13);  color: #ff9500;        border: 1px solid rgba(255,149,0,0.25); }
+        .diag-none  { background: rgba(255,69,58,0.10);  color: var(--error);   border: 1px solid rgba(255,69,58,0.22); }
+        .diag-na    { background: rgba(255,255,255,0.02);color: var(--text-muted); border: 1px solid rgba(255,255,255,0.05); }
+        .diag-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 14px; font-size: 10.5px; color: var(--text-muted); }
+        .diag-legend span { display: flex; align-items: center; gap: 6px; }
+        .diag-key { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+        /* --- AVISOS DE TRANSPARÊNCIA --- */
+        #undated-notice {
+            background: rgba(255,149,0,0.12); border: 1px solid rgba(255,149,0,0.35); color: #ff9500;
+            font-family: 'Uni Sans', 'Inter', sans-serif; font-size: 10px; font-weight: 700;
+            letter-spacing: 0.5px; padding: 6px 12px; border-radius: 99px; cursor: pointer;
+            white-space: nowrap; transition: all 0.2s;
+        }
+        #undated-notice:hover { background: rgba(255,149,0,0.22); }
+        #undated-notice.on { background: rgba(50,215,75,0.12); border-color: rgba(50,215,75,0.35); color: var(--success); }
+        .kpi-note { font-size: 11px; color: var(--text-muted); margin: 4px 0 0; font-weight: 500; }
+        .stale-badge {
+            display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700;
+            color: #ff9500; background: rgba(255,149,0,0.12); border: 1px solid rgba(255,149,0,0.3);
+            padding: 2px 8px; border-radius: 99px; margin-top: 6px; white-space: nowrap;
+        }
+        .stale-badge.dead { color: var(--error); background: rgba(255,69,58,0.12); border-color: rgba(255,69,58,0.3); }
+
         /* --- TOASTS DE NOVA VENDA --- */
         .toast-stack { position: fixed; bottom: 24px; right: 24px; z-index: 9600; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .sale-toast { pointer-events: auto; display: flex; align-items: flex-start; gap: 14px; background: rgba(28,28,30,0.97); border: 1px solid rgba(50,215,75,0.35); border-left: 4px solid var(--success); border-radius: 14px; padding: 14px 18px; min-width: 300px; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 25px rgba(50,215,75,0.12); cursor: pointer; animation: toastIn 0.45s cubic-bezier(0.175,0.885,0.32,1.275); }
@@ -527,6 +558,7 @@
                 <button class="btn-clear" onclick="clearDates()">Limpar</button>
             </div>
             <span id="period-days-count" style="display:none; font-size: 9px; color: var(--accent); font-weight: 800; text-transform: uppercase;">- Dias</span>
+            <button id="undated-notice" onclick="toggleUndated()" style="display:none;"></button>
         </div>
     </div>
 
@@ -545,6 +577,7 @@
             <div class="card kpi-main">
                 <h3>Total Filtrado</h3>
                 <p id="m-total" class="value">-</p>
+                <p id="m-dup-note" class="kpi-note" style="display:none;"></p>
             </div>
             <div class="card kpi-main" style="border-top: 3px solid var(--success);">
                 <h3>Qualificados</h3>
@@ -639,7 +672,13 @@
 
         <!-- Vendas Efetuadas -->
         <div class="sales-wrap reveal">
-            <h2 class="section-title">Vendas Efetuadas <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ FECHAMENTOS ]</span></h2>
+            <div class="neg-radar-header">
+                <h2 class="section-title" style="margin:0;">Vendas Efetuadas <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ FECHAMENTOS ]</span></h2>
+                <button class="export-xlsx-btn" id="btn-export-sales" onclick="exportSalesXLSX()" style="background: var(--success);">
+                    <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zm-8 2V5h2v6h1.17L12 13.17 9.83 11H11zm-6 7h14v2H5z"/></svg>
+                    Exportar XLSX
+                </button>
+            </div>
             <div class="card" style="padding: 25px; overflow-x: auto;">
                 <div id="sales-list"><div class="neg-empty">Carregando...</div></div>
             </div>
@@ -647,6 +686,10 @@
 
         <div class="metrics-dealers-header" style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:25px;">
             <h2 class="section-title" style="margin-bottom:0;">Breakdown por Dealer</h2>
+            <button class="export-xlsx-btn" id="btn-export-leads" onclick="exportLeadsXLSX()" title="Exporta todos os leads que passam pelos filtros atuais">
+                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zm-8 2V5h2v6h1.17L12 13.17 9.83 11H11zm-6 7h14v2H5z"/></svg>
+                Exportar Base
+            </button>
             <div id="country-filter-indicator" style="font-family:'Uni Sans', 'Montserrat', sans-serif; font-size:12px; color:var(--accent); font-weight:800; text-transform:uppercase; letter-spacing:1px; display:none;">
                 Filtrado por: <span id="active-country-name">-</span>
             </div>
@@ -722,6 +765,18 @@
                     <h3>Concorrentes Citados</h3>
                     <div id="adv-competitors"><div class="neg-empty">Carregando...</div></div>
                 </div>
+            </div>
+
+            <h2 class="section-title reveal">Calibração do Score de Calor <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ O SCORE ACERTA? ]</span></h2>
+            <div class="card analytics-card reveal" style="margin-bottom:40px; min-height:unset;">
+                <h3>Conversão em venda por faixa de score <span>Mede a hipótese do score contra o resultado real</span></h3>
+                <div id="adv-score-calib"><div class="neg-empty">Carregando...</div></div>
+            </div>
+
+            <h2 class="section-title reveal">Diagnóstico do Parser <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ COLUNAS DETECTADAS ]</span></h2>
+            <div class="card analytics-card reveal" style="margin-bottom:40px; min-height:unset; overflow-x:auto;">
+                <h3>Qual coluna o dashboard está lendo em cada planilha <span>% = leads com valor preenchido naquele campo</span></h3>
+                <div id="adv-parser"><div class="neg-empty">Carregando...</div></div>
             </div>
 
             <h2 class="section-title reveal">Higiene de Dados <span style="font-family:'Uni Sans', 'Bebas Neue', sans-serif; font-size:16px;">[ QUALIDADE DAS PLANILHAS ]</span></h2>
@@ -950,6 +1005,8 @@
         let CURRENT_COUNTRY_FILTER = null;
         let CURRENT_START_DATE = null;
         let CURRENT_END_DATE = null;
+        // Quando true, leads sem data continuam no resultado mesmo com período ativo
+        let INCLUDE_UNDATED = false;
 
         // Arquitetura v2: planilha geral como fonte de verdade AON
         const GENERAL_SHEET_ID = '1D4PxV6UzK4YOPAHBGUGjRb15I9UVf8jUlAg4yjRXppY';
@@ -981,7 +1038,7 @@
                     let csvText;
                     try {
                         csvText = await fetchWithProxyFallback(rawUrl);
-                        try { localStorage.setItem('cache_General_' + c, csvText); } catch(e) {}
+                        cacheWrite('cache_General_' + c, csvText);
                     } catch(err) {
                         const cached = localStorage.getItem('cache_General_' + c);
                         if (cached) { csvText = cached; }
@@ -1042,6 +1099,34 @@
         // parseDateAny é chamada milhares de vezes por render (filtros + analytics).
         // Cache por string: mesma entrada => mesmo Date, sem re-rodar os regex.
         const _DATE_CACHE = new Map();
+        // Telefone como identidade: compara só dígitos e usa os últimos 9, absorvendo
+        // variação de DDI, zeros à esquerda e o nono dígito móvel. Abaixo de 8 dígitos
+        // não é telefone confiável e não serve para identificar o lead.
+        function phoneKey(raw) {
+            const digits = (raw || '').toString().replace(/\D/g, '');
+            if (digits.length < 8) return null;
+            return digits.slice(-9);
+        }
+
+        // Prioridade de status: qual registro vence quando o mesmo lead aparece duas vezes.
+        function statusPriority(ld) {
+            if (isSaleLead(ld)) return 4; // venda fechada vence qualquer duplicata
+            const v = (ld.status || '').toLowerCase();
+            if (v.includes('qualificado') || v.includes('calificado')) return 3;
+            if (v.includes('negociac') || v.includes('propuesta') || v.includes('cotizando')) return 2;
+            if (v.includes('aguardando') || v.includes('esperando') || v.includes('contactado') || v.includes('pendiente')) return 1;
+            return 0;
+        }
+
+        // Identidades pelas quais um lead pode ser reconhecido em outra planilha.
+        function leadIdentities(ld) {
+            const ids = [];
+            if (ld.email && ld.email !== 'nan') ids.push('e:' + ld.email);
+            const pk = phoneKey(ld.phone);
+            if (pk) ids.push('p:' + pk);
+            return ids;
+        }
+
         function parseDateAny(dateStr) {
             if (!dateStr) return null;
             const key = dateStr.toString();
@@ -1090,6 +1175,43 @@
             { url: "https://api.codetabs.com/v1/proxy?quest=", encode: false }
         ];
         
+        // =============================================
+        // CACHE LOCAL
+        // O CSV bruto de 22 planilhas encosta no limite do localStorage (~5 MB) e a
+        // gravação falhava em silêncio — o modo offline não funcionava justamente
+        // quando era preciso. Agora a falha é registrada e mostrada no status, e o
+        // cache mais antigo é descartado para abrir espaço antes de desistir.
+        let CACHE_FAILED = new Set();
+
+        function cacheWrite(key, value) {
+            try {
+                localStorage.setItem(key, value);
+                localStorage.setItem(key + '__t', Date.now().toString());
+                CACHE_FAILED.delete(key);
+                return true;
+            } catch (e) {
+                // Cota estourada: descarta os caches mais antigos e tenta de novo
+                const entries = Object.keys(localStorage)
+                    .filter(k => k.startsWith('cache_') && !k.endsWith('__t') && k !== key)
+                    .map(k => ({ k, t: parseInt(localStorage.getItem(k + '__t') || '0', 10) }))
+                    .sort((a, b) => a.t - b.t);
+                for (const { k } of entries.slice(0, Math.ceil(entries.length / 3))) {
+                    localStorage.removeItem(k);
+                    localStorage.removeItem(k + '__t');
+                }
+                try {
+                    localStorage.setItem(key, value);
+                    localStorage.setItem(key + '__t', Date.now().toString());
+                    CACHE_FAILED.delete(key);
+                    return true;
+                } catch (e2) {
+                    CACHE_FAILED.add(key);
+                    console.warn('[CACHE] Sem espaço para', key, '— modo offline indisponível para esta planilha.');
+                    return false;
+                }
+            }
+        }
+
         async function fetchWithProxyFallback(rawUrl) {
             const TIMEOUT_MS = 8000;
 
@@ -1219,7 +1341,7 @@
             try {
                 csvText = await fetchWithProxyFallback(rawUrl);
                 // Download aprovado pelo Proxy: Salva o CSV inteiro no disco duro do navegador (LocalStorage)
-                try { localStorage.setItem('cache_' + dealerName, csvText); } catch(e) {}
+                cacheWrite('cache_' + dealerName, csvText);
             } catch (err) {
                 // Se todos os 4 Proxies Capotarem: Resgatar da memória!
                 const cached = localStorage.getItem('cache_' + dealerName);
@@ -1234,6 +1356,11 @@
             const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: 'greedy' });
             return parseLeadsFromCSV(parsed.data, config, dealerName);
         }
+
+        // Registro de qual coluna o parser escolheu para cada campo, por planilha.
+        // Alimenta o painel de Diagnóstico do Parser: erro de detecção passa a ser
+        // visível em vez de virar número errado em silêncio.
+        let PARSER_MAP = {};
 
         function parseLeadsFromCSV(rows, config, dealerName) {
             // rows é array de objetos com keys = nomes das colunas
@@ -1268,6 +1395,8 @@
                     });
                 }
             }
+
+            let _mapped = false;
 
             rows.forEach(row => {
                 if (!row) return;
@@ -1332,11 +1461,11 @@
                 const email = emailKey ? normalizeString(row[emailKey]) : '';
 
                 // Phone
-                const phoneKey = keys.find(k => {
+                const phoneKey_ = keys.find(k => {
                     const n = normalizeString(k);
                     return n.includes('tele') || n.includes('phone') || n === 'whatsapp';
                 });
-                const phone = phoneKey ? normalizeString(row[phoneKey]) : '';
+                const phone = phoneKey_ ? normalizeString(row[phoneKey_]) : '';
 
                 // Data
                 const dateKey = keys.find(k => {
@@ -1445,36 +1574,36 @@
                     noBuyRaw: noBuyKey ? normalizeString(row[noBuyKey]) : '',
                     dealerRaw: dealerKey ? (row[dealerKey] || '').toString().trim() : '',
                     hasMetaFormCols: !!(fleetKey && applicationKey),
+                    _cols: _mapped ? null : (_mapped = true, PARSER_MAP[dealerName] = {
+                        Status: statusKey, 'Pós-status': postKey, Nome: nameKey, 'E-mail': emailKey,
+                        Telefone: phoneKey_, Data: dateKey, Máquina: detectedMachineKey,
+                        Observação: lossKey, Frota: fleetKey, Setor: applicationKey,
+                        Prazo: timeframeKey, Pagamento: paymentKey, Região: regionKey,
+                        Cidade: cityKey, 'Início negociação': negStartKey,
+                        'Motivo não compra': noBuyKey, Distribuidor: dealerKey
+                    }, null),
                     rawAll: Object.values(row).map(v => normalizeString(v)).join(' ')
                 });
             });
 
-            // Deduplicação por e-mail dentro da mesma planilha de dealer
-            // Mantém o lead com status mais avançado (ex: Qualificado > Aguardando)
-            const statusPriority = (ld) => {
-                if (isSaleLead(ld)) return 4; // venda fechada vence qualquer duplicata
-                const v = (ld.status || '').toLowerCase();
-                if (v.includes('qualificado') || v.includes('calificado')) return 3;
-                if (v.includes('negociac') || v.includes('propuesta') || v.includes('cotizando')) return 2;
-                if (v.includes('aguardando') || v.includes('esperando') || v.includes('contactado') || v.includes('pendiente')) return 1;
-                return 0;
-            };
-            const seenEmails = new Map();
+            // Deduplicação dentro da mesma planilha, por e-mail E por telefone
+            // (o mesmo cliente às vezes é relançado sem o e-mail). Mantém o registro
+            // de status mais avançado; leads sem identidade nenhuma nunca deduplicam.
+            const seen = new Map();
             const dedupedLeads = [];
             leadsObjArr.forEach(ld => {
-                if (!ld.email || ld.email === 'nan' || ld.email === '') {
-                    dedupedLeads.push(ld); // sem e-mail: não deduplica
-                    return;
-                }
-                if (!seenEmails.has(ld.email)) {
-                    seenEmails.set(ld.email, dedupedLeads.length);
+                const ids = leadIdentities(ld);
+                if (ids.length === 0) { dedupedLeads.push(ld); return; }
+
+                const hitIdx = ids.map(id => seen.get(id)).find(i => i !== undefined);
+                if (hitIdx === undefined) {
+                    const idx = dedupedLeads.length;
                     dedupedLeads.push(ld);
+                    ids.forEach(id => seen.set(id, idx));
                 } else {
-                    // Já visto: mantém o de status mais alto
-                    const existingIdx = seenEmails.get(ld.email);
-                    if (statusPriority(ld) > statusPriority(dedupedLeads[existingIdx])) {
-                        dedupedLeads[existingIdx] = ld;
-                    }
+                    if (statusPriority(ld) > statusPriority(dedupedLeads[hitIdx])) dedupedLeads[hitIdx] = ld;
+                    // registra as identidades novas do duplicado no mesmo slot
+                    ids.forEach(id => { if (!seen.has(id)) seen.set(id, hitIdx); });
                 }
             });
             return dedupedLeads;
@@ -1558,6 +1687,11 @@
             applyFilter(CURRENT_FILTER);
         }
 
+        function toggleUndated() {
+            INCLUDE_UNDATED = !INCLUDE_UNDATED;
+            applyFilter(CURRENT_FILTER);
+        }
+
         function clearDates() {
             document.getElementById('start-date').value = '';
             document.getElementById('end-date').value = '';
@@ -1594,6 +1728,32 @@
             clearDates();
         }
 
+        // Dias desde o lead mais recente de um distribuidor. Serve para detectar
+        // planilha que parou de ser alimentada — sem isso o dashboard mostra números
+        // antigos como se fossem atuais.
+        const STALE_WARN_DAYS = 7;
+        const STALE_DEAD_DAYS = 21;
+        function dealerLastLeadDays(dealerName) {
+            const d = GLOBAL_ALL_DATA[dealerName];
+            if (!d || d.error || !d.leads || !d.leads.length) return null;
+            let newest = null;
+            d.leads.forEach(ld => {
+                const dt = parseDateAny(ld.dateRaw);
+                if (dt && (!newest || dt > newest)) newest = dt;
+            });
+            if (!newest) return null;
+            return Math.floor((Date.now() - newest.getTime()) / 86400000);
+        }
+
+        function staleBadgeHtml(dealerName) {
+            const days = dealerLastLeadDays(dealerName);
+            if (days === null || days < STALE_WARN_DAYS) return '';
+            const dead = days >= STALE_DEAD_DAYS;
+            return `<span class="stale-badge${dead ? ' dead' : ''}" title="Lead mais recente desta planilha tem ${days} dias">
+                        ${dead ? '⛔' : '⚠️'} Sem leads novos há ${days}d
+                    </span>`;
+        }
+
         // Monta os cards de país a partir de COUNTRIES (evita HTML duplicado por país)
         function renderCountryCards() {
             const wrap = document.getElementById('country-cards');
@@ -1627,8 +1787,64 @@
             wrap.dataset.built = '1';
         }
 
+        // =============================================
+        // DEDUPLICAÇÃO GLOBAL ENTRE DISTRIBUIDORES
+        // O mesmo lead trabalhado por dois dealers era contado duas vezes no total
+        // do país e do LATAM. Aqui cada identidade (e-mail ou telefone) recebe um
+        // dono único: o registro de status mais avançado; empate fica com quem tem
+        // a data mais recente e, persistindo, com o primeiro encontrado (estável).
+        // Expoagro fica de fora — tem regra própria de cruzamento com os dealers AR.
+        // =============================================
+        let GLOBAL_LEAD_OWNER = new Map();
+        let GLOBAL_DUP_COUNT = 0;
+
+        function computeGlobalOwnership() {
+            GLOBAL_LEAD_OWNER = new Map();
+            GLOBAL_DUP_COUNT = 0;
+            const best = new Map(); // identidade -> { dealerName, prio, time, lead }
+
+            for (const dealerName in GLOBAL_ALL_DATA) {
+                if (dealerName === 'Expoagro') continue;
+                const d = GLOBAL_ALL_DATA[dealerName];
+                if (!d || d.error || !d.leads) continue;
+
+                d.leads.forEach(ld => {
+                    const ids = leadIdentities(ld);
+                    if (!ids.length) return;
+                    const prio = statusPriority(ld);
+                    const dt = parseDateAny(ld.dateRaw);
+                    const time = dt ? dt.getTime() : 0;
+
+                    // Se qualquer identidade já tem dono, é o mesmo lead: compara e unifica
+                    const prev = ids.map(id => best.get(id)).find(Boolean);
+                    if (!prev) {
+                        const rec = { dealerName, prio, time, lead: ld };
+                        ids.forEach(id => best.set(id, rec));
+                        return;
+                    }
+                    if (prev.lead !== ld) GLOBAL_DUP_COUNT++;
+                    if (prio > prev.prio || (prio === prev.prio && time > prev.time)) {
+                        prev.dealerName = dealerName; prev.prio = prio; prev.time = time; prev.lead = ld;
+                    }
+                    ids.forEach(id => { if (!best.has(id)) best.set(id, prev); });
+                });
+            }
+
+            best.forEach((rec, id) => GLOBAL_LEAD_OWNER.set(id, rec.lead));
+        }
+
+        // Um lead só conta no dealer que "ganhou" a identidade dele.
+        function isOwnedHere(dealerName, lead) {
+            if (dealerName === 'Expoagro') return true;
+            const ids = leadIdentities(lead);
+            if (!ids.length) return true; // sem identidade: não há como saber, mantém
+            const owner = ids.map(id => GLOBAL_LEAD_OWNER.get(id)).find(Boolean);
+            return !owner || owner === lead;
+        }
+
         function applyFilter(filterType) {
             renderCountryCards();
+            computeGlobalOwnership();
             // Sincroniza CURRENT_FILTERS com o filterType passado
             if (!CURRENT_FILTERS || CURRENT_FILTERS.size === 0) CURRENT_FILTERS = new Set([filterType]);
             CURRENT_FILTER = filterType;
@@ -1660,6 +1876,7 @@
             let gProducts = {};
             let gLoss = {};
             GLOBAL_FILTERED_LEADS = {};
+            let droppedNoDate = 0;
             GLOBAL_OPEN_NEGS = [];
             GLOBAL_SALES = [];
 
@@ -1710,15 +1927,20 @@
 
                 if (!dData.error) {
                     filtered = dData.leads.filter(lead => {
+                        // Duplicata deste lead já contabilizada em outro distribuidor
+                        if (!isOwnedHere(dealerName, lead)) return false;
+
                         // NOVO: Filtro de Período Cronológico
                         if (CURRENT_START_DATE || CURRENT_END_DATE) {
                             const leadDate = parseDateAny(lead.dateRaw);
                             if (leadDate) {
                                 if (CURRENT_START_DATE && leadDate < CURRENT_START_DATE) return false;
                                 if (CURRENT_END_DATE && leadDate > CURRENT_END_DATE) return false;
-                            } else {
-                                // Se o lead não tem data e um filtro está ativo, por precaução ele é removido
-                                return false; 
+                            } else if (!INCLUDE_UNDATED) {
+                                // Sem data e com período ativo: fica de fora, mas é contabilizado
+                                // e informado ao usuário (antes sumia silenciosamente do total).
+                                droppedNoDate++;
+                                return false;
                             }
                         }
 
@@ -1919,6 +2141,7 @@
                                 <img src="${FLAGS[country]}" alt="${country}" title="${COUNTRY_NAMES[country]}">
                             </div>
                         </div>
+                        ${staleBadgeHtml(dealerName)}
                         <div class="dealer-stats">
                             <div>
                                 <span class="label">Qualificados</span> 
@@ -2048,6 +2271,31 @@
                 document.getElementById(`c-${c}-sales`).textContent = cm.sales;
             });
 
+            // Variação vs. o último retrato salvo (ver saveKpiSnapshot)
+            renderKpiDeltas(m);
+
+            // Transparência: leads sem data descartados pelo filtro de período
+            const undatedEl = document.getElementById('undated-notice');
+            if (undatedEl) {
+                const periodOn = !!(CURRENT_START_DATE || CURRENT_END_DATE);
+                if (!periodOn || (droppedNoDate === 0 && !INCLUDE_UNDATED)) {
+                    undatedEl.style.display = 'none';
+                } else {
+                    undatedEl.style.display = '';
+                    undatedEl.classList.toggle('on', INCLUDE_UNDATED);
+                    undatedEl.textContent = INCLUDE_UNDATED
+                        ? '✓ Incluindo leads sem data'
+                        : `${droppedNoDate} lead(s) sem data fora do período — incluir`;
+                }
+            }
+
+            // Transparência: duplicados fundidos entre distribuidores
+            const dupEl = document.getElementById('m-dup-note');
+            if (dupEl) {
+                dupEl.style.display = GLOBAL_DUP_COUNT > 0 ? '' : 'none';
+                dupEl.textContent = `${GLOBAL_DUP_COUNT} duplicado(s) fundido(s) entre distribuidores`;
+            }
+
             // Chama a nova engine de renderização visual
             if (typeof renderAnalytics === 'function') {
                 const targetMetrics = CURRENT_COUNTRY_FILTER ? cMetrics[CURRENT_COUNTRY_FILTER] : m;
@@ -2058,6 +2306,78 @@
             renderObsAnalysis();
             renderSales(cMetrics);
             renderAdvancedAnalytics();
+        }
+
+        // =============================================
+        // COMPARAÇÃO COM O PERÍODO ANTERIOR
+        // Guarda um retrato diário dos indicadores por combinação de filtros e
+        // mostra a variação ao lado de cada número. Sem isso, uma queda como a da
+        // taxa de atendimento da Argentina só aparece se alguém lembrar do valor.
+        // =============================================
+        const SNAPSHOT_KEY = 'jd_kpi_snapshots_v1';
+        const SNAPSHOT_MIN_HOURS = 20; // um retrato por dia de uso
+
+        function snapshotScope() {
+            return [...CURRENT_FILTERS].sort().join('+') + '|' + (CURRENT_COUNTRY_FILTER || 'ALL') +
+                   '|' + (CURRENT_START_DATE || CURRENT_END_DATE ? 'periodo' : 'total');
+        }
+
+        function readSnapshots() {
+            try { return JSON.parse(localStorage.getItem(SNAPSHOT_KEY)) || {}; } catch (e) { return {}; }
+        }
+
+        function renderKpiDeltas(m) {
+            const scope = snapshotScope();
+            const all = readSnapshots();
+            const prev = all[scope];
+            const now = Date.now();
+
+            const KPIS = [
+                { id: 'm-total', v: m.total,  up: true },
+                { id: 'm-qual',  v: m.qual,   up: true },
+                { id: 'm-neg',   v: m.neg,    up: true },
+                { id: 'm-sales', v: m.sales,  up: true },
+                { id: 'm-stop',  v: m.stopped, up: false },
+                { id: 'm-desq',  v: m.desq,   up: false }
+            ];
+
+            KPIS.forEach(k => {
+                const host = document.getElementById(k.id);
+                if (!host || !host.parentElement) return;
+                let el = document.getElementById(k.id + '-delta');
+                if (!el) {
+                    el = document.createElement('p');
+                    el.id = k.id + '-delta';
+                    el.className = 'kpi-note';
+                    host.parentElement.appendChild(el);
+                }
+                if (!prev || prev.v[k.id] === undefined) { el.style.display = 'none'; return; }
+                const diff = k.v - prev.v[k.id];
+                if (diff === 0) {
+                    el.style.display = '';
+                    el.style.color = 'var(--text-muted)';
+                    el.textContent = `= estável desde ${prev.label}`;
+                    return;
+                }
+                const good = k.up ? diff > 0 : diff < 0;
+                el.style.display = '';
+                el.style.color = good ? 'var(--success)' : 'var(--error)';
+                el.textContent = `${diff > 0 ? '▲' : '▼'} ${Math.abs(diff)} desde ${prev.label}`;
+            });
+
+            // Grava um novo retrato quando o anterior já envelheceu
+            if (!prev || (now - prev.ts) > SNAPSHOT_MIN_HOURS * 3600000) {
+                const d = new Date();
+                all[scope] = {
+                    ts: now,
+                    label: `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`,
+                    v: Object.fromEntries(KPIS.map(k => [k.id, k.v]))
+                };
+                // Mantém no máximo 30 escopos (evita crescer sem limite)
+                const keys = Object.keys(all).sort((a, b) => all[a].ts - all[b].ts);
+                while (keys.length > 30) delete all[keys.shift()];
+                try { localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(all)); } catch (e) {}
+            }
         }
 
         let _renderTimer = null;
@@ -2340,206 +2660,285 @@
             return s;
         }
 
+        // =============================================
+        // GERADOR XLSX GENÉRICO — layout John Deere
+        // Antes só o radar exportava, com o layout embutido na função. Agora o
+        // layout mora aqui e cada tela passa suas colunas, linhas e regras de cor.
+        // =============================================
+        const XLSX_PALETTE = {
+            JD_YELLOW: 'FFFFD100', JD_BLACK: 'FF000000',
+            DARK1: 'FF1C1C1E', DARK2: 'FF2A2A2C', DARK3: 'FF141416',
+            WHITE: 'FFF5F5F7', MUTED: 'FF86868B', BORDER: 'FF3A3A3C',
+            HOT: 'FFFF453A', WARM: 'FFFF9500', COLD: 'FF64D2FF', GREEN: 'FF32D74B'
+        };
+
+        async function buildXLSX({ sheetName, title, subtitle, columns, rows, fileName, cellStyle, tabColor }) {
+            const C = XLSX_PALETTE;
+            const wb = new ExcelJS.Workbook();
+            wb.creator = 'Dashboard AON 26';
+            wb.created = new Date();
+
+            const ws = wb.addWorksheet(sheetName, {
+                properties: { tabColor: { argb: tabColor || C.JD_YELLOW } },
+                pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1 }
+            });
+
+            const lastLetter = xlsxColLetter(columns.length);
+            columns.forEach((c, i) => { ws.getColumn(i + 1).width = c.width; });
+
+            // Linha 1: título
+            ws.mergeCells(`A1:${lastLetter}1`);
+            const titleCell = ws.getCell('A1');
+            titleCell.value = title;
+            titleCell.style = {
+                fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.JD_YELLOW } },
+                font: { bold: true, size: 15, color: { argb: C.JD_BLACK }, name: 'Calibri' },
+                alignment: { horizontal: 'center', vertical: 'middle' }
+            };
+            ws.getRow(1).height = 38;
+
+            // Linha 2: subtítulo
+            ws.mergeCells(`A2:${lastLetter}2`);
+            const sub = ws.getCell('A2');
+            sub.value = subtitle;
+            sub.style = {
+                fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.DARK3 } },
+                font: { size: 10, color: { argb: C.MUTED }, name: 'Calibri', italic: true },
+                alignment: { horizontal: 'center', vertical: 'middle' }
+            };
+            ws.getRow(2).height = 22;
+
+            // Linha 3: separador amarelo
+            ws.mergeCells(`A3:${lastLetter}3`);
+            ws.getCell('A3').style = { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.JD_YELLOW } } };
+            ws.getRow(3).height = 3;
+
+            // Linha 4: cabeçalhos
+            ws.getRow(4).height = 28;
+            columns.forEach((c, i) => {
+                const cell = ws.getCell(4, i + 1);
+                cell.value = c.header.toUpperCase();
+                cell.style = {
+                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.JD_BLACK } },
+                    font: { bold: true, size: 9, color: { argb: C.JD_YELLOW }, name: 'Calibri' },
+                    alignment: { horizontal: 'center', vertical: 'middle' },
+                    border: { bottom: { style: 'medium', color: { argb: C.JD_YELLOW } } }
+                };
+            });
+
+            // Dados
+            rows.forEach((rowData, idx) => {
+                const excelRow = idx + 5;
+                const rowBg = idx % 2 === 0 ? C.DARK1 : C.DARK2;
+                ws.getRow(excelRow).height = 20;
+
+                rowData.forEach((val, col) => {
+                    const cell = ws.getCell(excelRow, col + 1);
+                    cell.value = val;
+                    const s = (cellStyle && cellStyle(col, idx, val)) || {};
+                    cell.style = {
+                        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: s.bg || rowBg } },
+                        font: { size: 10, color: { argb: s.color || C.WHITE }, name: 'Calibri', bold: !!s.bold },
+                        alignment: { vertical: 'middle', horizontal: s.align || 'left', wrapText: !!columns[col].wrap },
+                        border: { bottom: { style: 'thin', color: { argb: C.BORDER } } }
+                    };
+                });
+            });
+
+            ws.views = [{ state: 'frozen', ySplit: 4 }];
+
+            // Rodapé
+            const footerRow = rows.length + 5;
+            ws.mergeCells(`A${footerRow}:${lastLetter}${footerRow}`);
+            const footer = ws.getCell(`A${footerRow}`);
+            footer.value = 'Dashboard AON 26 — John Deere Construção  |  Gerado automaticamente';
+            footer.style = {
+                fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.JD_YELLOW } },
+                font: { size: 9, color: { argb: C.JD_BLACK }, name: 'Calibri', bold: true },
+                alignment: { horizontal: 'center', vertical: 'middle' }
+            };
+            ws.getRow(footerRow).height = 18;
+
+            const buffer = await wb.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.download = fileName;
+            a.href = url;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function xlsxStamp() {
+            const now = new Date();
+            return now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function xlsxFileName(prefix) {
+            const d = new Date();
+            return `${prefix}_aon26_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.xlsx`;
+        }
+
+        const xlsxClean = v => (v && v !== 'nan' && v.trim()) ? v.trim() : '—';
+
+        // Executa uma exportação cuidando do estado do botão e dos erros
+        async function runExport(btnId, fn) {
+            const btn = document.getElementById(btnId);
+            const original = btn ? btn.innerHTML : '';
+            if (btn) { btn.disabled = true; btn.textContent = 'Gerando...'; }
+            try {
+                await fn();
+            } catch (err) {
+                console.error('Erro ao gerar XLSX:', err);
+                alert('Erro ao gerar o arquivo. Verifique o console.');
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = original; }
+            }
+        }
+
+        // ---- Negociações em aberto ----
         async function exportNegXLSX() {
             if (!_SCORED_NEGS || _SCORED_NEGS.length === 0) {
                 alert('Nenhuma negociação em aberto para exportar.');
                 return;
             }
-
-            const btn = document.getElementById('btn-export-xlsx');
-            btn.disabled = true;
-            btn.textContent = 'Gerando...';
-
-            try {
-                const wb = new ExcelJS.Workbook();
-                wb.creator = 'Dashboard AON 26';
-                wb.created = new Date();
-
-                // ---- Paleta JD Construção ----
-                const C = {
-                    JD_YELLOW : 'FFFFD100',
-                    JD_BLACK  : 'FF000000',
-                    DARK1     : 'FF1C1C1E',
-                    DARK2     : 'FF2A2A2C',
-                    DARK3     : 'FF141416',
-                    WHITE     : 'FFF5F5F7',
-                    MUTED     : 'FF86868B',
-                    BORDER    : 'FF3A3A3C',
-                    HOT       : 'FFFF453A',
-                    WARM      : 'FFFF9500',
-                    COLD      : 'FF64D2FF',
-                    GREEN     : 'FF32D74B',
-                    ACCENT_BG : 'FF2E2800',
-                };
-
-                const ws = wb.addWorksheet('Negociações em Aberto', {
-                    properties: { tabColor: { argb: C.JD_YELLOW } },
-                    pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1 }
-                });
-
-                const COLS = [
-                    { header: 'Distribuidor',        width: 20 },
-                    { header: 'Lead / Contato',      width: 30 },
-                    { header: 'Máquina',             width: 22 },
-                    { header: 'Temperatura',         width: 14 },
-                    { header: 'Score',               width: 8  },
-                    { header: 'Data do Lead',        width: 14 },
-                    { header: 'Dias em Aberto',      width: 16 },
-                    { header: 'Prazo de Compra',     width: 22 },
-                    { header: 'Forma de Pagamento',  width: 22 },
-                    { header: 'Frota Atual',         width: 22 },
-                    { header: 'Observação / Comentário', width: 55 },
-                ];
-                const nCols = COLS.length;
-                const lastLetter = xlsxColLetter(nCols);
-
-                // Larguras
-                COLS.forEach((c, i) => { ws.getColumn(i + 1).width = c.width; });
-
-                // ---- Linha 1: Título ----
-                ws.mergeCells(`A1:${lastLetter}1`);
-                const titleCell = ws.getCell('A1');
-                titleCell.value = 'NEGOCIAÇÕES EM ABERTO — AON 26  |  JOHN DEERE CONSTRUÇÃO';
-                titleCell.style = {
-                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.JD_YELLOW } },
-                    font: { bold: true, size: 15, color: { argb: C.JD_BLACK }, name: 'Calibri' },
-                    alignment: { horizontal: 'center', vertical: 'middle' },
-                };
-                ws.getRow(1).height = 38;
-
-                // ---- Linha 2: Subtítulo ----
-                ws.mergeCells(`A2:${lastLetter}2`);
-                const sub = ws.getCell('A2');
-                const now = new Date();
-                const stamp = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+            const C = XLSX_PALETTE;
+            await runExport('btn-export-xlsx', async () => {
                 const hot  = _SCORED_NEGS.filter(n => n.score >= 7).length;
                 const warm = _SCORED_NEGS.filter(n => n.score >= 4 && n.score < 7).length;
                 const cold = _SCORED_NEGS.filter(n => n.score < 4).length;
-                sub.value = `Gerado em ${stamp}  ·  ${_SCORED_NEGS.length} negociações  ·  🔥 ${hot} Quentes  ⚡ ${warm} Mornas  ❄️ ${cold} Frias  ·  Filtro: ${(CURRENT_FILTER||'TODOS').toUpperCase()}`;
-                sub.style = {
-                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.DARK3 } },
-                    font: { size: 10, color: { argb: C.MUTED }, name: 'Calibri', italic: true },
-                    alignment: { horizontal: 'center', vertical: 'middle' },
-                };
-                ws.getRow(2).height = 22;
 
-                // ---- Linha 3: Separador amarelo fino ----
-                ws.mergeCells(`A3:${lastLetter}3`);
-                ws.getCell('A3').style = { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.JD_YELLOW } } };
-                ws.getRow(3).height = 3;
-
-                // ---- Linha 4: Cabeçalhos das colunas ----
-                ws.getRow(4).height = 28;
-                COLS.forEach((c, i) => {
-                    const cell = ws.getCell(4, i + 1);
-                    cell.value = c.header.toUpperCase();
-                    cell.style = {
-                        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.JD_BLACK } },
-                        font: { bold: true, size: 9, color: { argb: C.JD_YELLOW }, name: 'Calibri' },
-                        alignment: { horizontal: 'center', vertical: 'middle' },
-                        border: { bottom: { style: 'medium', color: { argb: C.JD_YELLOW } } },
-                    };
+                await buildXLSX({
+                    sheetName: 'Negociações em Aberto',
+                    title: 'NEGOCIAÇÕES EM ABERTO — AON 26  |  JOHN DEERE CONSTRUÇÃO',
+                    subtitle: `Gerado em ${xlsxStamp()}  ·  ${_SCORED_NEGS.length} negociações  ·  🔥 ${hot} Quentes  ⚡ ${warm} Mornas  ❄️ ${cold} Frias  ·  Filtro: ${[...CURRENT_FILTERS].join(', ').toUpperCase()}`,
+                    columns: [
+                        { header: 'Distribuidor', width: 20 }, { header: 'Lead / Contato', width: 30 },
+                        { header: 'Máquina', width: 22 }, { header: 'Temperatura', width: 14 },
+                        { header: 'Score', width: 8 }, { header: 'Data do Lead', width: 14 },
+                        { header: 'Dias em Aberto', width: 16 }, { header: 'Prazo de Compra', width: 22 },
+                        { header: 'Forma de Pagamento', width: 22 }, { header: 'Frota Atual', width: 22 },
+                        { header: 'Observação / Comentário', width: 55, wrap: true }
+                    ],
+                    rows: _SCORED_NEGS.map(n => [
+                        n.dealerName, leadIdent(n.lead), normalizeMachine(n.lead.machineRaw),
+                        heatLabel(n.score, n.hasData).label, n.score,
+                        formatDate(n.lead.dateRaw) || '—',
+                        n.days !== null ? `${n.days} dias` : 'Sem data',
+                        xlsxClean(n.lead.timeframeRaw), xlsxClean(n.lead.paymentRaw),
+                        xlsxClean(n.lead.fleetRaw), xlsxClean(n.lead.lossRaw)
+                    ]),
+                    fileName: xlsxFileName('negociacoes'),
+                    cellStyle: (col, idx) => {
+                        const n = _SCORED_NEGS[idx];
+                        const heatColor = n.score >= 7 ? C.HOT : n.score >= 4 ? C.WARM : C.COLD;
+                        if (col === 0) return { bold: true, color: C.JD_YELLOW };
+                        if (col === 3) return { bold: true, color: heatColor };
+                        if (col === 4) return { bold: true, align: 'center', color: heatColor,
+                                                bg: n.score >= 7 ? 'FF2A0A09' : n.score >= 4 ? 'FF2A1A00' : 'FF001020' };
+                        if (col === 6 && n.days !== null) return { color: n.days > 30 ? C.HOT : n.days > 7 ? C.WARM : C.GREEN, bold: n.days > 30 };
+                        return {};
+                    }
                 });
+            });
+        }
 
-                // ---- Linhas de dados ----
-                _SCORED_NEGS.forEach((n, idx) => {
-                    const heat    = heatLabel(n.score, n.hasData);
-                    const machine = normalizeMachine(n.lead.machineRaw);
-                    const ident   = leadIdent(n.lead);
-                    const dateStr = formatDate(n.lead.dateRaw) || '—';
-                    const daysStr = n.days !== null ? `${n.days} dias` : 'Sem data';
-                    const clean   = v => (v && v !== 'nan' && v.trim()) ? v.trim() : '—';
-
-                    const rowData = [
-                        n.dealerName,
-                        ident,
-                        machine,
-                        heat.label,
-                        n.score,
-                        dateStr,
-                        daysStr,
-                        clean(n.lead.timeframeRaw),
-                        clean(n.lead.paymentRaw),
-                        clean(n.lead.fleetRaw),
-                        clean(n.lead.lossRaw),
-                    ];
-
-                    const excelRow = idx + 5;
-                    const rowBg = idx % 2 === 0 ? C.DARK1 : C.DARK2;
-                    ws.getRow(excelRow).height = 20;
-
-                    rowData.forEach((val, col) => {
-                        const cell = ws.getCell(excelRow, col + 1);
-                        cell.value = val;
-
-                        let fontColor = C.WHITE;
-                        let bold      = false;
-                        let cellBg    = rowBg;
-                        let hAlign    = 'left';
-
-                        // Distribuidor: bold amarelo
-                        if (col === 0) { bold = true; fontColor = C.JD_YELLOW; }
-                        // Temperatura
-                        if (col === 3) {
-                            bold = true;
-                            fontColor = n.score >= 7 ? C.HOT : n.score >= 4 ? C.WARM : C.COLD;
-                        }
-                        // Score
-                        if (col === 4) {
-                            bold = true; hAlign = 'center';
-                            fontColor = n.score >= 7 ? C.HOT : n.score >= 4 ? C.WARM : C.COLD;
-                            cellBg = n.score >= 7 ? 'FF2A0A09' : n.score >= 4 ? 'FF2A1A00' : 'FF001020';
-                        }
-                        // Dias em aberto
-                        if (col === 6 && n.days !== null) {
-                            fontColor = n.days > 30 ? C.HOT : n.days > 7 ? C.WARM : C.GREEN;
-                            bold = n.days > 30;
-                        }
-
-                        cell.style = {
-                            fill:      { type: 'pattern', pattern: 'solid', fgColor: { argb: cellBg } },
-                            font:      { size: 10, color: { argb: fontColor }, name: 'Calibri', bold },
-                            alignment: { vertical: 'middle', horizontal: hAlign, wrapText: col === 10 },
-                            border:    { bottom: { style: 'thin', color: { argb: C.BORDER } } },
-                        };
-                    });
-                });
-
-                // Congelar 4 linhas de cabeçalho
-                ws.views = [{ state: 'frozen', ySplit: 4 }];
-
-                // ---- Linha final: rodapé ----
-                const footerRow = _SCORED_NEGS.length + 5;
-                ws.mergeCells(`A${footerRow}:${lastLetter}${footerRow}`);
-                const footer = ws.getCell(`A${footerRow}`);
-                footer.value = 'Dashboard AON 26 — John Deere Construção  |  Gerado automaticamente';
-                footer.style = {
-                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.JD_YELLOW } },
-                    font: { size: 9, color: { argb: C.JD_BLACK }, name: 'Calibri', bold: true },
-                    alignment: { horizontal: 'center', vertical: 'middle' },
-                };
-                ws.getRow(footerRow).height = 18;
-
-                // Gera e faz download
-                const buffer = await wb.xlsx.writeBuffer();
-                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                const url  = URL.createObjectURL(blob);
-                const a    = document.createElement('a');
-                const d    = now;
-                a.download = `negociacoes_aon26_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.xlsx`;
-                a.href = url;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
-            } catch(err) {
-                console.error('Erro ao gerar XLSX:', err);
-                alert('Erro ao gerar o arquivo. Verifique o console.');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zm-8 2V5h2v6h1.17L12 13.17 9.83 11H11zm-6 7h14v2H5z"/></svg> Exportar XLSX`;
+        // ---- Vendas efetuadas ----
+        async function exportSalesXLSX() {
+            if (!GLOBAL_SALES || GLOBAL_SALES.length === 0) {
+                alert('Nenhuma venda efetuada para exportar com os filtros atuais.');
+                return;
             }
+            const C = XLSX_PALETTE;
+            const sorted = [...GLOBAL_SALES].sort((a, b) => {
+                const da = parseDateAny(a.lead.dateRaw), db = parseDateAny(b.lead.dateRaw);
+                return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+            });
+            await runExport('btn-export-sales', async () => {
+                const porPais = {};
+                sorted.forEach(s => { porPais[s.country] = (porPais[s.country] || 0) + 1; });
+                const resumo = Object.entries(porPais).map(([c, n]) => `${COUNTRY_NAMES[c] || c}: ${n}`).join('  ·  ');
+
+                await buildXLSX({
+                    sheetName: 'Vendas Efetuadas',
+                    title: 'VENDAS EFETUADAS — AON 26  |  JOHN DEERE CONSTRUÇÃO',
+                    subtitle: `Gerado em ${xlsxStamp()}  ·  ${sorted.length} vendas  ·  ${resumo}  ·  Filtro: ${[...CURRENT_FILTERS].join(', ').toUpperCase()}`,
+                    tabColor: C.GREEN,
+                    columns: [
+                        { header: 'Distribuidor', width: 20 }, { header: 'País', width: 12 },
+                        { header: 'Lead / Contato', width: 30 }, { header: 'Máquina', width: 22 },
+                        { header: 'Data do Lead', width: 14 }, { header: 'Início da Negociação', width: 20 },
+                        { header: 'Ciclo (dias)', width: 13 }, { header: 'Prazo de Compra', width: 22 },
+                        { header: 'Forma de Pagamento', width: 22 }, { header: 'Frota Anterior', width: 22 },
+                        { header: 'Observação', width: 55, wrap: true }
+                    ],
+                    rows: sorted.map(s => {
+                        const d0 = parseDateAny(s.lead.dateRaw), d1 = parseDateAny(s.lead.negStartRaw);
+                        const ciclo = (d0 && d1) ? Math.max(0, Math.round((d1 - d0) / 86400000)) : '—';
+                        return [
+                            s.dealerName, COUNTRY_NAMES[s.country] || s.country, leadIdent(s.lead),
+                            normalizeMachine(s.lead.machineRaw), formatDate(s.lead.dateRaw) || '—',
+                            formatDate(s.lead.negStartRaw) || '—', ciclo,
+                            xlsxClean(s.lead.timeframeRaw), xlsxClean(s.lead.paymentRaw),
+                            xlsxClean(s.lead.fleetRaw), xlsxClean(s.lead.lossRaw)
+                        ];
+                    }),
+                    fileName: xlsxFileName('vendas'),
+                    cellStyle: (col) => {
+                        if (col === 0) return { bold: true, color: C.JD_YELLOW };
+                        if (col === 3) return { bold: true, color: C.GREEN };
+                        if (col === 6) return { align: 'center' };
+                        return {};
+                    }
+                });
+            });
+        }
+
+        // ---- Base completa de leads filtrados ----
+        async function exportLeadsXLSX() {
+            const all = [];
+            for (const dn in GLOBAL_FILTERED_LEADS) {
+                const country = DEALERS_CONFIG[dn] ? DEALERS_CONFIG[dn].country : '';
+                GLOBAL_FILTERED_LEADS[dn].forEach(ld => all.push({ dealerName: dn, country, lead: ld }));
+            }
+            if (!all.length) {
+                alert('Nenhum lead para exportar com os filtros atuais.');
+                return;
+            }
+            const C = XLSX_PALETTE;
+            await runExport('btn-export-leads', async () => {
+                await buildXLSX({
+                    sheetName: 'Base de Leads',
+                    title: 'BASE DE LEADS FILTRADOS — AON 26  |  JOHN DEERE CONSTRUÇÃO',
+                    subtitle: `Gerado em ${xlsxStamp()}  ·  ${all.length} leads  ·  Filtro: ${[...CURRENT_FILTERS].join(', ').toUpperCase()}  ·  País: ${CURRENT_COUNTRY_FILTER ? COUNTRY_NAMES[CURRENT_COUNTRY_FILTER] : 'Todos'}`,
+                    columns: [
+                        { header: 'Distribuidor', width: 20 }, { header: 'País', width: 12 },
+                        { header: 'Nome', width: 28 }, { header: 'E-mail', width: 30 },
+                        { header: 'Telefone', width: 18 }, { header: 'Região', width: 12 },
+                        { header: 'Cidade', width: 20 }, { header: 'Data', width: 13 },
+                        { header: 'Máquina', width: 22 }, { header: 'Status', width: 22 },
+                        { header: 'Fase Pós-Qualificação', width: 24 }, { header: 'Prazo', width: 20 },
+                        { header: 'Pagamento', width: 20 }, { header: 'Observação', width: 50, wrap: true }
+                    ],
+                    rows: all.map(r => [
+                        r.dealerName, COUNTRY_NAMES[r.country] || r.country,
+                        xlsxClean(r.lead.nameRaw), xlsxClean(r.lead.email), xlsxClean(r.lead.phone),
+                        xlsxClean(r.lead.regionRaw), xlsxClean(r.lead.cityRaw),
+                        formatDate(r.lead.dateRaw) || '—', normalizeMachine(r.lead.machineRaw),
+                        xlsxClean(r.lead.status), xlsxClean(r.lead.postStatus),
+                        xlsxClean(r.lead.timeframeRaw), xlsxClean(r.lead.paymentRaw), xlsxClean(r.lead.lossRaw)
+                    ]),
+                    fileName: xlsxFileName('base_leads'),
+                    cellStyle: (col, idx) => {
+                        const o = leadOutcome(all[idx].lead);
+                        if (col === 0) return { bold: true, color: C.JD_YELLOW };
+                        if (col === 9) return { bold: true, color: o === 'sale' ? C.GREEN : o === 'desq' ? C.HOT : C.WHITE };
+                        return {};
+                    }
+                });
+            });
         }
 
         // Scored negs/sales cache (para navegação no modal de detalhe)
@@ -2944,6 +3343,134 @@
             renderAdvLosses(rows);
             renderAdvHygiene();
             renderAdvWeekly(rows);
+            renderAdvScoreCalibration(rows);
+            renderParserDiagnostics();
+        }
+
+        // ---- Calibração: o score prevê venda? ----
+        // Junta negociações abertas e vendas fechadas, pontua todas com a mesma régua
+        // e mede quantas viraram venda em cada faixa. Se as faixas converterem igual,
+        // o score é decorativo e os pesos precisam mudar.
+        function renderAdvScoreCalibration(rows) {
+            const el = document.getElementById('adv-score-calib');
+            if (!el) return;
+
+            const BANDS = [
+                { key: 'hot',  label: '🔥 Quente (7-10)', test: s => s >= 7,          color: 'var(--error)' },
+                { key: 'warm', label: '⚡ Morno (4-6)',    test: s => s >= 4 && s < 7, color: '#ff9500' },
+                { key: 'cold', label: '❄️ Frio (0-3)',     test: s => s < 4,           color: '#64d2ff' }
+            ];
+            const tally = Object.fromEntries(BANDS.map(b => [b.key, { n: 0, sales: 0 }]));
+
+            rows.forEach(r => {
+                const o = leadOutcome(r.lead);
+                if (o !== 'neg' && o !== 'sale') return;
+                const score = calcNegHeat(r.lead);
+                const band = BANDS.find(b => b.test(score));
+                if (!band) return;
+                tally[band.key].n++;
+                if (o === 'sale') tally[band.key].sales++;
+            });
+
+            const total = BANDS.reduce((a, b) => a + tally[b.key].n, 0);
+            const totalSales = BANDS.reduce((a, b) => a + tally[b.key].sales, 0);
+
+            if (total === 0) {
+                el.innerHTML = '<div class="neg-empty">Sem negociações nem vendas nos filtros atuais.</div>';
+                return;
+            }
+
+            const items = BANDS.map(b => {
+                const t = tally[b.key];
+                const rate = t.n > 0 ? (t.sales / t.n) * 100 : 0;
+                return { label: b.label, value: t.n, display: `${t.sales}/${t.n}`,
+                         sub: t.n > 0 ? rate.toFixed(0) + '% virou venda' : 'sem casos', color: b.color, rate, n: t.n };
+            });
+
+            // Leitura automática do resultado
+            let verdict;
+            if (totalSales < 5) {
+                verdict = `Ainda são <strong style="color:var(--text-main)">${totalSales} venda(s)</strong> registrada(s) — amostra pequena demais para concluir. O painel passa a valer conforme as vendas forem sendo marcadas nas planilhas.`;
+            } else {
+                const withCases = items.filter(i => i.n >= 3);
+                const hot = withCases.find(i => i.label.includes('Quente'));
+                const cold = withCases.find(i => i.label.includes('Frio'));
+                if (hot && cold && hot.rate > cold.rate * 1.5) {
+                    verdict = `O score está <strong style="color:var(--success)">funcionando</strong>: negociações quentes convertem ${(hot.rate / Math.max(cold.rate, 0.01)).toFixed(1)}× mais que as frias. Pode confiar na ordenação do radar.`;
+                } else if (hot && cold && cold.rate >= hot.rate) {
+                    verdict = `⚠️ O score está <strong style="color:var(--error)">invertido ou decorativo</strong>: as negociações frias convertem tanto ou mais que as quentes. Os pesos de <code>calcNegHeat</code> precisam ser revistos com base nestes números.`;
+                } else {
+                    verdict = `A diferença entre as faixas ainda é fraca. Vale acompanhar mais algumas semanas antes de recalibrar os pesos.`;
+                }
+            }
+
+            el.innerHTML = rankedBarsHtml(items) +
+                `<p class="adv-note">${verdict}</p>` +
+                `<p class="adv-note">Base: ${total} negociações e vendas pontuadas · ${totalSales} viraram venda.</p>`;
+        }
+
+        // ---- Diagnóstico do parser ----
+        // As planilhas não têm cabeçalho padronizado e o dashboard adivinha cada coluna.
+        // Este painel mostra o palpite e a taxa de preenchimento: coluna não encontrada
+        // ou vazia vira alerta visível em vez de análise silenciosamente errada.
+        function renderParserDiagnostics() {
+            const el = document.getElementById('adv-parser');
+            if (!el) return;
+
+            const FIELDS = [
+                { key: 'Status',            prop: 'status',        critical: true },
+                { key: 'Pós-status',        prop: 'postStatus',    critical: true },
+                { key: 'Data',              prop: 'dateRaw',       critical: true },
+                { key: 'Máquina',           prop: 'machineRaw',    critical: true },
+                { key: 'Observação',        prop: 'lossRaw',       critical: true },
+                { key: 'E-mail',            prop: 'email',         critical: false },
+                { key: 'Telefone',          prop: 'phone',         critical: false },
+                { key: 'Prazo',             prop: 'timeframeRaw',  critical: false },
+                { key: 'Pagamento',         prop: 'paymentRaw',    critical: false },
+                { key: 'Início negociação', prop: 'negStartRaw',   critical: false },
+                { key: 'Motivo não compra', prop: 'noBuyRaw',      critical: false }
+            ];
+
+            const dealers = Object.keys(GLOBAL_ALL_DATA)
+                .filter(dn => { const d = GLOBAL_ALL_DATA[dn]; return d && !d.error && d.leads && d.leads.length; })
+                .sort();
+
+            if (!dealers.length) {
+                el.innerHTML = '<div class="neg-empty">Nenhuma planilha carregada.</div>';
+                return;
+            }
+
+            const rowsHtml = dealers.map(dn => {
+                const leads = GLOBAL_ALL_DATA[dn].leads;
+                const map = PARSER_MAP[dn] || {};
+                const cells = FIELDS.map(f => {
+                    const col = map[f.key];
+                    if (!col) {
+                        const cls = f.critical ? 'diag-none' : 'diag-na';
+                        return `<td><div class="diag-cell ${cls}" title="Coluna não encontrada no cabeçalho desta planilha">—</div></td>`;
+                    }
+                    const filled = leads.filter(l => {
+                        const v = l[f.prop];
+                        return v !== undefined && v !== null && String(v).trim() !== '' && String(v).trim() !== 'nan';
+                    }).length;
+                    const pct = Math.round((filled / leads.length) * 100);
+                    const cls = pct === 0 ? 'diag-none' : pct < 25 ? 'diag-low' : 'diag-ok';
+                    return `<td><div class="diag-cell ${cls}" title="Lendo a coluna &quot;${escapeHtml(col)}&quot; · ${filled} de ${leads.length} leads preenchidos">${pct}%</div></td>`;
+                }).join('');
+                return `<tr><td class="diag-dealer" title="${leads.length} leads">${escapeHtml(dn)}</td>${cells}</tr>`;
+            }).join('');
+
+            el.innerHTML = `<table class="diag-table">
+                    <thead><tr><th>Distribuidor</th>${FIELDS.map(f => `<th>${f.key}</th>`).join('')}</tr></thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+                <div class="diag-legend">
+                    <span><i class="diag-key" style="background:rgba(50,215,75,0.5)"></i> Coluna lida e preenchida</span>
+                    <span><i class="diag-key" style="background:rgba(255,149,0,0.5)"></i> Encontrada, quase sempre vazia</span>
+                    <span><i class="diag-key" style="background:rgba(255,69,58,0.5)"></i> Não encontrada ou 100% vazia</span>
+                    <span><i class="diag-key" style="background:rgba(255,255,255,0.12)"></i> Campo opcional ausente</span>
+                </div>
+                <p class="adv-note">Passe o mouse em qualquer célula para ver <strong>qual coluna</strong> da planilha está sendo lida. Foi uma leitura errada assim — a coluna de observações apontando para "motivo do contato" — que manteve o score de calor e os motivos de perda sem informação em Argentina e México.</p>`;
         }
 
         // ---- 1. Performance de Mídia (planilha geral × status do dealer) ----

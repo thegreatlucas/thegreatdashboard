@@ -151,6 +151,13 @@ Helpers centrais: `isQualifiedStatus()`, `isStoppedPost()`, `isSaleLead()` — n
 
 ### Deduplicação
 
+Acontece em duas camadas, ambas mantendo o registro de **status mais avançado** (venda > negociação > qualificado > contatado):
+
+1. **Dentro da planilha** — por e-mail **e** por telefone. O telefone é comparado só por dígitos, pelos últimos 9 (`phoneKey`), absorvendo DDI, espaços e o nono dígito.
+2. **Entre distribuidores** (`computeGlobalOwnership`) — cada identidade recebe um dono único, então o mesmo lead trabalhado por dois dealers deixa de contar duas vezes no total do país e do LATAM. Empate de status vai para o lead mais recente. O total de duplicados fundidos aparece abaixo do KPI "Total Filtrado". Expoagro fica de fora: tem regra própria de cruzamento com os dealers AR.
+
+#### Camada antiga (referência)
+
 Dentro da mesma planilha, leads com mesmo email são deduplicados. Fica o de maior prioridade de status:
 
 ```
@@ -403,6 +410,60 @@ Helpers centrais: `leadOutcome()` (desfecho canônico: sale > neg > qual > desq 
 
 ---
 
+## Transparência e Diagnóstico
+
+### Diagnóstico do Parser (aba avançada)
+
+Matriz distribuidor × campo mostrando **qual coluna** o parser escolheu e a taxa de preenchimento. Verde = lida e preenchida; laranja = encontrada mas quase sempre vazia; vermelho = não encontrada ou 100% vazia. O tooltip de cada célula mostra o nome exato da coluna lida. Alimentado por `PARSER_MAP`, preenchido durante o parsing.
+
+Foi uma detecção errada desse tipo — observações apontando para "motivo do contato" — que manteve o score de calor e os motivos de perda sem informação em AR/MX. O painel torna esse tipo de erro visível.
+
+### Calibração do Score de Calor (aba avançada)
+
+Junta negociações abertas e vendas fechadas, pontua todas com `calcNegHeat` e mede a taxa de conversão por faixa. Emite um veredito automático: score funcionando, invertido/decorativo, ou amostra insuficiente. É o que permite recalibrar os pesos com dado em vez de hipótese.
+
+### Leads sem data
+
+Com filtro de período ativo, leads sem data são descartados — mas agora o número aparece ao lado do filtro e um clique os inclui (`INCLUDE_UNDATED`).
+
+### Planilha parada
+
+`dealerLastLeadDays()` calcula os dias desde o lead mais recente de cada distribuidor. Card ganha aviso a partir de 7 dias e alerta vermelho a partir de 21.
+
+### Comparação com o período anterior
+
+`renderKpiDeltas()` guarda um retrato diário dos indicadores por combinação de filtros (`jd_kpi_snapshots_v1`) e mostra a variação sob cada KPI, com cor por direção desejada (queda em "Pararam de Responder" é verde).
+
+---
+
+## Exportação XLSX
+
+`buildXLSX()` centraliza o layout John Deere (título, subtítulo, divisor, cabeçalho preto/amarelo, linhas alternadas, painéis congelados, rodapé). Cada tela passa colunas, linhas e uma função de estilo por célula:
+
+| Botão | Função | Conteúdo |
+|---|---|---|
+| Radar de negociações | `exportNegXLSX()` | Negociações abertas com score e temperatura |
+| Vendas efetuadas | `exportSalesXLSX()` | Vendas com ciclo em dias (lead → negociação) |
+| Breakdown por dealer | `exportLeadsXLSX()` | Base completa de leads sob os filtros atuais |
+
+---
+
+## Testes (`testes.html`)
+
+Abre no navegador e roda as regras reais de `index.html` (carregadas via `fetch` + `eval`, sem duplicar lógica) contra 59 casos: status PT/ES, detecção de venda, DEX, Megaventa, ExpertConnect, datas, telefone, categorização de máquina, motivos de perda, score de calor, desfecho e escape de HTML.
+
+Precisa de um servidor local — `python3 -m http.server` na pasta e abrir `http://localhost:8000/testes.html` (o navegador bloqueia `fetch` em `file://`).
+
+Rode depois de qualquer alteração nas regras de classificação.
+
+---
+
+## Cache local
+
+`cacheWrite()` grava o CSV de cada planilha e, quando a cota do `localStorage` estoura, descarta o terço mais antigo antes de tentar de novo. Falha definitiva é registrada em `CACHE_FAILED` e no console em vez de sumir em silêncio.
+
+---
+
 ## Alertas de Novas Vendas
 
 - **Auto-sync**: com o dashboard aberto, as planilhas são re-buscadas a cada 10 min em modo silencioso (sem overlay de loading).
@@ -495,6 +556,7 @@ Padroniza variações PT/ES para nome canônico:
 - **Ajustar calor**: função `calcNegHeat()` — arrays de keywords e valores de `daysMod` são os principais alvos.
 - **Novo filtro de campanha**: adicionar botão no HTML + case no `passesFilter()` + lógica de detecção própria.
 - **Colunas novas no XLSX**: array `columns` em `exportNegXLSX()` + campo correspondente extraído em `parseLeadsFromCSV()`.
+- **Nova regra de classificação**: adicione o caso em `testes.html` junto com a mudança.
 - **Planilha geral (cross-reference AON)**: `loadGeneralSheets()` — uma por país, popula `GENERAL_AON_EMAILS` e `EXPOAGRO_EMAILS/PHONES`.
 - **Critério de venda**: função `isSaleLead()` — palavras-chave e blacklist.
 - **Temas de observação**: array `OBS_THEMES` + `classifyObsTheme()`.

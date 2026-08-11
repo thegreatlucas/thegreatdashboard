@@ -1,0 +1,12 @@
+# Dados de leads nunca entram no repositório — as planilhas são a fonte,
+# e esses arquivos carregam nome, e-mail e telefone de clientes reais.
+*.csv
+tmp*
+*.xlsx
+
+# Sistema / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+node_modules/
