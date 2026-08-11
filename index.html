@@ -507,6 +507,8 @@
                 <button id="btn-filter-expertconnect" class="filter-btn" onclick="toggleFilter('expertconnect')">ExpertConnect</button>
                 <button id="btn-filter-conexpo" class="filter-btn" onclick="toggleFilter('conexpo')">Conexpo</button>
                 <button id="btn-filter-olx" class="filter-btn" onclick="toggleFilter('olx')">OLX</button>
+                <button id="btn-filter-dex" class="filter-btn" onclick="toggleFilter('dex')">DEX</button>
+                <button id="btn-filter-megaventa" class="filter-btn" onclick="toggleFilter('megaventa')" title="Exclusivo México — observação contém MEGAVENTA">Megaventa</button>
             </div>
             <button class="btn-clear" id="btn-clear-filters" onclick="clearAllFilters()" style="border-radius:99px; padding:8px 14px; font-size:11px; font-weight:700; letter-spacing:0.5px;">✕ Limpar Filtros</button>
 
@@ -575,119 +577,8 @@
             </div>
         </div>
 
-        <div class="country-cards reveal">
-            <div class="card country-card" id="card-BR" onclick="toggleCountryFilter('BR')">
-                <div class="country-header">
-                    <h3><img src="https://flagcdn.com/br.svg" alt="BR"> Brasil</h3>
-                    <p id="c-BR-dealers">-</p>
-                </div>
-                <div class="country-main-stat">
-                    <span class="country-metric-label">Total de Leads</span>
-                    <span id="c-BR-total" class="country-main-value">-</span>
-                </div>
-                <div class="country-stats-grid">
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Qualificados</span>
-                        <span id="c-BR-qual" class="country-stat-value" style="color: var(--success);">-</span>
-                    </div>
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Em Negociação</span>
-                        <span id="c-BR-neg" class="country-stat-value" style="color: #4da6ff;">-</span>
-                        <span id="c-BR-neg-pct" class="country-stat-sub">- dos qualificados</span>
-                    </div>
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Tx Atendimento</span>
-                        <span id="c-BR-txatend" class="country-stat-value">-</span>
-                    </div>
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Tx Qualificação</span>
-                        <span id="c-BR-txqual" class="country-stat-value" style="color: var(--success);">-</span>
-                    </div>
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Sem Atendimento</span>
-                        <span id="c-BR-semAtend" class="country-stat-value">-</span>
-                    </div>
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Desqualificados</span>
-                        <span id="c-BR-desq" class="country-stat-value" style="color: #ff9500;">-</span>
-                    </div>
-                </div>
-            </div>
-            <div class="card country-card" id="card-AR" onclick="toggleCountryFilter('AR')">
-                <div class="country-header">
-                    <h3><img src="https://flagcdn.com/ar.svg" alt="AR"> Argentina</h3>
-                    <p id="c-AR-dealers">-</p>
-                </div>
-                <div class="country-main-stat">
-                    <span class="country-metric-label">Total de Leads</span>
-                    <span id="c-AR-total" class="country-main-value">-</span>
-                </div>
-                <div class="country-stats-grid">
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Qualificados</span>
-                        <span id="c-AR-qual" class="country-stat-value" style="color: var(--success);">-</span>
-                    </div>
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Em Negociação</span>
-                        <span id="c-AR-neg" class="country-stat-value" style="color: #4da6ff;">-</span>
-                        <span id="c-AR-neg-pct" class="country-stat-sub">- dos qualificados</span>
-                    </div>
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Tx Atendimento</span>
-                        <span id="c-AR-txatend" class="country-stat-value">-</span>
-                    </div>
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Tx Qualificação</span>
-                        <span id="c-AR-txqual" class="country-stat-value" style="color: var(--success);">-</span>
-                    </div>
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Sem Atendimento</span>
-                        <span id="c-AR-semAtend" class="country-stat-value">-</span>
-                    </div>
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Desqualificados</span>
-                        <span id="c-AR-desq" class="country-stat-value" style="color: #ff9500;">-</span>
-                    </div>
-                </div>
-            </div>
-            <div class="card country-card" id="card-MX" onclick="toggleCountryFilter('MX')">
-                <div class="country-header">
-                    <h3><img src="https://flagcdn.com/mx.svg" alt="MX"> México</h3>
-                    <p id="c-MX-dealers">-</p>
-                </div>
-                <div class="country-main-stat">
-                    <span class="country-metric-label">Total de Leads</span>
-                    <span id="c-MX-total" class="country-main-value">-</span>
-                </div>
-                <div class="country-stats-grid">
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Qualificados</span>
-                        <span id="c-MX-qual" class="country-stat-value" style="color: var(--success);">-</span>
-                    </div>
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Em Negociação</span>
-                        <span id="c-MX-neg" class="country-stat-value" style="color: #4da6ff;">-</span>
-                        <span id="c-MX-neg-pct" class="country-stat-sub">- dos qualificados</span>
-                    </div>
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Tx Atendimento</span>
-                        <span id="c-MX-txatend" class="country-stat-value">-</span>
-                    </div>
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Tx Qualificação</span>
-                        <span id="c-MX-txqual" class="country-stat-value" style="color: var(--success);">-</span>
-                    </div>
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Sem Atendimento</span>
-                        <span id="c-MX-semAtend" class="country-stat-value">-</span>
-                    </div>
-                    <div class="country-stat-block">
-                        <span class="country-metric-label">Desqualificados</span>
-                        <span id="c-MX-desq" class="country-stat-value" style="color: #ff9500;">-</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Cards de país gerados dinamicamente a partir de COUNTRIES (ver renderCountryCards) -->
+        <div class="country-cards reveal" id="country-cards"></div>
 
         <h2 class="section-title">Analytics Intelligence Hub</h2>
         <div class="analytics-grid reveal">
@@ -1024,15 +915,31 @@
             "Maqro": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/1bFT6drlfD9jvBg7KsXXyJ7dNBb2jOw2_jcQYQMoyq0w/edit?gid=0#gid=0", statusCol: "Estado", postStatusCol: "Post-calificación" },
             "Dimasur": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/1OY7vHQD1nn7oTsCCvgWqvIofqf02sney3XEX00mhaGA/edit?gid=0#gid=0", statusCol: "Estado", postStatusCol: "Post-calificación" },
             "Dimanor": { country: "MX", sheetUrl: "https://docs.google.com/spreadsheets/d/1Kvp3Ia-jhqQpDt4lNg2lprPr4_WeMaPRYU-_TdbL9uc/edit?gid=0#gid=0", statusCol: "Estado", postStatusCol: "Post-calificación" },
+            // Planilhas por país (multiDealer): um card por distribuidor da coluna "Dealer"
+            "Colômbia": { country: "CO", multiDealer: true, sheetUrl: "https://docs.google.com/spreadsheets/d/14F9PpAQnXaL1juWZU-J2ERPoXnv4iNDNxOVwXG3Umw8/edit?gid=0#gid=0", statusCol: "Estado", postStatusCol: "Post-calificación" },
+            "Peru":     { country: "PE", multiDealer: true, sheetUrl: "https://docs.google.com/spreadsheets/d/1jsmS3FnWJTCtIogrWNe8ytDlXpUqlLmRLlWLZH7LVPM/edit?gid=0#gid=0", statusCol: "Estado", postStatusCol: "Post-calificación" },
+            "Chile":    { country: "CL", multiDealer: true, sheetUrl: "https://docs.google.com/spreadsheets/d/1iWgY-_u5lbqw48K-V_4v93vHmu0v57vhdAquF98-3oM/edit?gid=0#gid=0", statusCol: "Estado", postStatusCol: "Post-calificación" },
             "Expoagro": { country: "AR", sheetUrl: "https://docs.google.com/spreadsheets/d/1D4PxV6UzK4YOPAHBGUGjRb15I9UVf8jUlAg4yjRXppY/edit?gid=356962129", statusCol: "Status", postStatusCol: "Fase pós qualificação" }
         };
 
-        const FLAGS = { 
-            'BR': 'https://flagcdn.com/br.svg', 
-            'AR': 'https://flagcdn.com/ar.svg', 
-            'MX': 'https://flagcdn.com/mx.svg' 
+        // =============================================
+        // CONFIG CENTRAL DE PAÍSES
+        // Fonte única: nome, bandeira, aba da planilha geral e início da campanha.
+        // Adicionar um país = uma entrada aqui (cards, métricas e filtros seguem juntos).
+        // generalGid null = país sem aba na planilha geral: o filtro AON usa a
+        // data de início como critério, já que não há cruzamento por e-mail.
+        // =============================================
+        const COUNTRIES = {
+            BR: { name: 'Brasil',    flag: 'https://flagcdn.com/br.svg', generalGid: '356962129',  aonStart: new Date(2025, 10, 20) },
+            AR: { name: 'Argentina', flag: 'https://flagcdn.com/ar.svg', generalGid: '0',          aonStart: new Date(2025, 10, 19) },
+            MX: { name: 'México',    flag: 'https://flagcdn.com/mx.svg', generalGid: '2048582454', aonStart: new Date(2025, 10, 21) },
+            CO: { name: 'Colômbia',  flag: 'https://flagcdn.com/co.svg', generalGid: null,         aonStart: new Date(2026, 0, 1) },
+            PE: { name: 'Peru',      flag: 'https://flagcdn.com/pe.svg', generalGid: null,         aonStart: new Date(2026, 0, 1) },
+            CL: { name: 'Chile',     flag: 'https://flagcdn.com/cl.svg', generalGid: null,         aonStart: new Date(2026, 0, 1) }
         };
-        const COUNTRY_NAMES = { 'BR': 'Brasil', 'AR': 'Argentina', 'MX': 'México' };
+        const COUNTRY_CODES = Object.keys(COUNTRIES);
+        const FLAGS = Object.fromEntries(COUNTRY_CODES.map(c => [c, COUNTRIES[c].flag]));
+        const COUNTRY_NAMES = Object.fromEntries(COUNTRY_CODES.map(c => [c, COUNTRIES[c].name]));
 
         // GLOBAL CACHE DE DADOS
         let GLOBAL_ALL_DATA = {};
@@ -1046,10 +953,11 @@
 
         // Arquitetura v2: planilha geral como fonte de verdade AON
         const GENERAL_SHEET_ID = '1D4PxV6UzK4YOPAHBGUGjRb15I9UVf8jUlAg4yjRXppY';
-        const GENERAL_GIDS = { 'BR': '356962129', 'AR': '0', 'MX': '2048582454' };
+        // Países com aba na planilha geral (fonte de verdade AON por cruzamento de e-mail)
+        const GENERAL_COUNTRIES = COUNTRY_CODES.filter(c => COUNTRIES[c].generalGid);
         // Armazena todos os leads da planilha geral por país
-        let GENERAL_AON_DATA = { BR: [], AR: [], MX: [] };
-        let GENERAL_AON_EMAILS = { BR: new Set(), AR: new Set(), MX: new Set() };
+        let GENERAL_AON_DATA   = Object.fromEntries(COUNTRY_CODES.map(c => [c, []]));
+        let GENERAL_AON_EMAILS = Object.fromEntries(COUNTRY_CODES.map(c => [c, new Set()]));
 
         function getEmailFromGeneralRow(row) {
             const keys = Object.keys(row);
@@ -1067,9 +975,9 @@
         }
 
         async function loadGeneralSheets() {
-            await Promise.all(['BR', 'AR', 'MX'].map(async (c) => {
+            await Promise.all(GENERAL_COUNTRIES.map(async (c) => {
                 try {
-                    const rawUrl = `https://docs.google.com/spreadsheets/d/${GENERAL_SHEET_ID}/export?format=csv&gid=${GENERAL_GIDS[c]}&_t=${Date.now()}`;
+                    const rawUrl = `https://docs.google.com/spreadsheets/d/${GENERAL_SHEET_ID}/export?format=csv&gid=${COUNTRIES[c].generalGid}&_t=${Date.now()}`;
                     let csvText;
                     try {
                         csvText = await fetchWithProxyFallback(rawUrl);
@@ -1257,8 +1165,26 @@
             return !!(lead.rawAll && lead.rawAll.includes('olx'));
         }
 
+        // Campanha DEX: nova linha de máquinas. Critério = coluna de máquina
+        // procurada igual a DEX (\b evita casar com palavras que contenham "dex").
+        const DEX_RE = /\bdex\b/;
+        function isDexLead(lead) {
+            return DEX_RE.test(lead.machineRaw || '');
+        }
+
+        // Campanha MEGAVENTA (exclusiva do México): menção nas observações.
+        // Tolera "mega venta"/"megaventa" e a coluna de motivo de não compra.
+        const MEGAVENTA_RE = /mega\s?venta/;
+        function isMegaventaLead(lead) {
+            return MEGAVENTA_RE.test(lead.lossRaw || '') || MEGAVENTA_RE.test(lead.noBuyRaw || '');
+        }
+
         function isExpertConnect(lead) {
             const isEmpty = (v) => !v || v.trim() === '' || v.trim().toLowerCase() === 'nan';
+
+            // Sem as colunas do formulário Meta na planilha, o teste "ambos vazios" é
+            // sempre verdadeiro e classificaria tudo como EC. Só aplica onde faz sentido.
+            if (lead.hasMetaFormCols === false) return false;
 
             // Linha fantasma: sem nome e sem telefone não é lead real
             const temIdentidade = (!isEmpty(lead.nameRaw)) || (!isEmpty(lead.phone));
@@ -1314,7 +1240,7 @@
             const leadsObjArr = [];
 
             // Inteligência guiada a DADOS: Verifica fisicamente as células para achar a coluna (PT + ES)
-            const machineKeywords = ['retroescava', 'escavadeira', 'motoniveladora', 'pa carrega', 'pa-carrega', 'rolo compactador', 'trator de esteira', 'excavadora', 'cargadora', 'tractor', 'retroexcava'];
+            const machineKeywords = ['retroescava', 'escavadeira', 'motoniveladora', 'pa carrega', 'pa-carrega', 'rolo compactador', 'trator de esteira', 'excavadora', 'cargadora', 'tractor', 'retroexcava', 'dex'];
             let detectedMachineKey = null;
 
             if (rows && rows.length > 0) {
@@ -1422,10 +1348,22 @@
                 // Extra analytics columns
                 const machineRaw = detectedMachineKey ? normalizeString(row[detectedMachineKey]) : '';
 
+                // Observação do vendedor. Prioriza "Observações/Observaciones" e só depois
+                // cai para "motivo/razão" — nas planilhas ES existe "¿Cuál es el motivo de
+                // tu contacto?" (campo do formulário Meta, valor "Comprar una máquina") que
+                // vinha ANTES no cabeçalho e sequestrava a coluna, envenenando o score de
+                // calor, os motivos de perda e a análise de observações.
+                const isContactReasonCol = (n) => n.includes('motivo de tu contacto') ||
+                                                  n.includes('motivo do seu contato') ||
+                                                  n.includes('motivo de contato') ||
+                                                  n.includes('motivo del contacto');
                 const lossKey = keys.find(k => {
-                    const n = normalizeString(k);
-                    return n.includes('motivo') || n.includes('observa') || n.includes('coment') || n.includes('razão');
-                });
+                        const n = normalizeString(k);
+                        return n.includes('observa') || n.includes('coment');
+                    }) || keys.find(k => {
+                        const n = normalizeString(k);
+                        return (n.includes('motivo') || n.includes('razao')) && !isContactReasonCol(n);
+                    });
                 const lossRaw = lossKey ? normalizeString(row[lossKey]) : '';
 
                 // NOVO: Extratores de Perfil com os Aliases oficiais que você passou cruzados com a América Latina
@@ -1443,6 +1381,9 @@
                     return n.includes('nova') || n.includes('nueva');
                 });
                 
+                // A heurística ExpertConnect compara campos do formulário Meta. Se a planilha
+                // nem tem essas colunas (caso das planilhas por país CO/PE/CL), o teste é
+                // inválido e todo lead seria classificado como EC por engano.
                 const applicationKey = keys.find(k => {
                     const n = normalizeString(k);
                     return n.includes('aplica') || n.includes('principal') || 
@@ -1472,6 +1413,10 @@
                     const n = normalizeString(k);
                     return n.includes('inicio') && n.includes('negocia');
                 });
+                const dealerKey = keys.find(k => {
+                    const n = normalizeString(k);
+                    return n === 'dealer' || n === 'distribuidor' || n === 'concesionario';
+                });
                 const noBuyKey = keys.find(k => {
                     const n = normalizeString(k);
                     return n.includes('prosseguiu') || n.includes('prosigui') ||
@@ -1498,6 +1443,8 @@
                     cityRaw: cityKey ? (row[cityKey] || '').toString().trim() : '',
                     negStartRaw: negStartKey ? normalizeString(row[negStartKey]) : '',
                     noBuyRaw: noBuyKey ? normalizeString(row[noBuyKey]) : '',
+                    dealerRaw: dealerKey ? (row[dealerKey] || '').toString().trim() : '',
+                    hasMetaFormCols: !!(fleetKey && applicationKey),
                     rawAll: Object.values(row).map(v => normalizeString(v)).join(' ')
                 });
             });
@@ -1539,6 +1486,9 @@
         function machineCategory(raw) {
             if (raw === undefined || raw === '') return '';
             let pStr = normalizeString(raw).toUpperCase();
+
+            // DEX: linha própria, reconhecida antes da barricada anti-lixo
+            if (DEX_RE.test(pStr.toLowerCase())) return 'DEX';
 
             // Barricada anti-lixo: respostas de outras colunas que vazaram ou opções inúteis
             if (pStr.includes('NAO TENHO') || pStr.includes('OUTRA MARCA') || pStr.includes('JOHN DEERE') ||
@@ -1644,7 +1594,41 @@
             clearDates();
         }
 
+        // Monta os cards de país a partir de COUNTRIES (evita HTML duplicado por país)
+        function renderCountryCards() {
+            const wrap = document.getElementById('country-cards');
+            if (!wrap || wrap.dataset.built === '1') return;
+            const stat = (c, key, label, color, extra = '') => `
+                    <div class="country-stat-block">
+                        <span class="country-metric-label">${label}</span>
+                        <span id="c-${c}-${key}" class="country-stat-value"${color ? ` style="color: ${color};"` : ''}>-</span>
+                        ${extra}
+                    </div>`;
+            wrap.innerHTML = COUNTRY_CODES.map(c => `
+                <div class="card country-card" id="card-${c}" onclick="toggleCountryFilter('${c}')">
+                    <div class="country-header">
+                        <h3><img src="${COUNTRIES[c].flag}" alt="${c}"> ${COUNTRIES[c].name}</h3>
+                        <p id="c-${c}-dealers">-</p>
+                    </div>
+                    <div class="country-main-stat">
+                        <span class="country-metric-label">Total de Leads</span>
+                        <span id="c-${c}-total" class="country-main-value">-</span>
+                    </div>
+                    <div class="country-stats-grid">
+                        ${stat(c, 'qual', 'Qualificados', 'var(--success)')}
+                        ${stat(c, 'neg', 'Em Negociação', '#4da6ff', `<span id="c-${c}-neg-pct" class="country-stat-sub">- dos qualificados</span>`)}
+                        ${stat(c, 'txatend', 'Tx Atendimento', '')}
+                        ${stat(c, 'txqual', 'Tx Qualificação', 'var(--success)')}
+                        ${stat(c, 'semAtend', 'Sem Atendimento', '')}
+                        ${stat(c, 'desq', 'Desqualificados', '#ff9500')}
+                        ${stat(c, 'sales', 'Vendas', 'var(--success)')}
+                    </div>
+                </div>`).join('');
+            wrap.dataset.built = '1';
+        }
+
         function applyFilter(filterType) {
+            renderCountryCards();
             // Sincroniza CURRENT_FILTERS com o filterType passado
             if (!CURRENT_FILTERS || CURRENT_FILTERS.size === 0) CURRENT_FILTERS = new Set([filterType]);
             CURRENT_FILTER = filterType;
@@ -1668,7 +1652,7 @@
 
             let m = { total: 0, qual: 0, neg: 0, noInt: 0, stopped: 0, attended: 0, desq: 0, sales: 0 };
             const emptyCountry = () => ({ total: 0, dealers: 0, stopped: 0, qual: 0, neg: 0, attended: 0, desq: 0, sales: 0 });
-            let cMetrics = { BR: emptyCountry(), AR: emptyCountry(), MX: emptyCountry() };
+            let cMetrics = Object.fromEntries(COUNTRY_CODES.map(c => [c, emptyCountry()]));
             let matchedExpoEmails = new Set();
 
             // Analytics Reservoirs
@@ -1713,8 +1697,15 @@
                     continue; 
                 }
 
+                // Planilha por país já dividida em dealers próprios: a entrada "pai" não
+                // renderiza card nem conta como ponto de venda (evita duplicar/gerar erro falso).
+                if (DEALERS_CONFIG[dealerName].multiDealer &&
+                    !(GLOBAL_ALL_DATA[dealerName] && GLOBAL_ALL_DATA[dealerName].error)) {
+                    continue;
+                }
+
                 const dData = GLOBAL_ALL_DATA[dealerName] || { error: 'Sem dados', leads: [] };
-                
+
                 let filtered = [];
 
                 if (!dData.error) {
@@ -1768,15 +1759,23 @@
                             const _isOlx     = isOlxLead(lead);
                             const _dec2025plus = _ld && (_ld.getFullYear() > 2025 || (_ld.getFullYear() === 2025 && _ld.getMonth() >= 11));
 
-                            // Data mínima de início AON 26 por país
-                            const AON_START = { BR: new Date(2025, 10, 20), AR: new Date(2025, 10, 19), MX: new Date(2025, 10, 21) };
-                            const _afterStart = _ld && AON_START[country] && _ld >= AON_START[country];
+                            // Data mínima de início da campanha por país (COUNTRIES)
+                            const _cfg        = COUNTRIES[country];
+                            const _afterStart = !!(_ld && _cfg && _ld >= _cfg.aonStart);
+                            // País sem aba na planilha geral: não há cruzamento por e-mail,
+                            // então a data de início da campanha é o próprio critério AON.
+                            const _noGeneral  = !!(_cfg && !_cfg.generalGid);
+                            const _isDex      = isDexLead(lead);
+                            const _isMega     = country === 'MX' && isMegaventaLead(lead);
 
-                            if (ft === 'all') return isAonLead(lead, country) || _isEC || _isConexpo || isExpoLead || _isOlx;
+                            if (ft === 'all') return isAonLead(lead, country) || _isEC || _isConexpo || isExpoLead || _isOlx ||
+                                                     _isDex || _isMega || (_noGeneral && _afterStart);
                             if (ft === 'conexpo') return _isConexpo;
                             if (ft === 'expertconnect') return _isEC && !_isConexpo;
                             if (ft === 'expoagro') return isExpoLead;
                             if (ft === 'olx') return _isOlx;
+                            if (ft === 'dex') return _isDex;
+                            if (ft === 'megaventa') return _isMega;
 
                             if (ft === 'aon25') {
                                 if (_isEC || _isConexpo) return false;
@@ -1793,6 +1792,8 @@
                                 if (isAonLead(lead, country)) return true;
                                 // Fallback para AR/MX: leads sem e-mail contam pela data de início do AON
                                 if ((country === 'AR' || country === 'MX') && !lead.email && _afterStart) return true;
+                                // Países sem planilha geral (CO/PE/CL): data de início é o critério
+                                if (_noGeneral && _afterStart) return true;
                                 return false;
                             }
 
@@ -2000,7 +2001,7 @@
 
             const activeFilters = [...CURRENT_FILTERS];
             if (activeFilters.some(ft => ft === 'aon' || ft === 'all')) {
-                ['BR', 'AR', 'MX'].forEach(c => {
+                GENERAL_COUNTRIES.forEach(c => {
                     if (CURRENT_COUNTRY_FILTER && c !== CURRENT_COUNTRY_FILTER) return;
                     (GENERAL_AON_DATA[c] || []).forEach(gLead => {
                         if (!gLead.email || dealerEmailsSeen.has(gLead.email)) return;
@@ -2032,10 +2033,11 @@
             setKpi('m-desq', m.desq);
             setKpi('m-sales', m.sales);
 
-            ['BR', 'AR', 'MX'].forEach(c => {
+            COUNTRY_CODES.forEach(c => {
                 const cm = cMetrics[c];
                 document.getElementById(`c-${c}-total`).textContent = cm.total;
-                document.getElementById(`c-${c}-dealers`).textContent = cm.dealers + ' PONTOS DE VENDA';
+                document.getElementById(`c-${c}-dealers`).textContent =
+                    cm.dealers + (cm.dealers === 1 ? ' PONTO DE VENDA' : ' PONTOS DE VENDA');
                 document.getElementById(`c-${c}-qual`).textContent = cm.qual;
                 document.getElementById(`c-${c}-neg`).textContent = cm.neg;
                 document.getElementById(`c-${c}-neg-pct`).textContent = cm.qual > 0 ? ((cm.neg / cm.qual) * 100).toFixed(0) + '% dos QUALIF.' : '-';
@@ -2043,6 +2045,7 @@
                 document.getElementById(`c-${c}-txqual`).textContent = cm.total > 0 ? ((cm.qual / cm.total) * 100).toFixed(0) + '%' : '0%';
                 document.getElementById(`c-${c}-semAtend`).textContent = cm.total - cm.attended;
                 document.getElementById(`c-${c}-desq`).textContent = cm.desq;
+                document.getElementById(`c-${c}-sales`).textContent = cm.sales;
             });
 
             // Chama a nova engine de renderização visual
@@ -2063,6 +2066,42 @@
             _renderTimer = setTimeout(() => applyFilter(CURRENT_FILTER), 120);
         }
 
+        // Planilhas por país trazem vários distribuidores na coluna "Dealer".
+        // Cada distribuidor vira uma entrada própria (card, métricas e modal),
+        // registrada em DEALERS_CONFIG em runtime. Leads sem distribuidor
+        // preenchido ficam sob o nome do país, para não sumirem da contagem.
+        function splitCountrySheet(sheetName, config, leads) {
+            // Limpa entradas virtuais anteriores desta planilha (dealer pode sumir/mudar)
+            for (const dn in DEALERS_CONFIG) {
+                if (DEALERS_CONFIG[dn].parentSheet === sheetName) {
+                    delete DEALERS_CONFIG[dn];
+                    delete GLOBAL_ALL_DATA[dn];
+                }
+            }
+            delete GLOBAL_ALL_DATA[sheetName];
+
+            const groups = new Map();
+            leads.forEach(ld => {
+                const name = (ld.dealerRaw && ld.dealerRaw.toLowerCase() !== 'nan') ? ld.dealerRaw : sheetName;
+                if (!groups.has(name)) groups.set(name, []);
+                groups.get(name).push(ld);
+            });
+
+            if (groups.size === 0) {
+                // Planilha ainda sem leads: mantém o país visível como fonte conhecida
+                GLOBAL_ALL_DATA[sheetName] = { leads: [], error: null };
+                return;
+            }
+
+            groups.forEach((groupLeads, name) => {
+                // Colisão com dealer já existente de outro país: prefixa com o país
+                const key = (DEALERS_CONFIG[name] && DEALERS_CONFIG[name].parentSheet !== sheetName)
+                    ? `${name} (${config.country})` : name;
+                DEALERS_CONFIG[key] = { ...config, multiDealer: false, parentSheet: sheetName };
+                GLOBAL_ALL_DATA[key] = { leads: groupLeads, error: null };
+            });
+        }
+
         async function fetchAllData() {
             const dealerNames = Object.keys(DEALERS_CONFIG).filter(n => n !== "Expoagro");
 
@@ -2073,7 +2112,8 @@
                 const config = DEALERS_CONFIG[dealerName];
                 try {
                     const leads = await fetchGoogleSheetData(config, dealerName);
-                    GLOBAL_ALL_DATA[dealerName] = { leads: leads, error: null };
+                    if (config.multiDealer) splitCountrySheet(dealerName, config, leads);
+                    else GLOBAL_ALL_DATA[dealerName] = { leads: leads, error: null };
                 } catch (err) {
                     console.error(`Erro buscando ${dealerName}:`, err);
                     GLOBAL_ALL_DATA[dealerName] = { error: err.message, leads: [] };
@@ -2522,6 +2562,7 @@
         function normalizeMachine(raw) {
             if (!raw || raw === 'nan') return '—';
             let m = raw.toUpperCase();
+            if (DEX_RE.test(raw.toLowerCase())) return 'DEX';
             if (m.includes('RETROESCAV') || m.includes('RETROEXCAV')) return 'RETROESCAVADEIRA';
             if (m.includes('MINI ESC')   || m.includes('MINIESC') || m.includes('MINI EXC')) return 'MINIESCAVADEIRA';
             if (m.includes('MINI CAR')   || m.includes('MINICAR')) return 'MINICARREGADEIRA';
@@ -2930,7 +2971,7 @@
                 return true;
             };
             const gRows = [];
-            ['BR', 'AR', 'MX'].forEach(c => {
+            COUNTRY_CODES.forEach(c => {
                 if (CURRENT_COUNTRY_FILTER && c !== CURRENT_COUNTRY_FILTER) return;
                 (GENERAL_AON_DATA[c] || []).forEach(g => { if (inRange(g)) gRows.push(g); });
             });
@@ -2994,7 +3035,7 @@
 
             // Fallback: estado/cidade da planilha geral por e-mail (dealers sem coluna Região)
             const geoByEmail = new Map();
-            ['BR', 'AR', 'MX'].forEach(c => (GENERAL_AON_DATA[c] || []).forEach(g => {
+            COUNTRY_CODES.forEach(c => (GENERAL_AON_DATA[c] || []).forEach(g => {
                 if (g.email && (g.state || g.city)) geoByEmail.set(g.email, { state: g.state, city: g.city });
             }));
 

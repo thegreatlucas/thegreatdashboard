@@ -70,7 +70,19 @@ Cada dealer é uma entrada no objeto `DEALERS_CONFIG`:
 - **country**: Controla qual planilha geral AON é usada para cross-reference de emails
 - **statusCol / postStatusCol**: Matching é case-insensitive e tolera variações de hífen/espaço
 
-Dealers ativos: 11 BR, 4 AR, 3 MX + 1 entrada virtual (Expoagro AR).
+Dealers ativos: 11 BR, 4 AR, 3 MX + 1 entrada virtual (Expoagro AR) + 3 planilhas por país (CO, PE, CL).
+
+### Planilhas por país (`multiDealer`)
+
+Colômbia, Peru e Chile usam **uma planilha por país** com coluna `Dealer` interna. A entrada em `DEALERS_CONFIG` leva `multiDealer: true` e, no fetch, `splitCountrySheet()` divide os leads por distribuidor, registrando cada um como entrada própria em runtime (`parentSheet` aponta para a planilha de origem). Assim cada distribuidor ganha card, métricas e modal automaticamente conforme a planilha for populada — sem mexer no código.
+
+- Leads sem `Dealer` preenchido ficam agrupados sob o nome do país
+- Colisão de nome entre países vira `Nome (PAÍS)`
+- A entrada "pai" não vira card nem conta como ponto de venda (só aparece se o fetch falhar)
+
+### Países (`COUNTRIES`)
+
+Config central com nome, bandeira, aba da planilha geral e data de início da campanha. Adicionar um país = uma entrada ali; os cards, métricas, filtros e a aba avançada seguem juntos. Países com `generalGid: null` (CO/PE/CL) não têm cruzamento por e-mail: o filtro AON usa a data de início como critério.
 
 ---
 
@@ -87,7 +99,9 @@ normalizeString(str)
 
 | Campo | Como detecta |
 |---|---|
-| **Máquina** | Varre as primeiras 30 linhas procurando valores como `retroescava`, `escavadeira`, `cargadora`, `tractor` etc. Coluna com >2 hits vence. Fallback: header com `tipo de maquina` |
+| **Máquina** | Varre as primeiras 30 linhas procurando valores como `retroescava`, `escavadeira`, `cargadora`, `tractor`, `dex` etc. Coluna com >2 hits vence. Fallback: header com `tipo de maquina` |
+| **Observação** | Prioriza header com `observa`/`coment`; só então cai para `motivo`/`razao`, **excluindo** "motivo de tu contacto" (campo do formulário Meta que sequestrava a coluna nas planilhas ES) |
+| **Dealer** | Header igual a `dealer`, `distribuidor` ou `concesionario` (planilhas por país) |
 | **Status** | Match no nome do header via `config.statusCol` |
 | **AON?** | Match exato: `key.trim() === 'AON?'` |
 | **Nome** | Header com `nome`, `nombre`, `name`, `razao social`, `razon social` |
@@ -230,6 +244,14 @@ YEAR(dateRaw) <= 2025
 ```
 
 Leads legados da campanha AON 2025.
+
+### DEX (`dex`)
+
+Lançamento da nova linha DEX. Critério: coluna de máquina procurada igual a `DEX` (regex `\bdex\b`, evita falso positivo em palavras que contenham "dex"). Vale para todos os países.
+
+### Megaventa (`megaventa`) — exclusivo México
+
+Observação do vendedor contendo `megaventa` ou `mega venta`. O filtro só considera leads `country === 'MX'`; a mesma menção em outro país é ignorada.
 
 ### Geral (`all`)
 
