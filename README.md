@@ -226,6 +226,10 @@ AND !isConexpo(lead)                   ← não é lead Conexpo
 
 **Racional:** leads do Meta sempre têm setor e frota preenchidos (campos do formulário). EC usa formulário diferente — não tem essas perguntas. A combinação de ambos vazios + janela de data é o identificador.
 
+**Colunas ausentes na planilha** (`hasMetaFormCols`): basta **uma** das duas colunas existir para o teste valer — uma coluna que não existe tem valor vazio e satisfaz o critério de graça. As planilhas AR/MX têm "setor" mas não têm "frota"; exigir as duas desligava a regra nesses países e derrubava ~33 leads do filtro Geral. Sem nenhuma das duas, o teste é vacuous e não se aplica.
+
+**Países sem planilha geral** (CO/PE/CL): não há cruzamento por e-mail para separar EC de Meta, então a heurística não classifica esses leads como EC nem os barra nos filtros AON.
+
 ### OLX (`olx`)
 
 ```

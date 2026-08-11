@@ -1292,8 +1292,9 @@
         function isExpertConnect(lead) {
             const isEmpty = (v) => !v || v.trim() === '' || v.trim().toLowerCase() === 'nan';
 
-            // Sem as colunas do formulário Meta na planilha, o teste "ambos vazios" é
-            // sempre verdadeiro e classificaria tudo como EC. Só aplica onde faz sentido.
+            // Sem nenhuma coluna do formulário Meta, o teste "ambos vazios" seria
+            // sempre verdadeiro e classificaria tudo como EC. Só aplica onde há
+            // ao menos uma das colunas para comparar.
             if (lead.hasMetaFormCols === false) return false;
 
             // Linha fantasma: sem nome e sem telefone não é lead real
@@ -1498,9 +1499,6 @@
                     return n.includes('nova') || n.includes('nueva');
                 });
                 
-                // A heurística ExpertConnect compara campos do formulário Meta. Se a planilha
-                // nem tem essas colunas (caso das planilhas por país CO/PE/CL), o teste é
-                // inválido e todo lead seria classificado como EC por engano.
                 const applicationKey = keys.find(k => {
                     const n = normalizeString(k);
                     return n.includes('aplica') || n.includes('principal') || 
@@ -1561,7 +1559,12 @@
                     negStartRaw: negStartKey ? normalizeString(row[negStartKey]) : '',
                     noBuyRaw: noBuyKey ? normalizeString(row[noBuyKey]) : '',
                     dealerRaw: dealerKey ? (row[dealerKey] || '').toString().trim() : '',
-                    hasMetaFormCols: !!(fleetKey && applicationKey),
+                    // A heurística ExpertConnect compara campos do formulário Meta.
+                    // Basta UMA das colunas existir para o teste valer: as planilhas
+                    // AR/MX têm "setor" mas não têm "frota", e exigir as duas desligava
+                    // a regra nesses países, derrubando leads do filtro Geral.
+                    // Sem nenhuma das duas, o teste é vacuous e não se aplica.
+                    hasMetaFormCols: !!(fleetKey || applicationKey),
                     _cols: _mapped ? null : (_mapped = true, PARSER_MAP[dealerName] = {
                         Status: statusKey, 'Pós-status': postKey, Nome: nameKey, 'E-mail': emailKey,
                         Telefone: phoneKey_, Data: dateKey, Máquina: detectedMachineKey,
@@ -1868,7 +1871,9 @@
                             if (ft === 'all') return isAonLead(lead, country) || _isEC || _isConexpo || isExpoLead || _isOlx ||
                                                      _isDex || _isMega || (_noGeneral && _afterStart);
                             if (ft === 'conexpo') return _isConexpo;
-                            if (ft === 'expertconnect') return _isEC && !_isConexpo;
+                            // Em país sem planilha geral não há como separar EC de Meta:
+                            // a heurística não classifica nem barra esses leads.
+                            if (ft === 'expertconnect') return _isEC && !_isConexpo && !_noGeneral;
                             // Expoagro: e-mail/telefone na lista da campanha, montada a partir
                             // da planilha geral (campaign_name contendo "expo"). Independe de
                             // qualquer planilha de dealer.
@@ -1878,7 +1883,8 @@
                             if (ft === 'megaventa') return _isMega;
 
                             if (ft === 'aon25') {
-                                if (_isEC || _isConexpo) return false;
+                                if (_isConexpo) return false;
+                                if (_isEC && !_noGeneral) return false;
                                 if (country === 'BR' && lead.hasAonCol) {
                                     const aon = (lead.aonRaw ?? '').toString().trim();
                                     return aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#') && isUpToDec2025(lead.dateRaw);
@@ -1887,7 +1893,8 @@
                             }
 
                             if (ft === 'aon') {
-                                if (_isEC || _isConexpo) return false;
+                                if (_isConexpo) return false;
+                                if (_isEC && !_noGeneral) return false;
                                 // Primário: cruzamento por e-mail com a planilha geral
                                 if (isAonLead(lead, country)) return true;
                                 // Fallback para AR/MX: leads sem e-mail contam pela data de início do AON
