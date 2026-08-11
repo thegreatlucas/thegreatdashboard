@@ -28,6 +28,13 @@ Tudo roda no browser. O dado persiste em `localStorage` como cache de emergênci
 
 ## Autenticação
 
+> ⚠️ **A senha atual não é proteção.** `jdc123` está escrita no código-fonte da
+> página — qualquer visitante lê em dois cliques. Vale como aviso de "área
+> interna", não como controle de acesso.
+>
+> O caminho para login real (Cloudflare Pages + Access, gratuito) e o passo a
+> passo de migração estão em **[SEGURANCA.md](SEGURANCA.md)**.
+
 - Senha: `jdc123` (case-insensitive)
 - Armazenada em `sessionStorage` como flag `jd_auth`
 - Persiste durante a sessão; some ao fechar o browser

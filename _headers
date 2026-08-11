@@ -1,0 +1,32 @@
+# Cabeçalhos HTTP aplicados pelo Cloudflare Pages.
+# Diferente das meta tags, estes valem no nível do servidor: chegam mesmo
+# para clientes que não executam HTML/JS (crawlers, scripts, proxies).
+
+/*
+  # Bloqueio de indexação no servidor — mais forte que a meta tag, porque
+  # crawlers que ignoram robots.txt e não renderizam a página ainda o recebem.
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet, noimageindex
+
+  # Impede que o painel seja embutido em iframe de outro site (clickjacking)
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'
+
+  # Navegador não tenta adivinhar o tipo do arquivo
+  X-Content-Type-Options: nosniff
+
+  # A URL do painel não vaza no Referer ao abrir planilhas em outra aba
+  Referrer-Policy: no-referrer
+
+  # Sem uso de câmera, microfone ou localização nesta página
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+
+  # Força HTTPS por 1 ano
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+  # Dados de cliente não ficam em cache de intermediários
+  Cache-Control: no-store, max-age=0
+
+# A página de testes não deve ser servida em produção; se for, mesmas regras.
+/testes.html
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store, max-age=0
