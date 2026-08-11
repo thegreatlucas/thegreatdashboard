@@ -160,24 +160,19 @@ Helpers centrais: `isQualifiedStatus()`, `isStoppedPost()`, `isSaleLead()` — n
 
 ### Deduplicação
 
-Acontece em duas camadas, ambas mantendo o registro de **status mais avançado** (venda > negociação > qualificado > contatado):
-
-1. **Dentro da planilha** — por e-mail **e** por telefone. O telefone é comparado só por dígitos, pelos últimos 9 (`phoneKey`), absorvendo DDI, espaços e o nono dígito.
-2. **Entre distribuidores** (`computeGlobalOwnership`) — cada identidade recebe um dono único, então o mesmo lead trabalhado por dois dealers deixa de contar duas vezes no total do país e do LATAM. Empate de status vai para o lead mais recente. O total de duplicados fundidos aparece abaixo do KPI "Total Filtrado".
-
-#### Camada antiga (referência)
-
-Dentro da mesma planilha, leads com mesmo email são deduplicados. Fica o de maior prioridade de status:
+Apenas **dentro da mesma planilha**, por e-mail, mantendo o registro de status mais avançado:
 
 ```
-venda efetuada (isSaleLead)      → 4
-qualificado / calificado        → 3
+venda                            → 4
+qualificado / calificado         → 3
 negociac / propuesta / cotizando → 2
-aguardando / contactado          → 1
+aguardando / contactado / pendiente → 1
 outros                           → 0
 ```
 
-Leads sem email nunca são deduplicados.
+Leads sem e-mail nunca são deduplicados.
+
+**Não há deduplicação entre distribuidores**, por decisão: o mesmo lead trabalhado por dois dealers conta nos dois, para o painel bater com o relatório oficial de leads. Uma versão com dono único por identidade (e-mail ou telefone) chegou a ser implementada e foi removida — mexia em ~11 leads e afastava os totais da referência usada na operação.
 
 ### Filtro de Linhas Fantasma
 

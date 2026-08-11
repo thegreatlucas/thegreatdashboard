@@ -585,7 +585,6 @@
             <div class="card kpi-main">
                 <h3>Total Filtrado</h3>
                 <p id="m-total" class="value">-</p>
-                <p id="m-dup-note" class="kpi-note" style="display:none;"></p>
             </div>
             <div class="card kpi-main" style="border-top: 3px solid var(--success);">
                 <h3>Qualificados</h3>
@@ -1106,15 +1105,6 @@
         // parseDateAny é chamada milhares de vezes por render (filtros + analytics).
         // Cache por string: mesma entrada => mesmo Date, sem re-rodar os regex.
         const _DATE_CACHE = new Map();
-        // Telefone como identidade: compara só dígitos e usa os últimos 9, absorvendo
-        // variação de DDI, zeros à esquerda e o nono dígito móvel. Abaixo de 8 dígitos
-        // não é telefone confiável e não serve para identificar o lead.
-        function phoneKey(raw) {
-            const digits = (raw || '').toString().replace(/\D/g, '');
-            if (digits.length < 8) return null;
-            return digits.slice(-9);
-        }
-
         // Prioridade de status: qual registro vence quando o mesmo lead aparece duas vezes.
         function statusPriority(ld) {
             if (isSaleLead(ld)) return 4; // venda fechada vence qualquer duplicata
@@ -1123,15 +1113,6 @@
             if (v.includes('negociac') || v.includes('propuesta') || v.includes('cotizando')) return 2;
             if (v.includes('aguardando') || v.includes('esperando') || v.includes('contactado') || v.includes('pendiente')) return 1;
             return 0;
-        }
-
-        // Identidades pelas quais um lead pode ser reconhecido em outra planilha.
-        function leadIdentities(ld) {
-            const ids = [];
-            if (ld.email && ld.email !== 'nan') ids.push('e:' + ld.email);
-            const pk = phoneKey(ld.phone);
-            if (pk) ids.push('p:' + pk);
-            return ids;
         }
 
         function parseDateAny(dateStr) {
@@ -1593,24 +1574,25 @@
                 });
             });
 
-            // Deduplicação dentro da mesma planilha, por e-mail E por telefone
-            // (o mesmo cliente às vezes é relançado sem o e-mail). Mantém o registro
-            // de status mais avançado; leads sem identidade nenhuma nunca deduplicam.
-            const seen = new Map();
+            // Deduplicação por e-mail dentro da mesma planilha de dealer.
+            // Mantém o lead com status mais avançado (ex: Qualificado > Aguardando).
+            // Não deduplica entre distribuidores: o mesmo lead trabalhado por dois
+            // dealers conta nos dois, para bater com o relatório oficial de leads.
+            const seenEmails = new Map();
             const dedupedLeads = [];
             leadsObjArr.forEach(ld => {
-                const ids = leadIdentities(ld);
-                if (ids.length === 0) { dedupedLeads.push(ld); return; }
-
-                const hitIdx = ids.map(id => seen.get(id)).find(i => i !== undefined);
-                if (hitIdx === undefined) {
-                    const idx = dedupedLeads.length;
+                if (!ld.email || ld.email === 'nan' || ld.email === '') {
+                    dedupedLeads.push(ld); // sem e-mail: não deduplica
+                    return;
+                }
+                if (!seenEmails.has(ld.email)) {
+                    seenEmails.set(ld.email, dedupedLeads.length);
                     dedupedLeads.push(ld);
-                    ids.forEach(id => seen.set(id, idx));
                 } else {
-                    if (statusPriority(ld) > statusPriority(dedupedLeads[hitIdx])) dedupedLeads[hitIdx] = ld;
-                    // registra as identidades novas do duplicado no mesmo slot
-                    ids.forEach(id => { if (!seen.has(id)) seen.set(id, hitIdx); });
+                    const existingIdx = seenEmails.get(ld.email);
+                    if (statusPriority(ld) > statusPriority(dedupedLeads[existingIdx])) {
+                        dedupedLeads[existingIdx] = ld;
+                    }
                 }
             });
             return dedupedLeads;
@@ -1794,61 +1776,8 @@
             wrap.dataset.built = '1';
         }
 
-        // =============================================
-        // DEDUPLICAÇÃO GLOBAL ENTRE DISTRIBUIDORES
-        // O mesmo lead trabalhado por dois dealers era contado duas vezes no total
-        // do país e do LATAM. Aqui cada identidade (e-mail ou telefone) recebe um
-        // dono único: o registro de status mais avançado; empate fica com quem tem
-        // a data mais recente e, persistindo, com o primeiro encontrado (estável).
-        // =============================================
-        let GLOBAL_LEAD_OWNER = new Map();
-        let GLOBAL_DUP_COUNT = 0;
-
-        function computeGlobalOwnership() {
-            GLOBAL_LEAD_OWNER = new Map();
-            GLOBAL_DUP_COUNT = 0;
-            const best = new Map(); // identidade -> { dealerName, prio, time, lead }
-
-            for (const dealerName in GLOBAL_ALL_DATA) {
-                const d = GLOBAL_ALL_DATA[dealerName];
-                if (!d || d.error || !d.leads) continue;
-
-                d.leads.forEach(ld => {
-                    const ids = leadIdentities(ld);
-                    if (!ids.length) return;
-                    const prio = statusPriority(ld);
-                    const dt = parseDateAny(ld.dateRaw);
-                    const time = dt ? dt.getTime() : 0;
-
-                    // Se qualquer identidade já tem dono, é o mesmo lead: compara e unifica
-                    const prev = ids.map(id => best.get(id)).find(Boolean);
-                    if (!prev) {
-                        const rec = { dealerName, prio, time, lead: ld };
-                        ids.forEach(id => best.set(id, rec));
-                        return;
-                    }
-                    if (prev.lead !== ld) GLOBAL_DUP_COUNT++;
-                    if (prio > prev.prio || (prio === prev.prio && time > prev.time)) {
-                        prev.dealerName = dealerName; prev.prio = prio; prev.time = time; prev.lead = ld;
-                    }
-                    ids.forEach(id => { if (!best.has(id)) best.set(id, prev); });
-                });
-            }
-
-            best.forEach((rec, id) => GLOBAL_LEAD_OWNER.set(id, rec.lead));
-        }
-
-        // Um lead só conta no dealer que "ganhou" a identidade dele.
-        function isOwnedHere(dealerName, lead) {
-            const ids = leadIdentities(lead);
-            if (!ids.length) return true; // sem identidade: não há como saber, mantém
-            const owner = ids.map(id => GLOBAL_LEAD_OWNER.get(id)).find(Boolean);
-            return !owner || owner === lead;
-        }
-
         function applyFilter(filterType) {
             renderCountryCards();
-            computeGlobalOwnership();
             // Sincroniza CURRENT_FILTERS com o filterType passado
             if (!CURRENT_FILTERS || CURRENT_FILTERS.size === 0) CURRENT_FILTERS = new Set([filterType]);
             CURRENT_FILTER = filterType;
@@ -1902,9 +1831,6 @@
 
                 if (!dData.error) {
                     filtered = dData.leads.filter(lead => {
-                        // Duplicata deste lead já contabilizada em outro distribuidor
-                        if (!isOwnedHere(dealerName, lead)) return false;
-
                         // NOVO: Filtro de Período Cronológico
                         if (CURRENT_START_DATE || CURRENT_END_DATE) {
                             const leadDate = parseDateAny(lead.dateRaw);
@@ -2239,13 +2165,6 @@
                         ? '✓ Incluindo leads sem data'
                         : `${droppedNoDate} lead(s) sem data fora do período — incluir`;
                 }
-            }
-
-            // Transparência: duplicados fundidos entre distribuidores
-            const dupEl = document.getElementById('m-dup-note');
-            if (dupEl) {
-                dupEl.style.display = GLOBAL_DUP_COUNT > 0 ? '' : 'none';
-                dupEl.textContent = `${GLOBAL_DUP_COUNT} duplicado(s) fundido(s) entre distribuidores`;
             }
 
             // Chama a nova engine de renderização visual
