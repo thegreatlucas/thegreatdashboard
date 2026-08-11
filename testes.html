@@ -143,14 +143,37 @@ group('Interpretação de datas', () => {
     check('Vazio vira null', parseDateAny(''), null);
 });
 
-// ---------------------------------------------------------------- TELEFONE
-group('Telefone como identidade', () => {
-    check('Formatações diferentes do mesmo número batem',
-          phoneKey('+55 11 98765-4321') === phoneKey('5511987654321'), true);
-    check('Números diferentes não batem',
-          phoneKey('11987654321') === phoneKey('11912345678'), false);
-    check('Curto demais é descartado', phoneKey('1234'), null);
-    check('Vazio é descartado', phoneKey(''), null);
+// ---------------------------------------------------------------- DEDUPLICAÇÃO
+group('Deduplicação dentro da planilha', () => {
+    const cfg = { statusCol: 'Status', postStatusCol: 'Fase pós qualificação' };
+    const linha = (o) => Object.assign({
+        'Nome': 'Cliente', 'E-mail': '', 'Telefone': '', 'Data': '01/06/2026',
+        'Status': '', 'Fase pós qualificação': '', 'Observações': ''
+    }, o);
+
+    check('Mesmo e-mail na mesma planilha vira um lead só',
+          parseLeadsFromCSV([
+              linha({ 'E-mail': 'a@x.com', 'Status': 'Sem Retorno' }),
+              linha({ 'E-mail': 'a@x.com', 'Status': 'Qualificado' })
+          ], cfg, 't').length, 1);
+
+    check('E vence o de status mais avançado',
+          parseLeadsFromCSV([
+              linha({ 'E-mail': 'a@x.com', 'Status': 'Sem Retorno' }),
+              linha({ 'E-mail': 'a@x.com', 'Status': 'Qualificado' })
+          ], cfg, 't')[0].status, 'qualificado');
+
+    check('Leads sem e-mail nunca deduplicam',
+          parseLeadsFromCSV([
+              linha({ 'Telefone': '11999999999' }),
+              linha({ 'Telefone': '11999999999' })
+          ], cfg, 't').length, 2);
+
+    check('Mesmo telefone com e-mails diferentes conta duas vezes',
+          parseLeadsFromCSV([
+              linha({ 'E-mail': 'a@x.com', 'Telefone': '11999999999' }),
+              linha({ 'E-mail': 'b@x.com', 'Telefone': '11999999999' })
+          ], cfg, 't').length, 2);
 });
 
 // ---------------------------------------------------------------- MÁQUINAS
