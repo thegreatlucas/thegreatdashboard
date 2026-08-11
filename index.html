@@ -3,6 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Painel interno com dados de clientes: fora de buscadores, arquivos e
+         treinamento de IA. Complementa o robots.txt (que alguns crawlers ignoram). -->
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
+    <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+    <meta name="bingbot" content="noindex, nofollow, noarchive, nosnippet">
+    <meta name="google" content="nositelinkssearchbox">
+    <!-- Não vaza a URL do painel ao abrir as planilhas em outra aba -->
+    <meta name="referrer" content="no-referrer">
     <title>Dashboard AON 26 - Brasil, Argentina & México</title>
     <!-- Papa Parse para leitura de CSV -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
