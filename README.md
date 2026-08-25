@@ -195,13 +195,47 @@ Retorna `Date` ou `null`.
 
 ---
 
+## Colunas Marcadoras de Campanha
+
+As planilhas passaram a trazer colunas que dizem, por lead, a que campanha ele pertence — já conferidas contra a planilha mãe. Elas são a fonte de verdade; a detecção antiga vale só como retaguarda.
+
+| Coluna | Onde | Filtro |
+|---|---|---|
+| `AON?` | 18 planilhas (BR, AR, MX) | AON 26 |
+| `DEX?` | 16 planilhas | DEX |
+| `MEGAVENTA?` / `Megaventa?` | 3 planilhas do México | Megaventa |
+
+O nome é reconhecido sem depender de caixa, acento, espaço ou da interrogação.
+
+### Como o valor é interpretado (`markerState`)
+
+| Valor | Significado |
+|---|---|
+| `Sim` · `Si` · `X` · e-mail (formato legado) | **Marcado** — pertence à campanha |
+| `Não` · `No` | **Fora** — resposta negativa, decide sozinha |
+| `#N/A` | **Fora** — o PROCV não achou o lead na planilha mãe |
+| vazio · `nan` | **Indefinido** — linha ainda não conferida; cai na detecção anterior |
+
+A distinção entre "Não" e vazio importa: `Não` é uma resposta e encerra o assunto; célula em branco significa que aquela linha ainda não foi processada, e aí o dashboard volta a cruzar por e-mail com a planilha geral (é o caso da Terraverde, com 836 de 989 linhas em branco, e da Veneza Sul, ainda no formato antigo).
+
+### Consequências
+
+- **Lead marcado em qualquer campanha nunca é ExpertConnect** — a origem já é conhecida.
+- **DEX e Megaventa**: o marcador decide; sem coluna, valem a coluna de máquina (`DEX`) e a menção nas observações.
+- **CO / PE / CL** não têm as colunas: os leads são DEX ou ExpertConnect, identificados pela coluna de máquina, e **não entram no filtro AON**.
+- **Filtro 2025**: passou a exigir marcação AON positiva + data até dez/2025. Antes qualquer valor não vazio contava, então `Não` era lido como "é AON" e o filtro devolvia 994 leads em vez de 183.
+
+---
+
 ## Filtros de Campanha
 
 Todos os filtros são inclusivos com lógica **OR**: um lead passa se satisfizer qualquer filtro ativo.
 
 ### AON 26 (`aon`)
 
-Cross-reference de email com a planilha geral AON de cada país.
+**Primeiro critério:** a coluna `AON?` da planilha, quando preenchida — ela decide para os dois lados.
+
+**Retaguarda** (coluna ausente ou célula em branco): cross-reference de email com a planilha geral AON de cada país.
 
 ```
 lead.email ∈ GENERAL_AON_EMAILS[país]

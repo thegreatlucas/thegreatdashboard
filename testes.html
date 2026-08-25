@@ -76,7 +76,8 @@ function lead(over) {
         status: '', postStatus: '', aonRaw: '', hasAonCol: false, dateRaw: '', nameRaw: 'Teste',
         email: '', phone: '', machineRaw: '', lossRaw: '', fleetRaw: '', conditionRaw: '',
         applicationRaw: '', timeframeRaw: '', paymentRaw: '', rawAll: '', regionRaw: '',
-        cityRaw: '', negStartRaw: '', noBuyRaw: '', dealerRaw: '', hasMetaFormCols: true
+        cityRaw: '', negStartRaw: '', noBuyRaw: '', dealerRaw: '', hasMetaFormCols: true,
+        aonMark: null, dexMark: null, megaMark: null
     }, over);
 }
 
@@ -117,6 +118,34 @@ group('Campanhas DEX e Megaventa', () => {
     check('MEGAVENTA na observação', isMegaventaLead(lead({ lossRaw: 'vino por la megaventa' })), true);
     check('"mega venta" separado', isMegaventaLead(lead({ lossRaw: 'contacto en mega venta' })), true);
     check('Observação sem menção', isMegaventaLead(lead({ lossRaw: 'cliente interessado' })), false);
+});
+
+// ---------------------------------------------------------------- MARCADORES
+group('Colunas marcadoras (AON? / DEX? / MEGAVENTA?)', () => {
+    check('"Sim" marca a campanha', markerState('Sim'), true);
+    check('"Si" (ES) marca', markerState('Si'), true);
+    check('"Não" é resposta negativa, não indefinido', markerState('Não'), false);
+    check('"No" (ES) é negativa', markerState('No'), false);
+    check('"#N/A" do PROCV = não achou na planilha mãe', markerState('#N/A'), false);
+    check('Célula vazia fica indefinida (cai na detecção anterior)', markerState(''), null);
+    check('E-mail no formato legado conta como marcado',
+          markerState('cliente@empresa.com.br'), true);
+
+    const cfg = { statusCol: 'Status', postStatusCol: 'Fase pós qualificação' };
+    const linha = (o) => Object.assign({
+        'Nome': 'Cliente', 'E-mail': 'x@y.com', 'Telefone': '', 'Data': '10/08/2026',
+        'Status': '', 'Fase pós qualificação': '', 'Observações': ''
+    }, o);
+
+    check('Coluna "AON?" é lida mesmo com caixa e espaço diferentes',
+          parseLeadsFromCSV([linha({ ' aon? ': 'Sim' })], cfg, 't')[0].aonMark, true);
+    check('Coluna "DEX?" lida', parseLeadsFromCSV([linha({ 'DEX?': 'Sim' })], cfg, 't')[0].dexMark, true);
+    check('Coluna "Megaventa?" lida (variação de caixa do México)',
+          parseLeadsFromCSV([linha({ 'Megaventa?': 'Sim' })], cfg, 't')[0].megaMark, true);
+    check('Sem a coluna, o marcador fica indefinido',
+          parseLeadsFromCSV([linha({})], cfg, 't')[0].dexMark, null);
+    check('Lead marcado em campanha não é ExpertConnect',
+          isExpertConnect(lead({ nameRaw: 'Ana', dateRaw: '10/08/2026', aonMark: true })), false);
 });
 
 // ---------------------------------------------------------------- EXPERTCONNECT

@@ -1105,6 +1105,24 @@
         // parseDateAny é chamada milhares de vezes por render (filtros + analytics).
         // Cache por string: mesma entrada => mesmo Date, sem re-rodar os regex.
         const _DATE_CACHE = new Map();
+        // Valor de uma coluna marcadora de campanha:
+        //   true  → marcado ("Sim"/"Si"/"X", ou o e-mail casado no formato legado)
+        //   false → explicitamente fora ("Não"/"No")
+        //   null  → indefinido: coluna vazia, "#N/A" da fórmula, ou planilha ainda
+        //           não migrada. Nesse caso o dashboard cai na detecção anterior.
+        function markerState(raw) {
+            const v = normalizeString(raw);
+            if (!v || v === 'nan') return null;          // célula em branco: não conferida
+            if (v.startsWith('#')) return false;         // #N/A do PROCV: não achou na planilha mãe
+            if (v === 'nao' || v === 'no' || v === 'n') return false;
+            return true;
+        }
+
+        // Lead marcado em qualquer campanha não é ExpertConnect.
+        function hasAnyCampaignMark(lead) {
+            return lead.aonMark === true || lead.dexMark === true || lead.megaMark === true;
+        }
+
         // Prioridade de status: qual registro vence quando o mesmo lead aparece duas vezes.
         function statusPriority(ld) {
             if (isSaleLead(ld)) return 4; // venda fechada vence qualquer duplicata
@@ -1292,6 +1310,9 @@
         function isExpertConnect(lead) {
             const isEmpty = (v) => !v || v.trim() === '' || v.trim().toLowerCase() === 'nan';
 
+            // Marcado em alguma campanha na planilha: a origem já é conhecida.
+            if (hasAnyCampaignMark(lead)) return false;
+
             // Sem nenhuma coluna do formulário Meta, o teste "ambos vazios" seria
             // sempre verdadeiro e classificaria tudo como EC. Só aplica onde há
             // ao menos uma das colunas para comparar.
@@ -1420,17 +1441,18 @@
                 const postRaw   = postKey ? normalizeString(row[postKey]) : '';
                 
                 // =====================================================================
-                // FIX AON — v2
-                // Problema anterior: k === 'AON?' era case-sensitive e não tolerava
-                // espaços extras no header (ex: 'AON? ', 'aon?') vindos do CSV exportado.
-                // Além disso, normalizeString() no valor AON podia corromper o conteúdo
-                // antes do check, impedindo a validação correta.
-                //
-                // Fix 1: aonKey — tolerante a trim + case insensitive
-                // Fix 2: aonRaw — preserva valor original sem normalizeString
-                // Fix 3: isAonValid — usa toString().trim() seguro (evita falsy em "0")
+                // COLUNAS MARCADORAS DE CAMPANHA
+                // As planilhas passaram a trazer "AON?", "DEX?" e (no México)
+                // "MEGAVENTA?", já conferidas contra a planilha mãe. Quando existem e
+                // estão preenchidas, elas mandam — não é preciso adivinhar a campanha.
+                // Tolerante a caixa, acento, espaço e à interrogação no nome.
                 // =====================================================================
-                const aonKey = keys.find(k => k.trim() === 'AON?' || k.trim().toUpperCase() === 'AON?');
+                const markerKey = (needle) => keys.find(k =>
+                    normalizeString(k).replace(/[?¿\s]/g, '') === needle);
+                const aonKey  = markerKey('aon');
+                const dexKey  = markerKey('dex');
+                const megaKey = markerKey('megaventa');
+
                 const aonRaw = aonKey ? (row[aonKey] ?? '').toString().trim() : '';
                 const hasAonCol = !!aonKey;
 
@@ -1543,6 +1565,10 @@
                     postStatus: postRaw,
                     aonRaw: aonRaw,
                     hasAonCol: hasAonCol,
+                    // true = marcado, false = explicitamente fora, null = indefinido
+                    aonMark:  markerState(aonRaw),
+                    dexMark:  dexKey  ? markerState(row[dexKey])  : null,
+                    megaMark: megaKey ? markerState(row[megaKey]) : null,
                     dateRaw: dateRaw,
                     nameRaw: nameRaw,
                     email: email,
@@ -1862,18 +1888,19 @@
                             // Data mínima de início da campanha por país (COUNTRIES)
                             const _cfg        = COUNTRIES[country];
                             const _afterStart = !!(_ld && _cfg && _ld >= _cfg.aonStart);
-                            // País sem aba na planilha geral: não há cruzamento por e-mail,
-                            // então a data de início da campanha é o próprio critério AON.
-                            const _noGeneral  = !!(_cfg && !_cfg.generalGid);
-                            const _isDex      = isDexLead(lead);
-                            const _isMega     = country === 'MX' && isMegaventaLead(lead);
 
-                            if (ft === 'all') return isAonLead(lead, country) || _isEC || _isConexpo || isExpoLead || _isOlx ||
-                                                     _isDex || _isMega || (_noGeneral && _afterStart);
+                            // Marcador da planilha manda; sem coluna preenchida, vale a
+                            // detecção anterior — é o caso de CO/PE/CL, que não têm as
+                            // colunas e trazem "DEX" na coluna de máquina.
+                            const _markedAny  = hasAnyCampaignMark(lead);
+                            const _isDex      = lead.dexMark  !== null ? lead.dexMark  === true : isDexLead(lead);
+                            const _isMega     = country === 'MX' &&
+                                                (lead.megaMark !== null ? lead.megaMark === true : isMegaventaLead(lead));
+
+                            if (ft === 'all') return _markedAny || isAonLead(lead, country) ||
+                                                     _isEC || _isConexpo || isExpoLead || _isOlx || _isDex || _isMega;
                             if (ft === 'conexpo') return _isConexpo;
-                            // Em país sem planilha geral não há como separar EC de Meta:
-                            // a heurística não classifica nem barra esses leads.
-                            if (ft === 'expertconnect') return _isEC && !_isConexpo && !_noGeneral;
+                            if (ft === 'expertconnect') return _isEC && !_isConexpo;
                             // Expoagro: e-mail/telefone na lista da campanha, montada a partir
                             // da planilha geral (campaign_name contendo "expo"). Independe de
                             // qualquer planilha de dealer.
@@ -1884,23 +1911,21 @@
 
                             if (ft === 'aon25') {
                                 if (_isConexpo) return false;
-                                if (_isEC && !_noGeneral) return false;
-                                if (country === 'BR' && lead.hasAonCol) {
-                                    const aon = (lead.aonRaw ?? '').toString().trim();
-                                    return aon !== '' && aon.toLowerCase() !== 'nan' && !aon.startsWith('#') && isUpToDec2025(lead.dateRaw);
-                                }
+                                // Marcação AON positiva + data até dez/2025
+                                if (country === 'BR' && lead.aonMark === true) return isUpToDec2025(lead.dateRaw);
                                 return false;
                             }
 
                             if (ft === 'aon') {
                                 if (_isConexpo) return false;
-                                if (_isEC && !_noGeneral) return false;
-                                // Primário: cruzamento por e-mail com a planilha geral
+                                // Coluna "AON?" preenchida: já foi conferida contra a planilha
+                                // mãe e decide sozinha, para os dois lados.
+                                if (lead.aonMark !== null) return lead.aonMark === true;
+                                // Planilha ainda não migrada: cruzamento por e-mail, como antes
+                                if (_isEC) return false;
                                 if (isAonLead(lead, country)) return true;
-                                // Fallback para AR/MX: leads sem e-mail contam pela data de início do AON
+                                // Leads AR/MX sem e-mail contam pela data de início do AON
                                 if ((country === 'AR' || country === 'MX') && !lead.email && _afterStart) return true;
-                                // Países sem planilha geral (CO/PE/CL): data de início é o critério
-                                if (_noGeneral && _afterStart) return true;
                                 return false;
                             }
 
