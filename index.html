@@ -371,6 +371,7 @@
             padding: 2px 8px; border-radius: 99px; margin-top: 6px; white-space: nowrap;
         }
         .stale-badge.dead { color: var(--error); background: rgba(255,69,58,0.12); border-color: rgba(255,69,58,0.3); }
+        .stale-badge.closed { color: var(--text-muted); background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.12); }
 
         /* --- TOASTS DE NOVA VENDA --- */
         .toast-stack { position: fixed; bottom: 24px; right: 24px; z-index: 9600; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
@@ -959,7 +960,9 @@
         });
 
         const DEALERS_CONFIG = {
-            "Veneza Sul": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1JCeNcqhmFF0cDWQJhCAKLg28xLyL-GfsbJQN7ia2FNI/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
+            // Encerrada: não recebe leads novos e não migrou para as colunas
+            // marcadoras. O histórico continua contando; o card sai dos alertas.
+            "Veneza Sul": { closed: true, country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1JCeNcqhmFF0cDWQJhCAKLg28xLyL-GfsbJQN7ia2FNI/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
             "Veneza NE": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1zbktMtatVyTPZnjMF4JI1ERkzQYCm2KamYj9-Tx_340/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
             "INOVA": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1r1ywrkva9dLT50wStb0UQ2_NYtXy7iGIqtrB1LKdeL0/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
             "RZK": { country: "BR", sheetUrl: "https://docs.google.com/spreadsheets/d/1hvlMm4zjP0etlxXEWxbMmzuJ06nlK-AUebyMBUvGjL0/edit?gid=0#gid=0", statusCol: "Status", postStatusCol: "Fase pós qualificação" },
@@ -1005,7 +1008,6 @@
         // GLOBAL CACHE DE DADOS
         let GLOBAL_ALL_DATA = {};
         let EXPOAGRO_EMAILS = new Set();
-        let EXPOAGRO_PHONES = new Set();
         let CURRENT_FILTERS = new Set(['aon']);
         let CURRENT_FILTER = 'aon';
         let CURRENT_COUNTRY_FILTER = null;
@@ -1070,10 +1072,7 @@
                                 state: (r['state'] || '').toString().trim().toUpperCase(),
                                 city: (r['city'] || '').toString().trim()
                             });
-                            if (camp.includes('expo')) {
-                                EXPOAGRO_EMAILS.add(email);
-                                if (phone) EXPOAGRO_PHONES.add(phone);
-                            }
+                            if (camp.includes('expo')) EXPOAGRO_EMAILS.add(email);
                         }
                     });
                     console.log('[GERAL ' + c + '] ' + GENERAL_AON_EMAILS[c].size + ' e-mails AON');
@@ -1454,7 +1453,6 @@
                 const megaKey = markerKey('megaventa');
 
                 const aonRaw = aonKey ? (row[aonKey] ?? '').toString().trim() : '';
-                const hasAonCol = !!aonKey;
 
                 // Nome
                 const nameKey = keys.find(k => {
@@ -1564,7 +1562,6 @@
                     status: statusRaw,
                     postStatus: postRaw,
                     aonRaw: aonRaw,
-                    hasAonCol: hasAonCol,
                     // true = marcado, false = explicitamente fora, null = indefinido
                     aonMark:  markerState(aonRaw),
                     dexMark:  dexKey  ? markerState(row[dexKey])  : null,
@@ -1764,6 +1761,10 @@
         }
 
         function staleBadgeHtml(dealerName) {
+            const cfg = DEALERS_CONFIG[dealerName];
+            if (cfg && cfg.closed) {
+                return `<span class="stale-badge closed" title="Distribuidor encerrado — o histórico continua no painel">🏁 Encerrado</span>`;
+            }
             const days = dealerLastLeadDays(dealerName);
             if (days === null || days < STALE_WARN_DAYS) return '';
             const dead = days >= STALE_DEAD_DAYS;
@@ -1883,7 +1884,6 @@
                             const _isConexpo = isConexpo(lead.dateRaw);
                             const _isEC      = isExpertConnect(lead);
                             const _isOlx     = isOlxLead(lead);
-                            const _dec2025plus = _ld && (_ld.getFullYear() > 2025 || (_ld.getFullYear() === 2025 && _ld.getMonth() >= 11));
 
                             // Data mínima de início da campanha por país (COUNTRIES)
                             const _cfg        = COUNTRIES[country];
@@ -3333,6 +3333,12 @@
                 { key: 'Início negociação', prop: 'negStartRaw',   critical: false },
                 { key: 'Motivo não compra', prop: 'noBuyRaw',      critical: false }
             ];
+            // Colunas marcadoras: mostram quais planilhas já migraram para o padrão novo
+            const MARKERS = [
+                { key: 'AON?',       prop: 'aonMark'  },
+                { key: 'DEX?',       prop: 'dexMark'  },
+                { key: 'MEGAVENTA?', prop: 'megaMark' }
+            ];
 
             const dealers = Object.keys(GLOBAL_ALL_DATA)
                 .filter(dn => { const d = GLOBAL_ALL_DATA[dn]; return d && !d.error && d.leads && d.leads.length; })
@@ -3360,11 +3366,23 @@
                     const cls = pct === 0 ? 'diag-none' : pct < 25 ? 'diag-low' : 'diag-ok';
                     return `<td><div class="diag-cell ${cls}" title="Lendo a coluna &quot;${escapeHtml(col)}&quot; · ${filled} de ${leads.length} leads preenchidos">${pct}%</div></td>`;
                 }).join('');
-                return `<tr><td class="diag-dealer" title="${leads.length} leads">${escapeHtml(dn)}</td>${cells}</tr>`;
+                const marks = MARKERS.map(mk => {
+                    const decididos = leads.filter(l => l[mk.prop] !== null && l[mk.prop] !== undefined).length;
+                    if (decididos === 0) {
+                        return `<td><div class="diag-cell diag-na" title="Planilha sem a coluna ${mk.key} — a campanha é detectada pelo método antigo">—</div></td>`;
+                    }
+                    const pct = Math.round((decididos / leads.length) * 100);
+                    const sim = leads.filter(l => l[mk.prop] === true).length;
+                    const cls = pct >= 95 ? 'diag-ok' : 'diag-low';
+                    return `<td><div class="diag-cell ${cls}" title="${decididos} de ${leads.length} linhas conferidas · ${sim} marcadas como Sim">${pct}%</div></td>`;
+                }).join('');
+                const encerrado = DEALERS_CONFIG[dn] && DEALERS_CONFIG[dn].closed
+                    ? ' <span style="color:var(--text-muted);font-weight:500;">· encerrado</span>' : '';
+                return `<tr><td class="diag-dealer" title="${leads.length} leads">${escapeHtml(dn)}${encerrado}</td>${cells}${marks}</tr>`;
             }).join('');
 
             el.innerHTML = `<table class="diag-table">
-                    <thead><tr><th>Distribuidor</th>${FIELDS.map(f => `<th>${f.key}</th>`).join('')}</tr></thead>
+                    <thead><tr><th>Distribuidor</th>${FIELDS.map(f => `<th>${f.key}</th>`).join('')}${MARKERS.map(m => `<th>${m.key}</th>`).join('')}</tr></thead>
                     <tbody>${rowsHtml}</tbody>
                 </table>
                 <div class="diag-legend">
@@ -3373,7 +3391,7 @@
                     <span><i class="diag-key" style="background:rgba(255,69,58,0.5)"></i> Não encontrada ou 100% vazia</span>
                     <span><i class="diag-key" style="background:rgba(255,255,255,0.12)"></i> Campo opcional ausente</span>
                 </div>
-                <p class="adv-note">Passe o mouse em qualquer célula para ver <strong>qual coluna</strong> da planilha está sendo lida. Foi uma leitura errada assim — a coluna de observações apontando para "motivo do contato" — que manteve o score de calor e os motivos de perda sem informação em Argentina e México.</p>`;
+                <p class="adv-note">As três últimas colunas mostram quanto de cada planilha já foi conferida contra a planilha mãe — é por onde se acompanha a migração para o padrão novo. Passe o mouse em qualquer célula para ver <strong>qual coluna</strong> da planilha está sendo lida. Foi uma leitura errada assim — a coluna de observações apontando para "motivo do contato" — que manteve o score de calor e os motivos de perda sem informação em Argentina e México.</p>`;
         }
 
         // ---- 1. Performance de Mídia (planilha geral × status do dealer) ----
