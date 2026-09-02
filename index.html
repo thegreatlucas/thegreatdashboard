@@ -1049,7 +1049,7 @@
                         cacheWrite('cache_General_' + c, csvText);
                     } catch(err) {
                         const cached = localStorage.getItem('cache_General_' + c);
-                        if (cached) { csvText = cached; }
+                        if (cached) { CACHE_USED.add('Geral ' + c); csvText = cached; }
                         else throw err;
                     }
                     const rows = Papa.parse(csvText, { header: true, skipEmptyLines: true }).data;
@@ -1187,6 +1187,9 @@
         // quando era preciso. Agora a falha é registrada e mostrada no status, e o
         // cache mais antigo é descartado para abrir espaço antes de desistir.
         let CACHE_FAILED = new Set();
+        // Planilhas servidas do cache local nesta carga: os dados podem estar velhos
+        // e o usuário precisa saber, senão investiga número errado achando que é bug.
+        let CACHE_USED = new Set();
 
         function cacheWrite(key, value) {
             try {
@@ -1356,6 +1359,9 @@
                 const cached = localStorage.getItem('cache_' + dealerName);
                 if (cached) {
                     console.warn(`[OFFLINE CACHE] Proxies mortos. Puxando dados salvos de ${dealerName}`);
+                    CACHE_USED.add(dealerName);
+                    const quando = parseInt(localStorage.getItem('cache_' + dealerName + '__t') || '0', 10);
+                    if (quando) console.warn(`   salvos em ${new Date(quando).toLocaleString('pt-BR')}`);
                     csvText = cached;
                 } else {
                     throw err; // Se capotou na primeira vez da vida, joga o erro pra frente
@@ -2361,13 +2367,25 @@
 
             try {
                 GLOBAL_ALL_DATA = {}; // limpa cache
+                CACHE_USED.clear();
                 await fetchAllData();
                 applyFilter([...CURRENT_FILTERS][0]);
                 checkNewSales(); // alerta de novas vendas (toast + notificação)
 
                 const now = new Date();
-                status.textContent = `Puxado com Sucesso às ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-                status.style.color = 'var(--accent)';
+                const hora = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+                if (CACHE_USED.size > 0) {
+                    // Sem isso, uma planilha que não baixou vira número errado silencioso
+                    const quais = [...CACHE_USED].slice(0, 3).join(', ') +
+                                  (CACHE_USED.size > 3 ? ` +${CACHE_USED.size - 3}` : '');
+                    status.textContent = `⚠️ ${CACHE_USED.size} planilha(s) vieram do cache local (${quais}) — números podem estar desatualizados`;
+                    status.style.color = '#ff9500';
+                    status.title = 'Os proxies não responderam para essas planilhas. Clique em Atualizar Sincronização para tentar de novo.';
+                } else {
+                    status.textContent = `Puxado com Sucesso às ${hora}`;
+                    status.style.color = 'var(--accent)';
+                    status.title = '';
+                }
             } catch (err) {
                 console.error(err);
                 if (!silent) {
@@ -3378,7 +3396,9 @@
                 }).join('');
                 const encerrado = DEALERS_CONFIG[dn] && DEALERS_CONFIG[dn].closed
                     ? ' <span style="color:var(--text-muted);font-weight:500;">· encerrado</span>' : '';
-                return `<tr><td class="diag-dealer" title="${leads.length} leads">${escapeHtml(dn)}${encerrado}</td>${cells}${marks}</tr>`;
+                const doCache = CACHE_USED.has(dn)
+                    ? ' <span style="color:#ff9500;font-weight:600;" title="Esta planilha não baixou agora; os dados vieram do cache local">· cache</span>' : '';
+                return `<tr><td class="diag-dealer" title="${leads.length} leads">${escapeHtml(dn)}${encerrado}${doCache}</td>${cells}${marks}</tr>`;
             }).join('');
 
             el.innerHTML = `<table class="diag-table">
