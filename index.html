@@ -1172,13 +1172,45 @@
             return match ? match[1] : null;
         }
 
-        // Táticas de Sobrevivência: Fazemos "Round-Robin" balanceado de proxies!
-        // Alguns Proxies como o AllOrigins exigem URL Encode. Outros (Codetabs) recusam Encoding.
+        // =============================================
+        // BUSCA DAS PLANILHAS
+        // O export CSV do Google Sheets responde com CORS liberado
+        // (Access-Control-Allow-Origin no redirect e no arquivo final), então o
+        // navegador busca DIRETO — sem intermediário e sem os dados dos leads
+        // passando por serviço de terceiro.
+        //
+        // Os proxies públicos ficam só como retaguarda. Em ago/2026 os três
+        // pararam ao mesmo tempo (corsproxy.io passou a exigir chave e devolvia
+        // 401, allorigins caiu com 522, codetabs parou de responder) e o painel
+        // passou a servir tudo do cache local sem que ninguém percebesse.
+        // =============================================
         const PROXIES = [
             { url: "https://corsproxy.io/?url=", encode: true },
             { url: "https://api.allorigins.win/raw?url=", encode: true },
             { url: "https://api.codetabs.com/v1/proxy?quest=", encode: false }
         ];
+
+        // Planilha privada ou link quebrado devolve a página de login do Google em
+        // HTML. Sem esta checagem, o HTML era parseado como se fosse CSV.
+        function assertCsv(text, origem) {
+            const inicio = (text || '').slice(0, 200).trim().toLowerCase();
+            if (!text || inicio.startsWith('<!doctype') || inicio.startsWith('<html')) {
+                throw new Error(`${origem} devolveu HTML em vez de CSV (planilha sem link público?)`);
+            }
+            return text;
+        }
+
+        function fetchComTimeout(url, ms) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), ms);
+            return fetch(url, { signal: controller.signal, credentials: 'omit' })
+                .then(r => {
+                    clearTimeout(timer);
+                    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                    return r.text();
+                })
+                .catch(err => { clearTimeout(timer); throw err; });
+        }
         
         // =============================================
         // CACHE LOCAL
@@ -1221,24 +1253,21 @@
         }
 
         async function fetchWithProxyFallback(rawUrl) {
-            const TIMEOUT_MS = 8000;
+            // 1) Direto do Google — caminho normal
+            try {
+                return assertCsv(await fetchComTimeout(rawUrl, 15000), 'Google Sheets');
+            } catch (errDireto) {
+                console.warn('[DIRETO] falhou, tentando proxies:', errDireto.message);
+            }
 
+            // 2) Retaguarda: dispara os proxies em paralelo e usa o primeiro que responder
             const attempts = PROXIES.map(proxy => {
                 const proxyUrl = proxy.url + (proxy.encode ? encodeURIComponent(rawUrl) : rawUrl);
-                const controller = new AbortController();
-                const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-                return fetch(proxyUrl, { signal: controller.signal })
-                    .then(r => {
-                        clearTimeout(timer);
-                        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                        return r.text();
-                    })
-                    .catch(err => { clearTimeout(timer); throw err; });
+                return fetchComTimeout(proxyUrl, 8000).then(t => assertCsv(t, 'Proxy'));
             });
 
-            // Dispara todos os proxies em paralelo e usa o primeiro que responder
             return Promise.any(attempts).catch(() => {
-                throw new Error('Todos os proxies falharam ou expiraram.');
+                throw new Error('Busca direta e todos os proxies falharam.');
             });
         }
 

@@ -45,19 +45,20 @@ Tudo roda no browser. O dado persiste em `localStorage` como cache de emergênci
 
 ### Proxy Rotation (`fetchWithProxyFallback`)
 
-Google Sheets bloqueia CORS direto. O dashboard tenta 3 proxies em paralelo com `Promise.any()` — o primeiro que responder vence:
+**O dashboard busca direto do Google.** O export CSV do Sheets responde com CORS liberado — `Access-Control-Allow-Origin` no redirect e no arquivo final — então não é preciso intermediário, e os dados dos leads não passam por serviço de terceiro. Timeout de 15s.
 
-1. `corsproxy.io`
-2. `allorigins.win`
-3. `codetabs.com`
+Os três proxies públicos (`corsproxy.io`, `allorigins.win`, `codetabs.com`) ficaram apenas como retaguarda, disparados em paralelo com `Promise.any()` e 8s cada.
 
-Timeout por proxy: **8 segundos** (AbortController). Se todos falharem, cai no cache local.
+> **Ago/2026:** os três pararam ao mesmo tempo — corsproxy.io passou a exigir chave (401), allorigins caiu (522) e codetabs parou de responder. O painel passou a servir tudo do cache local **sem avisar**, e os números congelaram. Daí vieram duas correções: a busca direta e o aviso de cache.
+
+`assertCsv()` rejeita resposta em HTML: planilha sem link público devolve a página de login do Google, que antes era parseada como se fosse CSV.
 
 ### Cache localStorage
 
 - Chave: `cache_{DEALER_NAME}` e `cache_General_{COUNTRY}`
 - Salvo a cada fetch bem-sucedido
-- Lido automaticamente se proxy falhar
+- Lido automaticamente se a busca direta e os proxies falharem
+- **Quando isso acontece o painel avisa**: o indicador de status fica laranja e nomeia as planilhas afetadas (`CACHE_USED`), e o diagnóstico do parser marca a linha com `· cache`
 
 ---
 
