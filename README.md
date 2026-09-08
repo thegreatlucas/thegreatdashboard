@@ -305,7 +305,15 @@ Observação do vendedor contendo `megaventa` ou `mega venta`. O filtro só cons
 
 ### Geral (`all`)
 
-Sem filtro — mostra tudo. Exclusivo: ativar `all` desativa os outros.
+**Todos os leads das planilhas**, sem exceção, mais os leads da planilha mãe que ainda não chegaram a nenhum distribuidor. Exclusivo: ativar `all` desativa os outros.
+
+> Até set/2026 o "Geral" era a **união das campanhas** — um lead que não se encaixasse em nenhuma sumia mesmo dele. Eram 930 leads invisíveis, quase todos brasileiros e quase todos marcados `Não` em `AON?` e `DEX?`. Hoje o nome corresponde ao conteúdo, e esses leads têm filtro próprio.
+
+### Sem Campanha (`semcampanha`)
+
+O complemento do resto: leads que **não** pertencem a nenhuma campanha mapeada — nem marcados nas colunas, nem AON por e-mail, nem ExpertConnect, Conexpo, Expoagro, OLX, DEX ou Megaventa.
+
+Na prática são leads legítimos de outra origem (balcão, indicação, campanha antiga), a maioria com `Não` nas colunas marcadoras — ou seja, já conferidos contra a planilha mãe. Serve para enxergar o que está fora das campanhas em vez de descobrir por diferença de total.
 
 ---
 

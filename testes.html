@@ -148,6 +148,25 @@ group('Colunas marcadoras (AON? / DEX? / MEGAVENTA?)', () => {
           isExpertConnect(lead({ nameRaw: 'Ana', dateRaw: '10/08/2026', aonMark: true })), false);
 });
 
+// ---------------------------------------------------------------- ESCOPO DOS FILTROS
+group('Escopo dos filtros Geral e Sem Campanha', () => {
+    const cfg = { statusCol: 'Status', postStatusCol: 'Fase pós qualificação' };
+    const linha = (o) => Object.assign({
+        'Nome': 'Cliente', 'E-mail': 'x@y.com', 'Telefone': '11999999999', 'Data': '10/08/2026',
+        'Status': 'Qualificado', 'Fase pós qualificação': '', 'Observações': '',
+        'Setor/ Negócio de Atuação': 'Construção civil',
+        'Tem maquinaria? Tipo de Maquinário  que possui ': 'Sim, outra marca'
+    }, o);
+
+    // Lead sem campanha nenhuma: marcadores "Não" e campos do formulário preenchidos
+    const semCampanha = parseLeadsFromCSV([linha({ 'AON?': 'Não', 'DEX?': 'Não' })], cfg, 't')[0];
+    check('Marcadores "Não" não marcam campanha', hasAnyCampaignMark(semCampanha), false);
+    check('E com o formulário preenchido não é ExpertConnect', isExpertConnect(semCampanha), false);
+
+    const doAon = parseLeadsFromCSV([linha({ 'AON?': 'Sim', 'DEX?': 'Não' })], cfg, 't')[0];
+    check('Marcador "Sim" marca campanha', hasAnyCampaignMark(doAon), true);
+});
+
 // ---------------------------------------------------------------- EXPERTCONNECT
 group('ExpertConnect', () => {
     check('Setor e frota vazios + data 2026 = EC',
