@@ -496,6 +496,19 @@ Com filtro de período ativo, leads sem data são descartados — mas agora o n�
 | Radar de negociações | `exportNegXLSX()` | Negociações abertas com score e temperatura |
 | Vendas efetuadas | `exportSalesXLSX()` | Vendas com ciclo em dias (lead → negociação) |
 | Breakdown por dealer | `exportLeadsXLSX()` | Base completa de leads sob os filtros atuais |
+| Sem Atendimento | `exportUnattendedXLSX()` | **Várias abas**: Geral (país + distribuidor), "Não Distribuídos" e uma por distribuidor |
+
+### Export de leads sem atendimento
+
+Quem ainda não recebeu o primeiro contato, definido por `isUnattended()` — a mesma função que o painel usa para a taxa de atendimento, então o arquivo sempre bate com o KPI.
+
+- **Geral**: todos, ordenados por país e distribuidor
+- **Não Distribuídos**: leads que estão na planilha mãe e não aparecem em nenhuma planilha de distribuidor — os mais urgentes, porque ninguém sequer os recebeu
+- **Uma aba por distribuidor**, com o nome e o país no título
+
+Cada linha traz os dias de espera, coloridos: verde até 7 dias, laranja até 30, vermelho acima. Dentro de cada aba os mais antigos vêm primeiro.
+
+`buildXLSX()` aceita `sheets: [...]` para arquivos de várias abas; nomes são saneados para o limite do Excel (31 caracteres, sem `: \ / ? * [ ]`) e duplicatas ganham sufixo.
 
 ---
 

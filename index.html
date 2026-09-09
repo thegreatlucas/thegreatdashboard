@@ -695,6 +695,10 @@
 
         <div class="metrics-dealers-header" style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:25px;">
             <h2 class="section-title" style="margin-bottom:0;">Breakdown por Dealer</h2>
+            <button class="export-xlsx-btn" id="btn-export-unattended" onclick="exportUnattendedXLSX()" title="Leads que ainda não receberam o primeiro contato — aba geral + uma por distribuidor" style="background: var(--error); color:#fff;">
+                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zm-8 2V5h2v6h1.17L12 13.17 9.83 11H11zm-6 7h14v2H5z"/></svg>
+                Sem Atendimento
+            </button>
             <button class="export-xlsx-btn" id="btn-export-leads" onclick="exportLeadsXLSX()" title="Exporta todos os leads que passam pelos filtros atuais">
                 <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zm-8 2V5h2v6h1.17L12 13.17 9.83 11H11zm-6 7h14v2H5z"/></svg>
                 Exportar Base
@@ -1083,6 +1087,9 @@
             }));
         }
         let GLOBAL_FILTERED_LEADS = {};
+        // Leads que estão na planilha mãe e ainda não foram para nenhum distribuidor:
+        // são os "sem atendimento" mais urgentes, porque ninguém sequer os recebeu.
+        let GLOBAL_UNDISTRIBUTED = [];
         let GLOBAL_OPEN_NEGS = [];
         let GLOBAL_SALES = [];
 
@@ -1121,6 +1128,15 @@
         // Lead marcado em qualquer campanha não é ExpertConnect.
         function hasAnyCampaignMark(lead) {
             return lead.aonMark === true || lead.dexMark === true || lead.megaMark === true;
+        }
+
+        // Lead ainda não trabalhado: status em branco, ou só o marcador de espera
+        // sem complemento. "Pendiente de respuesta" / "Aguardando Resposta" NÃO entram
+        // aqui — significam que o dealer já contatou e aguarda o retorno do cliente.
+        function isUnattended(lead) {
+            const s = lead.status;
+            return !s || s === '' || s === 'nan' ||
+                   s === 'aguardando' || s === 'esperando' || s === 'pendiente';
         }
 
         // Prioridade de status: qual registro vence quando o mesmo lead aparece duas vezes.
@@ -1874,6 +1890,7 @@
             let gProducts = {};
             let gLoss = {};
             GLOBAL_FILTERED_LEADS = {};
+            GLOBAL_UNDISTRIBUTED = [];
             let droppedNoDate = 0;
             GLOBAL_OPEN_NEGS = [];
             GLOBAL_SALES = [];
@@ -2007,9 +2024,7 @@
                         // Resposta" CONTAM como atendido: o dealer já contatou e aguarda retorno
                         // do lead. Apenas o marcador solto ("pendiente"/"aguardando", sem
                         // complemento) indica lead ainda não trabalhado.
-                        const _pendente = !ld.status || ld.status === '' || ld.status === 'nan' ||
-                                          ld.status === 'aguardando' || ld.status === 'esperando' || ld.status === 'pendiente';
-                        if (!_pendente) dt.attended++;
+                        if (!isUnattended(ld)) dt.attended++;
 
                         const _isDesq = ld.status.includes('nao qualif') || ld.status.includes('no qualif') ||
                                         ld.status.includes('descalif') || ld.status.includes('desqualif') ||
@@ -2194,6 +2209,7 @@
                             if (CURRENT_END_DATE && ld > CURRENT_END_DATE) return;
                         }
                         // Contabiliza como lead sem status (aguardando dealer)
+                        GLOBAL_UNDISTRIBUTED.push({ country: c, lead: gLead });
                         m.total++;
                         cMetrics[c].total++;
                     });
@@ -2635,13 +2651,31 @@
             HOT: 'FFFF453A', WARM: 'FFFF9500', COLD: 'FF64D2FF', GREEN: 'FF32D74B'
         };
 
-        async function buildXLSX({ sheetName, title, subtitle, columns, rows, fileName, cellStyle, tabColor }) {
-            const C = XLSX_PALETTE;
+        // Nome de aba do Excel: máx. 31 caracteres e sem : \ / ? * [ ]
+        function xlsxSheetName(nome, usados) {
+            let s = (nome || 'Aba').replace(/[:\\\/?*\[\]]/g, '-').replace(/\s+/g, ' ').trim().slice(0, 31);
+            if (!s) s = 'Aba';
+            let base = s, i = 2;
+            while (usados.has(s)) { const suf = ' (' + i++ + ')'; s = base.slice(0, 31 - suf.length) + suf; }
+            usados.add(s);
+            return s;
+        }
+
+        // Uma aba do arquivo. Aceita chamada com uma aba só (compatível com as
+        // exportações antigas) ou com `sheets: [...]` para várias.
+        async function buildXLSX(opts) {
+            const abas = opts.sheets || [opts];
             const wb = new ExcelJS.Workbook();
             wb.creator = 'Dashboard AON 26';
             wb.created = new Date();
+            const usados = new Set();
+            abas.forEach(aba => montarAba(wb, aba, usados));
+            await baixarWorkbook(wb, opts.fileName);
+        }
 
-            const ws = wb.addWorksheet(sheetName, {
+        function montarAba(wb, { sheetName, title, subtitle, columns, rows, cellStyle, tabColor }, usados) {
+            const C = XLSX_PALETTE;
+            const ws = wb.addWorksheet(xlsxSheetName(sheetName, usados), {
                 properties: { tabColor: { argb: tabColor || C.JD_YELLOW } },
                 pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1 }
             });
@@ -2721,7 +2755,9 @@
                 alignment: { horizontal: 'center', vertical: 'middle' }
             };
             ws.getRow(footerRow).height = 18;
+        }
 
+        async function baixarWorkbook(wb, fileName) {
             const buffer = await wb.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             const url = URL.createObjectURL(blob);
@@ -2856,6 +2892,119 @@
                         return {};
                     }
                 });
+            });
+        }
+
+        // ---- Leads sem atendimento: aba geral + uma por distribuidor ----
+        async function exportUnattendedXLSX() {
+            const C = XLSX_PALETTE;
+            const porDealer = new Map();
+            const todos = [];
+
+            // Ordena por país e depois por distribuidor, para as abas saírem agrupadas
+            const nomes = Object.keys(GLOBAL_FILTERED_LEADS).sort((a, b) => {
+                const ca = (DEALERS_CONFIG[a] || {}).country || '', cb = (DEALERS_CONFIG[b] || {}).country || '';
+                return ca === cb ? a.localeCompare(b, 'pt-BR') : ca.localeCompare(cb);
+            });
+
+            nomes.forEach(dn => {
+                const country = (DEALERS_CONFIG[dn] || {}).country || '';
+                // Mais antigos primeiro: são os que estão esperando há mais tempo
+                const pend = GLOBAL_FILTERED_LEADS[dn].filter(isUnattended).sort((a, b) => {
+                    const da = parseDateAny(a.dateRaw), db = parseDateAny(b.dateRaw);
+                    return (da ? da.getTime() : Infinity) - (db ? db.getTime() : Infinity);
+                });
+                if (!pend.length) return;
+                porDealer.set(dn, { country, leads: pend });
+                pend.forEach(l => todos.push({ dealerName: dn, country, lead: l }));
+            });
+
+            if (!todos.length && !GLOBAL_UNDISTRIBUTED.length) {
+                alert('Nenhum lead sem atendimento com os filtros atuais. 🎉');
+                return;
+            }
+
+            const diasEspera = (l) => {
+                const d = parseDateAny(l.dateRaw);
+                return d === null ? '—' : Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+            };
+            // Vermelho a partir de 30 dias parado, laranja a partir de 7
+            const corEspera = (v) => typeof v !== 'number' ? {} :
+                { bold: v > 30, align: 'center', color: v > 30 ? C.HOT : v > 7 ? C.WARM : C.GREEN };
+
+            const COLS_GERAL = [
+                { header: 'País', width: 12 }, { header: 'Distribuidor', width: 20 },
+                { header: 'Nome', width: 30 }, { header: 'E-mail', width: 32 },
+                { header: 'Telefone', width: 18 }, { header: 'Região', width: 12 },
+                { header: 'Cidade', width: 20 }, { header: 'Data do Lead', width: 14 },
+                { header: 'Dias Esperando', width: 16 }, { header: 'Máquina de Interesse', width: 24 },
+                { header: 'Prazo de Compra', width: 22 }, { header: 'Forma de Pagamento', width: 20 }
+            ];
+            const linhaGeral = (dn, country, l) => [
+                COUNTRY_NAMES[country] || country, dn,
+                xlsxClean(l.nameRaw), xlsxClean(l.email), xlsxClean(l.phone),
+                xlsxClean(l.regionRaw), xlsxClean(l.cityRaw),
+                formatDate(l.dateRaw) || '—', diasEspera(l),
+                normalizeMachine(l.machineRaw), xlsxClean(l.timeframeRaw), xlsxClean(l.paymentRaw)
+            ];
+
+            await runExport('btn-export-unattended', async () => {
+                const porPais = {};
+                todos.forEach(t => { porPais[t.country] = (porPais[t.country] || 0) + 1; });
+                const resumo = Object.entries(porPais)
+                    .map(([c, n]) => `${COUNTRY_NAMES[c] || c}: ${n}`).join('  ·  ');
+
+                const abas = [{
+                    sheetName: 'Geral',
+                    title: 'LEADS SEM ATENDIMENTO — AON 26  |  JOHN DEERE CONSTRUÇÃO',
+                    subtitle: `Gerado em ${xlsxStamp()}  ·  ${todos.length} leads aguardando primeiro contato  ·  ${resumo}` +
+                              (GLOBAL_UNDISTRIBUTED.length ? `  ·  + ${GLOBAL_UNDISTRIBUTED.length} não distribuídos (aba própria)` : '') +
+                              `  ·  Filtro: ${[...CURRENT_FILTERS].join(', ').toUpperCase()}`,
+                    tabColor: C.HOT,
+                    columns: COLS_GERAL,
+                    rows: todos.map(t => linhaGeral(t.dealerName, t.country, t.lead)),
+                    cellStyle: (col, idx) => {
+                        if (col === 1) return { bold: true, color: C.JD_YELLOW };
+                        if (col === 8) return corEspera(diasEspera(todos[idx].lead));
+                        return {};
+                    }
+                }];
+
+                // Leads que ainda não foram repassados a nenhum distribuidor
+                if (GLOBAL_UNDISTRIBUTED.length) {
+                    abas.push({
+                        sheetName: 'Não Distribuídos',
+                        title: 'LEADS AINDA NÃO REPASSADOS A NENHUM DISTRIBUIDOR',
+                        subtitle: `${GLOBAL_UNDISTRIBUTED.length} leads estão na planilha mãe e não aparecem em nenhuma planilha de distribuidor  ·  Gerado em ${xlsxStamp()}`,
+                        tabColor: C.WARM,
+                        columns: [
+                            { header: 'País', width: 12 }, { header: 'E-mail', width: 34 },
+                            { header: 'Telefone', width: 18 }, { header: 'Data do Lead', width: 14 },
+                            { header: 'Dias Esperando', width: 16 }
+                        ],
+                        rows: GLOBAL_UNDISTRIBUTED.map(u => [
+                            COUNTRY_NAMES[u.country] || u.country,
+                            xlsxClean(u.lead.email), xlsxClean(u.lead.phone),
+                            formatDate(u.lead.dateRaw) || '—', diasEspera(u.lead)
+                        ]),
+                        cellStyle: (col, idx) => col === 4 ? corEspera(diasEspera(GLOBAL_UNDISTRIBUTED[idx].lead)) : {}
+                    });
+                }
+
+                // Uma aba por distribuidor, sem repetir as colunas de país e dealer
+                const COLS_DEALER = COLS_GERAL.slice(2);
+                porDealer.forEach(({ country, leads }, dn) => {
+                    abas.push({
+                        sheetName: dn,
+                        title: `${dn.toUpperCase()}  ·  ${(COUNTRY_NAMES[country] || country).toUpperCase()}  —  LEADS SEM ATENDIMENTO`,
+                        subtitle: `${leads.length} leads aguardando primeiro contato  ·  Gerado em ${xlsxStamp()}`,
+                        columns: COLS_DEALER,
+                        rows: leads.map(l => linhaGeral(dn, country, l).slice(2)),
+                        cellStyle: (col, idx) => col === 6 ? corEspera(diasEspera(leads[idx])) : {}
+                    });
+                });
+
+                await buildXLSX({ sheets: abas, fileName: xlsxFileName('sem_atendimento') });
             });
         }
 
