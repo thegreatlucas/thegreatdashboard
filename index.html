@@ -2673,7 +2673,105 @@
             await baixarWorkbook(wb, opts.fileName);
         }
 
-        function montarAba(wb, { sheetName, title, subtitle, columns, rows, cellStyle, tabColor }, usados) {
+        // Paleta clara, para os arquivos que circulam entre as equipes.
+        // O tema escuro do painel fica só nos extratos internos.
+        const XLSX_DOC = {
+            JD_GREEN : 'FF367C2B',   // verde John Deere
+            BRANCO   : 'FFFFFFFF',
+            ZEBRA    : 'FFF7F8F5',   // alternância quase imperceptível
+            CAB_BG   : 'FFEDEFEA',
+            TINTA    : 'FF2B2B2B',
+            SUAVE    : 'FF6B6B6B',
+            LINHA    : 'FFD9DDD4',
+            VERMELHO : 'FFB3261E',
+            AMBAR    : 'FF9A6700',
+            VERDE    : 'FF2E7D32'
+        };
+
+        function xlsxDataPorExtenso(d = new Date()) {
+            const meses = ['janeiro','fevereiro','março','abril','maio','junho',
+                           'julho','agosto','setembro','outubro','novembro','dezembro'];
+            return `${d.getDate()} de ${meses[d.getMonth()]} de ${d.getFullYear()}`;
+        }
+
+        function montarAba(wb, aba, usados) {
+            if (aba.theme === 'documento') return montarAbaDocumento(wb, aba, usados);
+            return montarAbaPainel(wb, aba, usados);
+        }
+
+        // ---- Tema documento: claro, sem carimbo de sistema ----
+        function montarAbaDocumento(wb, { sheetName, title, subtitle, columns, rows, cellStyle }, usados) {
+            const D = XLSX_DOC;
+            const ws = wb.addWorksheet(xlsxSheetName(sheetName, usados), {
+                properties: { tabColor: { argb: D.JD_GREEN } },
+                pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1,
+                             margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 } }
+            });
+
+            const lastLetter = xlsxColLetter(columns.length);
+            columns.forEach((c, i) => { ws.getColumn(i + 1).width = c.width; });
+
+            // Título — alinhado à esquerda, como um documento, não centralizado como um banner
+            ws.mergeCells(`A1:${lastLetter}1`);
+            const t = ws.getCell('A1');
+            t.value = title;
+            t.style = {
+                font: { bold: true, size: 16, color: { argb: D.TINTA }, name: 'Calibri' },
+                alignment: { horizontal: 'left', vertical: 'bottom', indent: 1 }
+            };
+            ws.getRow(1).height = 30;
+
+            ws.mergeCells(`A2:${lastLetter}2`);
+            const s = ws.getCell('A2');
+            s.value = subtitle;
+            s.style = {
+                font: { size: 10.5, color: { argb: D.SUAVE }, name: 'Calibri' },
+                alignment: { horizontal: 'left', vertical: 'top', indent: 1 }
+            };
+            ws.getRow(2).height = 18;
+
+            ws.getRow(3).height = 8; // respiro
+
+            // Cabeçalho: fundo suave e um filete verde embaixo
+            ws.getRow(4).height = 22;
+            columns.forEach((c, i) => {
+                const cell = ws.getCell(4, i + 1);
+                cell.value = c.header;
+                cell.style = {
+                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: D.CAB_BG } },
+                    font: { bold: true, size: 10, color: { argb: D.TINTA }, name: 'Calibri' },
+                    alignment: { horizontal: c.align || 'left', vertical: 'middle', indent: 1 },
+                    border: { bottom: { style: 'medium', color: { argb: D.JD_GREEN } } }
+                };
+            });
+
+            rows.forEach((rowData, idx) => {
+                const r = idx + 5;
+                const bg = idx % 2 === 0 ? D.BRANCO : D.ZEBRA;
+                ws.getRow(r).height = 18;
+                rowData.forEach((val, col) => {
+                    const cell = ws.getCell(r, col + 1);
+                    cell.value = val;
+                    const e = (cellStyle && cellStyle(col, idx, val)) || {};
+                    cell.style = {
+                        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: e.bg || bg } },
+                        font: { size: 10.5, color: { argb: e.color || D.TINTA }, name: 'Calibri', bold: !!e.bold },
+                        alignment: { vertical: 'middle', horizontal: e.align || columns[col].align || 'left',
+                                     indent: (e.align || columns[col].align) === 'center' ? 0 : 1,
+                                     wrapText: !!columns[col].wrap },
+                        border: { bottom: { style: 'hair', color: { argb: D.LINHA } } }
+                    };
+                });
+            });
+
+            // Filtro e painel congelado: quem recebe vai querer ordenar e filtrar
+            if (rows.length) ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: rows.length + 4, column: columns.length } };
+            ws.views = [{ state: 'frozen', ySplit: 4 }];
+            ws.headerFooter = { oddFooter: '&L&"Calibri"&9&K6B6B6B' + (sheetName || '') + '&R&"Calibri"&9&K6B6B6BPágina &P de &N' };
+        }
+
+        // ---- Tema painel: escuro, para os extratos internos ----
+        function montarAbaPainel(wb, { sheetName, title, subtitle, columns, rows, cellStyle, tabColor }, usados) {
             const C = XLSX_PALETTE;
             const ws = wb.addWorksheet(xlsxSheetName(sheetName, usados), {
                 properties: { tabColor: { argb: tabColor || C.JD_YELLOW } },
@@ -2683,7 +2781,6 @@
             const lastLetter = xlsxColLetter(columns.length);
             columns.forEach((c, i) => { ws.getColumn(i + 1).width = c.width; });
 
-            // Linha 1: título
             ws.mergeCells(`A1:${lastLetter}1`);
             const titleCell = ws.getCell('A1');
             titleCell.value = title;
@@ -2694,7 +2791,6 @@
             };
             ws.getRow(1).height = 38;
 
-            // Linha 2: subtítulo
             ws.mergeCells(`A2:${lastLetter}2`);
             const sub = ws.getCell('A2');
             sub.value = subtitle;
@@ -2705,12 +2801,10 @@
             };
             ws.getRow(2).height = 22;
 
-            // Linha 3: separador amarelo
             ws.mergeCells(`A3:${lastLetter}3`);
             ws.getCell('A3').style = { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.JD_YELLOW } } };
             ws.getRow(3).height = 3;
 
-            // Linha 4: cabeçalhos
             ws.getRow(4).height = 28;
             columns.forEach((c, i) => {
                 const cell = ws.getCell(4, i + 1);
@@ -2723,12 +2817,10 @@
                 };
             });
 
-            // Dados
             rows.forEach((rowData, idx) => {
                 const excelRow = idx + 5;
                 const rowBg = idx % 2 === 0 ? C.DARK1 : C.DARK2;
                 ws.getRow(excelRow).height = 20;
-
                 rowData.forEach((val, col) => {
                     const cell = ws.getCell(excelRow, col + 1);
                     cell.value = val;
@@ -2744,11 +2836,10 @@
 
             ws.views = [{ state: 'frozen', ySplit: 4 }];
 
-            // Rodapé
             const footerRow = rows.length + 5;
             ws.mergeCells(`A${footerRow}:${lastLetter}${footerRow}`);
             const footer = ws.getCell(`A${footerRow}`);
-            footer.value = 'Dashboard AON 26 — John Deere Construção  |  Gerado automaticamente';
+            footer.value = 'Dashboard AON 26 — John Deere Construção';
             footer.style = {
                 fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: C.JD_YELLOW } },
                 font: { size: 9, color: { argb: C.JD_BLACK }, name: 'Calibri', bold: true },
@@ -2895,13 +2986,15 @@
             });
         }
 
-        // ---- Leads sem atendimento: aba geral + uma por distribuidor ----
+        // ---- Leads sem atendimento: uma visão geral + uma aba por distribuidor ----
+        // Este arquivo circula entre as equipes dos distribuidores, então usa o tema
+        // claro e linguagem de documento, não de extrato de sistema.
         async function exportUnattendedXLSX() {
-            const C = XLSX_PALETTE;
+            const D = XLSX_DOC;
             const porDealer = new Map();
             const todos = [];
 
-            // Ordena por país e depois por distribuidor, para as abas saírem agrupadas
+            // Agrupa por país e depois por distribuidor, para as abas saírem na ordem
             const nomes = Object.keys(GLOBAL_FILTERED_LEADS).sort((a, b) => {
                 const ca = (DEALERS_CONFIG[a] || {}).country || '', cb = (DEALERS_CONFIG[b] || {}).country || '';
                 return ca === cb ? a.localeCompare(b, 'pt-BR') : ca.localeCompare(cb);
@@ -2909,7 +3002,7 @@
 
             nomes.forEach(dn => {
                 const country = (DEALERS_CONFIG[dn] || {}).country || '';
-                // Mais antigos primeiro: são os que estão esperando há mais tempo
+                // Mais antigos primeiro: são os que esperam há mais tempo
                 const pend = GLOBAL_FILTERED_LEADS[dn].filter(isUnattended).sort((a, b) => {
                     const da = parseDateAny(a.dateRaw), db = parseDateAny(b.dateRaw);
                     return (da ? da.getTime() : Infinity) - (db ? db.getTime() : Infinity);
@@ -2919,8 +3012,8 @@
                 pend.forEach(l => todos.push({ dealerName: dn, country, lead: l }));
             });
 
-            if (!todos.length && !GLOBAL_UNDISTRIBUTED.length) {
-                alert('Nenhum lead sem atendimento com os filtros atuais. 🎉');
+            if (!todos.length) {
+                alert('Nenhum lead sem atendimento com os filtros atuais.');
                 return;
             }
 
@@ -2928,19 +3021,21 @@
                 const d = parseDateAny(l.dateRaw);
                 return d === null ? '—' : Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
             };
-            // Vermelho a partir de 30 dias parado, laranja a partir de 7
-            const corEspera = (v) => typeof v !== 'number' ? {} :
-                { bold: v > 30, align: 'center', color: v > 30 ? C.HOT : v > 7 ? C.WARM : C.GREEN };
+            // Só destaca o que precisa de ação: acima de 30 dias em vermelho, acima de 7 em âmbar
+            const corEspera = (v) => typeof v !== 'number' ? { align: 'center' } :
+                { align: 'center', bold: v > 30, color: v > 30 ? D.VERMELHO : v > 7 ? D.AMBAR : D.TINTA };
 
-            const COLS_GERAL = [
-                { header: 'País', width: 12 }, { header: 'Distribuidor', width: 20 },
+            const COLS = [
+                { header: 'País', width: 13 }, { header: 'Distribuidor', width: 20 },
                 { header: 'Nome', width: 30 }, { header: 'E-mail', width: 32 },
                 { header: 'Telefone', width: 18 }, { header: 'Região', width: 12 },
-                { header: 'Cidade', width: 20 }, { header: 'Data do Lead', width: 14 },
-                { header: 'Dias Esperando', width: 16 }, { header: 'Máquina de Interesse', width: 24 },
-                { header: 'Prazo de Compra', width: 22 }, { header: 'Forma de Pagamento', width: 20 }
+                { header: 'Cidade', width: 20 },
+                { header: 'Data do lead', width: 14, align: 'center' },
+                { header: 'Dias esperando', width: 15, align: 'center' },
+                { header: 'Máquina de interesse', width: 24 },
+                { header: 'Prazo de compra', width: 22 }, { header: 'Forma de pagamento', width: 20 }
             ];
-            const linhaGeral = (dn, country, l) => [
+            const linha = (dn, country, l) => [
                 COUNTRY_NAMES[country] || country, dn,
                 xlsxClean(l.nameRaw), xlsxClean(l.email), xlsxClean(l.phone),
                 xlsxClean(l.regionRaw), xlsxClean(l.cityRaw),
@@ -2949,62 +3044,45 @@
             ];
 
             await runExport('btn-export-unattended', async () => {
+                const hoje = xlsxDataPorExtenso();
                 const porPais = {};
                 todos.forEach(t => { porPais[t.country] = (porPais[t.country] || 0) + 1; });
                 const resumo = Object.entries(porPais)
-                    .map(([c, n]) => `${COUNTRY_NAMES[c] || c}: ${n}`).join('  ·  ');
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([c, n]) => `${n} ${COUNTRY_NAMES[c] || c}`).join(', ');
 
                 const abas = [{
-                    sheetName: 'Geral',
-                    title: 'LEADS SEM ATENDIMENTO — AON 26  |  JOHN DEERE CONSTRUÇÃO',
-                    subtitle: `Gerado em ${xlsxStamp()}  ·  ${todos.length} leads aguardando primeiro contato  ·  ${resumo}` +
-                              (GLOBAL_UNDISTRIBUTED.length ? `  ·  + ${GLOBAL_UNDISTRIBUTED.length} não distribuídos (aba própria)` : '') +
-                              `  ·  Filtro: ${[...CURRENT_FILTERS].join(', ').toUpperCase()}`,
-                    tabColor: C.HOT,
-                    columns: COLS_GERAL,
-                    rows: todos.map(t => linhaGeral(t.dealerName, t.country, t.lead)),
+                    theme: 'documento',
+                    sheetName: 'Visão geral',
+                    title: 'Leads aguardando primeiro contato',
+                    subtitle: `John Deere Construção · AON 26   |   ${todos.length} leads em ${porDealer.size} distribuidores (${resumo})   |   Posição de ${hoje}`,
+                    columns: COLS,
+                    rows: todos.map(t => linha(t.dealerName, t.country, t.lead)),
                     cellStyle: (col, idx) => {
-                        if (col === 1) return { bold: true, color: C.JD_YELLOW };
+                        if (col === 1) return { bold: true };
                         if (col === 8) return corEspera(diasEspera(todos[idx].lead));
                         return {};
                     }
                 }];
 
-                // Leads que ainda não foram repassados a nenhum distribuidor
-                if (GLOBAL_UNDISTRIBUTED.length) {
-                    abas.push({
-                        sheetName: 'Não Distribuídos',
-                        title: 'LEADS AINDA NÃO REPASSADOS A NENHUM DISTRIBUIDOR',
-                        subtitle: `${GLOBAL_UNDISTRIBUTED.length} leads estão na planilha mãe e não aparecem em nenhuma planilha de distribuidor  ·  Gerado em ${xlsxStamp()}`,
-                        tabColor: C.WARM,
-                        columns: [
-                            { header: 'País', width: 12 }, { header: 'E-mail', width: 34 },
-                            { header: 'Telefone', width: 18 }, { header: 'Data do Lead', width: 14 },
-                            { header: 'Dias Esperando', width: 16 }
-                        ],
-                        rows: GLOBAL_UNDISTRIBUTED.map(u => [
-                            COUNTRY_NAMES[u.country] || u.country,
-                            xlsxClean(u.lead.email), xlsxClean(u.lead.phone),
-                            formatDate(u.lead.dateRaw) || '—', diasEspera(u.lead)
-                        ]),
-                        cellStyle: (col, idx) => col === 4 ? corEspera(diasEspera(GLOBAL_UNDISTRIBUTED[idx].lead)) : {}
-                    });
-                }
-
-                // Uma aba por distribuidor, sem repetir as colunas de país e dealer
-                const COLS_DEALER = COLS_GERAL.slice(2);
+                // Uma aba por distribuidor — país e nome já vão no título
+                const COLS_DEALER = COLS.slice(2);
                 porDealer.forEach(({ country, leads }, dn) => {
+                    const maisAntigo = diasEspera(leads[0]);
+                    const alerta = typeof maisAntigo === 'number' && maisAntigo > 30
+                        ? `   |   O mais antigo aguarda há ${maisAntigo} dias` : '';
                     abas.push({
+                        theme: 'documento',
                         sheetName: dn,
-                        title: `${dn.toUpperCase()}  ·  ${(COUNTRY_NAMES[country] || country).toUpperCase()}  —  LEADS SEM ATENDIMENTO`,
-                        subtitle: `${leads.length} leads aguardando primeiro contato  ·  Gerado em ${xlsxStamp()}`,
+                        title: `${dn} — ${COUNTRY_NAMES[country] || country}`,
+                        subtitle: `${leads.length} ${leads.length === 1 ? 'lead aguardando' : 'leads aguardando'} primeiro contato${alerta}   |   Posição de ${hoje}`,
                         columns: COLS_DEALER,
-                        rows: leads.map(l => linhaGeral(dn, country, l).slice(2)),
+                        rows: leads.map(l => linha(dn, country, l).slice(2)),
                         cellStyle: (col, idx) => col === 6 ? corEspera(diasEspera(leads[idx])) : {}
                     });
                 });
 
-                await buildXLSX({ sheets: abas, fileName: xlsxFileName('sem_atendimento') });
+                await buildXLSX({ sheets: abas, fileName: xlsxFileName('leads_sem_atendimento') });
             });
         }
 

@@ -496,17 +496,29 @@ Com filtro de período ativo, leads sem data são descartados — mas agora o n�
 | Radar de negociações | `exportNegXLSX()` | Negociações abertas com score e temperatura |
 | Vendas efetuadas | `exportSalesXLSX()` | Vendas com ciclo em dias (lead → negociação) |
 | Breakdown por dealer | `exportLeadsXLSX()` | Base completa de leads sob os filtros atuais |
-| Sem Atendimento | `exportUnattendedXLSX()` | **Várias abas**: Geral (país + distribuidor), "Não Distribuídos" e uma por distribuidor |
+| Sem Atendimento | `exportUnattendedXLSX()` | **Várias abas**: Visão geral + uma por distribuidor (tema claro) |
 
 ### Export de leads sem atendimento
 
-Quem ainda não recebeu o primeiro contato, definido por `isUnattended()` — a mesma função que o painel usa para a taxa de atendimento, então o arquivo sempre bate com o KPI.
+Quem ainda não recebeu o primeiro contato, definido por `isUnattended()` — a mesma função que o painel usa para a taxa de atendimento.
 
-- **Geral**: todos, ordenados por país e distribuidor
-- **Não Distribuídos**: leads que estão na planilha mãe e não aparecem em nenhuma planilha de distribuidor — os mais urgentes, porque ninguém sequer os recebeu
-- **Uma aba por distribuidor**, com o nome e o país no título
+- **Visão geral**: todos, ordenados por país e distribuidor
+- **Uma aba por distribuidor**, com o nome e o país no título, e um alerta no subtítulo quando o lead mais antigo passa de 30 dias
 
-Cada linha traz os dias de espera, coloridos: verde até 7 dias, laranja até 30, vermelho acima. Dentro de cada aba os mais antigos vêm primeiro.
+Só entram leads que estão em planilha de distribuidor. Os que estão na planilha mãe e ainda não foram repassados ficam de fora deste arquivo — ele é a lista de trabalho de quem já recebeu o lead.
+
+Dentro de cada aba os mais antigos vêm primeiro, e a coluna de dias esperando é destacada acima de 7 dias (âmbar) e de 30 (vermelho).
+
+### Dois temas de planilha
+
+`buildXLSX()` monta cada aba com um dos dois:
+
+| Tema | Onde | Cara |
+|---|---|---|
+| `documento` | Sem atendimento | Claro, título alinhado à esquerda, cabeçalho suave com filete verde JD, zebrado quase imperceptível, autofiltro e numeração de página no rodapé |
+| padrão (painel) | Radar, vendas, base | Escuro, faixa amarela, cabeçalho preto — combina com a tela, para extrato interno |
+
+O tema `documento` existe porque o arquivo de leads sem atendimento circula entre as equipes dos distribuidores: ele precisa parecer um documento de trabalho, não um despejo de sistema. Nenhum dos dois carrega carimbo de "gerado automaticamente".
 
 `buildXLSX()` aceita `sheets: [...]` para arquivos de várias abas; nomes são saneados para o limite do Excel (31 caracteres, sem `: \ / ? * [ ]`) e duplicatas ganham sufixo.
 
